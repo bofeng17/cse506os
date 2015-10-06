@@ -1,10 +1,14 @@
 # cse506os
 
-## first stage
+##Stages
 
-memory management 
+###First stage
+ 
+ memory management 
+- physical memory
+- virtual memory
 
-## references
+##References
 
 ###Knowledge
 - [Operating Systems Development - Physical Memory](http://www.brokenthorn.com/Resources/OSDev17.html)

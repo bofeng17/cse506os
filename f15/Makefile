@@ -1,6 +1,6 @@
 CC=gcc
 AS=as
-CFLAGS=-O1 -std=c99 -D__thread= -Wall -Werror -nostdinc -Iinclude -msoft-float -mno-sse -mno-red-zone -fno-builtin -fPIC -march=amdfam10 -g3
+CFLAGS=-O1 -std=c99 -D__thread= -Wall -Werror -nostdinc -Iinclude -msoft-float -mno-sse -mno-red-zone -fno-builtin -fPIC -march=amdfam10 -g3 -fno-stack-protector
 LD=ld
 LDLAGS=-nostdlib
 AR=ar
@@ -73,3 +73,12 @@ submit: clean
 clean:
 	find $(ROOTLIB) $(ROOTBIN) -type f ! -name .empty -print -delete
 	rm -rfv obj kernel newfs.506 $(ROOTBOOT)/kernel/kernel $(USER).iso
+
+.PHONY: debug qemu
+
+debug:
+	qemu-system-x86_64 -curses -cdrom $(USER).iso -drive id=disk,file=$(USER).img,if=none -device ahci,id=ahci -device ide-drive,drive=disk,bus=ahci.0 -net nic -net user,hostfwd=tcp::10080-:80 -net user,hostfwd=tcp::10023-:23 --no-reboot -gdb tcp::9998 -S
+
+qemu:
+	qemu-system-x86_64 -curses -cdrom $(USER).iso -drive id=disk,file=$(USER).img,if=none -device ahci,id=ahci -device ide-drive,drive=disk,bus=ahci.0 -net nic -net user,hostfwd=tcp::10080-:80 -net user,hostfwd=tcp::10023-:23 --no-reboot -gdb tcp::9998
+

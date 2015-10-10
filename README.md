@@ -1,5 +1,11 @@
 # cse506os
 
+##Makefile Changes
+ Three changes
+ - add '-fno-stack-protector' gcc option so that we can compile it on local linux machine
+ - make qemu to run the kermel
+ - make debug for debug. Qemu starts without do anything, except waiting for gdb connection. After connected gdb, set break points and continue.
+
 ##Stages
 
 ###First stage

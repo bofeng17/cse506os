@@ -2,9 +2,9 @@
 
 ##Makefile Changes
  Three changes
- - add '-fno-stack-protector' gcc option so that we can compile it on local linux machine
- - make qemu to run the kermel
- - make debug for debug. Qemu starts without do anything, except waiting for gdb connection. After connected gdb, set break points and continue.
+ - add '-fno-stack-protector' gcc compile option so that we can compile it on local linux machine
+ - add 'make qemu' command to run the kermel
+ - add 'make debug' for debugging. Qemu starts without do anything, except waiting for gdb connection. After connected gdb, set break points and continue. "gdb -ex 'target remote localhost:9998' -ex 'break boot' -ex 'call boot()' ./kernel" is a quick way to do this
 
 ##Stages
 

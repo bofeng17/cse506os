@@ -1,19 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/physical.h>
 
-
-#define PAGE_OCP 0x0001
-#define PAGE_FREE 0x0000
 
 static uint32_t page_inuse_num=0;
 
 //each page is 4kb
-struct page{
-	uint64_t info;
-	uint64_t next;
-	uint64_t reserved1;
-	uint64_t reserved2;
-}__attribute__((packed)) *page_sp;
 
 
 int init_phy_page(int num)
@@ -28,21 +20,21 @@ int init_phy_page(int num)
 
 	while(i<page_num)
 	{
-		page_tmp=0xffffffff80200000+i;
+		page_tmp=(page_sp*)(0xffffffff80200000+i);
 
 	if(i<num)
 	{
-		page_tmp=PAGE_OCP;
+		page_tmp->info=PAGE_OCP;
 	}
 	else if(i>=num)
 	{
-		page_tmp=PAGE_FREE;
+		page_tmp->info=PAGE_FREE;
 	}
 
-	page_tmp->next=page_index_+1;
+	page_tmp->next=page_index+1;
 
 	i++;
-	page_index_++;
+	//(page_index)=(page_index)+1;
 	page_inuse_num+=num;
 
     }
@@ -56,12 +48,12 @@ uint32_t find_first_free()
 
 	for(i=0;i<page_num;i++)
 	{
-		page_sp* tem=0xffffffff80200000+i;
+		page_sp* tmp=(page_sp*)(0xffffffff80200000+i);
 		if(tmp->info&PAGE_OCP)
 		{
 			break;
 		}
-		elseif(tmp->info&PAGE_FREE)
+		else if(tmp->info&PAGE_FREE)
 		{
 			tmp->info=PAGE_OCP;
 		}
@@ -74,7 +66,7 @@ uint32_t find_first_free()
 uint32_t find_free_pages(int num)
 {
 	int i=0,j=0;
-	int number;
+	int number=0;
 	int start=0;
 
 	for(i=0;i<page_num-num+1;i++)
@@ -85,11 +77,11 @@ uint32_t find_free_pages(int num)
 			break;
 		}
         
-		page_sp* tem=0xffffffff80200000+i;
+		page_sp* tmp=(page_sp*)(0xffffffff80200000+i);
 
 		for(j=0;j<num;j++)
 		{
-			number=0;
+			//number=0;
 			if(tmp->info==0)
 				{
 					tmp->info=PAGE_OCP;
@@ -103,7 +95,7 @@ uint32_t find_free_pages(int num)
 			
 		}
 
-		if(number=num)
+		if(number==num)
 			{
 				start=i;
 			}
@@ -121,7 +113,7 @@ uint32_t find_free_pages(int num)
 
 uint64_t allocate_page()
 {
-	int start=find_free_page();
+	int start=find_first_free();
 	return (uint64_t)(0xffffffff80200000+start);
 }
 

@@ -8,7 +8,7 @@
 struct page{
 	uint64_t info;
 	uint64_t next;
-	uint64_t reserved1;
+	uint64_t index;
 	uint64_t reserved2;
 }__attribute__((packed));
 

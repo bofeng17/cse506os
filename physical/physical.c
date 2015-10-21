@@ -17,6 +17,7 @@ int init_phy_page(int num)
 
 	page_sp* page_tmp;
 	int i=0;
+	uint64_t index_=page_index;
 
 	while(i<page_num)
 	{
@@ -31,9 +32,12 @@ int init_phy_page(int num)
 		page_tmp->info=PAGE_FREE;
 	}
 
+	page_tmp->index=index_;
+
 	page_tmp->next=page_index+1;
 
 	i++;
+	index_++;
 	//(page_index)=(page_index)+1;
 	page_inuse_num+=num;
 
@@ -114,13 +118,16 @@ uint32_t find_free_pages(int num)
 uint64_t allocate_page()
 {
 	int start=find_first_free();
-	return (uint64_t)(0xffffffff80200000+start);
+	//return (uint64_t)(0xffffffff80200000+start);
+	return (uint64_t)(start<<12)
+
 }
 
 uint64_t allocate_pages(int num)
 {
 	int start=find_free_pages(num);
-	return (uint64_t)(0xffffffff80200000+start);
+	//return (uint64_t)(0xffffffff80200000+start);
+	return (uint64_t)(start<<12)
 }
 
 

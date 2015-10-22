@@ -21,7 +21,7 @@ int init_phy_page(int num)
 
 	while(i<page_num)
 	{
-		page_tmp=(page_sp*)(0xffffffff80350000+i);
+		page_tmp=(page_sp*)(0xffffffff80350000)+i;
 
 	if(i<num)
 	{
@@ -47,21 +47,21 @@ return 0;
 
 void set_used(int index)
 {
-	page_sp* tmp=(page_sp*)(0xffffffff80350000+index);
+	page_sp* tmp=(page_sp*)(0xffffffff80350000)+index;
 	tmp->info&=PAGE_OCP;
 }
 
 
 void set_free(int index)
 {
-	page_sp* tmp=(page_sp*)(0xffffffff80350000+index);
+	page_sp* tmp=(page_sp*)(0xffffffff80350000)+index;
 	tmp->info|=PAGE_FREE;
 }
 
 int check_usable(uint64_t phy_add)
 {
 	int index=(phy_add>>12)-page_index;
-	page_sp* tmp=(page_sp*)(0xffffffff80350000+index)
+	page_sp* tmp=(page_sp*)(0xffffffff80350000)+index;
 	if(!(tmp->info & PAGE_OCP))
 	{
 		return 1;//means its opy
@@ -81,7 +81,7 @@ uint32_t find_first_free()
 
 	for(i=0;i<page_num;i++)
 	{
-		page_sp* tmp=(page_sp*)(0xffffffff80350000+i);
+		page_sp* tmp=(page_sp*)(0xffffffff80350000)+i;
 		if(tmp->info&PAGE_OCP)
 		{
 			break;
@@ -112,7 +112,7 @@ uint32_t find_free_pages(int num)
 			break;
 		}
         
-		page_sp* tmp=(page_sp*)(0xffffffff80350000+i);
+		page_sp* tmp=(page_sp*)(0xffffffff80350000)+i;
 
 		if(!(tmp->info & PAGE_OCP))
 		{
@@ -145,7 +145,7 @@ uint64_t allocate_page()
 {
 	int start=find_first_free();
 	//return (uint64_t)(0xffffffff80200000+start);
-	page_sp* tmp=(page_sp*)(0xffffffff80350000+start);
+	page_sp* tmp=(page_sp*)(0xffffffff80350000)+start;
 	return (uint64_t)((tmp->index)<<12);
 
 }
@@ -154,7 +154,7 @@ uint64_t allocate_pages(int num)
 {
 	int start=find_free_pages(num);
 	//return (uint64_t)(0xffffffff80200000+start);
-	page_sp* tmp=(page_sp*)(0xffffffff80350000+start);
+	page_sp* tmp=(page_sp*)(0xffffffff80350000)+start;
 	//return (uint64_t)(start<<12)
 	return (uint64_t)((tmp->index)<<12);
 }

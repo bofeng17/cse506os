@@ -10,7 +10,7 @@ static uint32_t page_inuse_num=0;
 
 int init_phy_page(int num)
 {
-	if(num<page_num)
+	if(num>page_num)
 	{
 		printf("ERROR: number is too big to init page");
 	}
@@ -56,6 +56,20 @@ void set_free(int index)
 {
 	page_sp* tmp=(page_sp*)(0xffffffff80350000+index);
 	tmp->info|=PAGE_FREE;
+}
+
+int check_usable(uint64_t phy_add)
+{
+	int index=(phy_add>>12)-page_index;
+	page_sp* tmp=(page_sp*)(0xffffffff80350000+index)
+	if(!(tmp->info & PAGE_OCP))
+	{
+		return 1;//means its opy
+	}
+	else
+	{
+		return -1;//means its free
+	}
 }
 
 

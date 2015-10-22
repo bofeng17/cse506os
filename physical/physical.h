@@ -20,3 +20,6 @@ uint32_t find_first_free();
 uint32_t find_free_pages(int);
 uint64_t allocate_page();
 uint64_t allocate_pages();
+void set_used(int);
+void set_free(int);
+int check_usable(uint64_t);

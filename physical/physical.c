@@ -2,30 +2,39 @@
 #include <stdlib.h>
 #include <sys/physical.h>
 
-
+extern char physfree,kernofs;
 static uint32_t page_inuse_num=0;
+page_sp* page_struct_start=(page_sp*)(0xffffffff80350000);
+extern uint32_t page_index;
+extern uint32_t page_num;
+ //int page_num=((page_length)>>12);
 
 //each page is 4kb
 
 
-int init_phy_page(int num)
+int init_phy_page(uint32_t num, uint32_t page_num, uint32_t page_index)
 {
 	if(num>page_num)
 	{
 		printf("ERROR: number is too big to init page");
 	}
 
+	printf("page number=%x\n",page_num);
+
 	page_sp* page_tmp;
-	int i=0;
-	uint64_t index_=page_index;
+	uint32_t i=0;
+	uint32_t index_=page_index;
 
 	while(i<page_num)
 	{
-		page_tmp=(page_sp*)(0xffffffff80350000)+i;
+		
+		page_tmp=page_struct_start+i;
 
 	if(i<num)
 	{
+		//printf("%d\n",i);
 		page_tmp->info=PAGE_OCP;
+		//printf("%x\n",page_tmp->info);
 	}
 	else if(i>=num)
 	{
@@ -42,53 +51,48 @@ int init_phy_page(int num)
 	page_inuse_num+=num;
 
     }
-return 0;
+
+    printf("lalalala");
+    return 0;
 }
 
-void set_used(int index)
+void set_used(uint32_t index)
 {
-	page_sp* tmp=(page_sp*)(0xffffffff80350000)+index;
+	page_sp* tmp=(page_sp*)(page_struct_start+index);
 	tmp->info&=PAGE_OCP;
 }
 
 
-void set_free(int index)
+void set_free(uint32_t index)
 {
-	page_sp* tmp=(page_sp*)(0xffffffff80350000)+index;
+	page_sp* tmp=(page_sp*)(page_struct_start+index);
 	tmp->info|=PAGE_FREE;
-}
-
-int check_usable(uint64_t phy_add)
-{
-	int index=(phy_add>>12)-page_index;
-	page_sp* tmp=(page_sp*)(0xffffffff80350000)+index;
-	if(!(tmp->info & PAGE_OCP))
-	{
-		return 1;//means its opy
-	}
-	else
-	{
-		return -1;//means its free
-	}
 }
 
 
 
 uint32_t find_first_free()
 {
-	int i=0;
-	//int start=0;
+	uint32_t i=0;
+	//uint32_t start=0;
+
+	//printf("struct start :%x\n", page_struct_start);
+
+
 
 	for(i=0;i<page_num;i++)
 	{
-		page_sp* tmp=(page_sp*)(0xffffffff80350000)+i;
+		//printf("page_num:%x",page_num);
+		page_sp* tmp=(page_struct_start+i);
 		if(tmp->info&PAGE_OCP)
 		{
-			break;
+			//printf("find one! %x",i);
+			continue;
 		}
-		else if(tmp->info&PAGE_FREE)
+		else
 		{
-			tmp->info=PAGE_OCP;
+			//tmp->info=PAGE_OCP;
+			//printf("find one! %x",i);
 			return i;
 		}
 		//start=i;
@@ -98,9 +102,9 @@ uint32_t find_first_free()
 	return 0;
 }
 
-uint32_t find_free_pages(int num)
+uint32_t find_free_pages(uint32_t num)
 {
-	int i=0,j=0;
+	uint32_t i=0,j=0;
 	//int number=0;
 	//int start=0;
 
@@ -112,7 +116,7 @@ uint32_t find_free_pages(int num)
 			break;
 		}
         
-		page_sp* tmp=(page_sp*)(0xffffffff80350000)+i;
+		page_sp* tmp=(page_struct_start+i);
 
 		if(!(tmp->info & PAGE_OCP))
 		{
@@ -141,22 +145,31 @@ uint32_t find_free_pages(int num)
 	//return start;
 }
 
-uint64_t allocate_page()
+uint32_t allocate_page()
 {
-	int start=find_first_free();
+	uint32_t start=find_first_free();
 	//return (uint64_t)(0xffffffff80200000+start);
-	page_sp* tmp=(page_sp*)(0xffffffff80350000)+start;
-	return (uint64_t)((tmp->index)<<12);
+	page_sp* tmp=(page_sp*)(page_struct_start+start);
+	tmp->info=PAGE_OCP;
+	//printf("see1: %x\n",tmp->index);
+	return (uint32_t)((tmp->index)<<12);
 
 }
 
-uint64_t allocate_pages(int num)
+uint32_t allocate_pages(uint32_t num)
 {
-	int start=find_free_pages(num);
+	uint32_t i;
+	uint32_t start=find_free_pages(num);
 	//return (uint64_t)(0xffffffff80200000+start);
-	page_sp* tmp=(page_sp*)(0xffffffff80350000)+start;
+	page_sp* tmp=(page_struct_start+start);
+	//page_sp* temp=(page_struct_start+start);
+	for(i=0;i<num;i++)
+	{
+		page_sp* temp=(page_struct_start+i);
+		temp->info=PAGE_OCP;
+	}
 	//return (uint64_t)(start<<12)
-	return (uint64_t)((tmp->index)<<12);
+	return (uint32_t)((tmp->index)<<12);
 }
 
 

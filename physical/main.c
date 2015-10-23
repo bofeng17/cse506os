@@ -7,12 +7,12 @@
 
 //extern uint32_t page_index;
 //extern page_sp* page_struct_begin;
-extern char kernmem, physbase;
+//extern char kernmem, physbase;
 uint32_t page_index=0;
 uint32_t page_num=0;
 uint64_t length=0;
 uint32_t first=0;
-extern page_sp* page_struct_start;
+page_sp* page_struct_start;
 
 void start(uint32_t* modulep, void* physbase, void* physfree)
 {
@@ -34,7 +34,7 @@ void start(uint32_t* modulep, void* physbase, void* physfree)
 	//page_num=length>>12;
 	//page_index=(uint32_t)((smap->base)>>12);
     //page_index=smap->base>>12;
-    //page_struct_begin=(page_sp*)((uint64_t)(&kernmem) + (uint64_t) physfree);
+    page_struct_start=(page_sp*) physfree;
 
     
 
@@ -57,7 +57,7 @@ void start(uint32_t* modulep, void* physbase, void* physfree)
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE];
 uint32_t* loader_stack;
-//extern char kernmem, physbase;
+extern char kernmem, physbase;
 struct tss_t tss;
 
 void boot(void)

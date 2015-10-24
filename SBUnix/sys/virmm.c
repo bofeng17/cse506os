@@ -27,6 +27,7 @@ void* pdpt_alloc(struct PML4 *pml4, uint64_t pml4_indx)
 	struct PDPT *pdpt = (struct PDPT *)allocate_page();
 	uint64_t pdpt_entry = (uint64_t)pdpt;
 	pdpt_entry |= (PTE_P|PTE_W|PTE_U);
+	pdpt_entry &= PTE_EX;// clear executable bit
 	pml4->PML4E[pml4_indx] = pdpt_entry;
 
 	return (void *)pdpt;
@@ -38,6 +39,7 @@ void* pdt_alloc(struct PDPT *pdpt, uint64_t pdpt_indx)
 	struct PDT *pdt = (struct PDT*)allocate_page();
         uint64_t pdt_entry = (uint64_t)pdt;
         pdt_entry |= (PTE_P|PTE_W|PTE_U);
+        pdt_entry&= PTE_EX;// clear executable bit
         pdpt->PDPTE[pdpt_indx] = pdt_entry;
 
 	return (void *)pdt;
@@ -49,6 +51,7 @@ void* pt_alloc(struct PDT *pdt, uint64_t pdt_indx)
 	struct PT *pt = (struct PT *)allocate_page();
         uint64_t pt_entry = (uint64_t)pt;
         pt_entry |= (PTE_P|PTE_W|PTE_U);
+        pt_entry &= PTE_EX;// clear executable bit
         pdt->PDTE[pdt_indx] = pt_entry;
 
 	return (void *)pt;
@@ -69,20 +72,32 @@ void* get_pt_addr_from_PML4(struct PML4 *pml4,uint64_t vir_addr) {
 
 	uint64_t pml4e = pml4->PML4E[pml4e_index];
 
-	if(pml4e & PTE_P)
-		pdpt = (struct PDPT *)get_entry_viraddr(pml4e);
+	if(pml4e & PTE_P){
+		uint64_t pdpt64=get_entry_viraddr(pml4e);
+		pdpt64 &= 0xfffffffffffff000ul;
+		pdpt = (struct PDPT *)pdpt64;
+
+	}
 	else
 		pdpt = (struct PDPT*)pdpt_alloc(pml4, pml4e_index);
 
 	uint64_t pdpte = pdpt->PDPTE[pdpte_index];
-	if(pdpte & PTE_P)
-		pdt = (struct PDT*)get_entry_viraddr(pdpte);
+	if(pdpte & PTE_P){
+		uint64_t pdt64=get_entry_viraddr(pdpte);
+		pdt64 &=0xfffffffffffff000;
+		pdt = (struct PDT*)pdt64;
+
+	}
 	else
 		pdt = (struct PDT*)pdt_alloc(pdpt, pdpte_index);
 
 	uint64_t pdte = pdt->PDTE[pdpte_index];
-	if(pdte & PTE_P)
-        pt = (struct PT*)get_entry_viraddr(pdte);
+	if(pdte & PTE_P){
+		uint64_t pt64=get_entry_viraddr(pdte);
+		pt64 &=0xfffffffffffff000;
+        pt = (struct PT*)pt64;
+
+	}
     else
 		pt = (struct PT*)pt_alloc(pdt, pdte_index);
 
@@ -105,13 +120,16 @@ void init_pagetables() {
 void map_virmem_to_phymem(uint64_t vir_addr,uint64_t phy_addr){
 
 	struct PT* pt;
-	uint64_t pte = phy_addr;
-	pte |= (PTE_P|PTE_W|PTE_U);
+
 
 	pt=(struct PT*) get_pt_addr_from_PML4(pml4, vir_addr);
 
+	uint64_t pte = phy_addr;
+	pte |= (PTE_P|PTE_W|PTE_U);
+	pte &= PTE_EX;// clear executable bit
 	uint64_t pte_index=get_pte_index(vir_addr);
 	pt->PTE[pte_index] = pte;
+
 
 }
 

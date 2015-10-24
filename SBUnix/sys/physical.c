@@ -151,7 +151,7 @@ uint64_t allocate_page()
 {
 	uint32_t start=find_first_free();
 	//return (uint64_t)(0xffffffff80200000+start);
-	page_sp* tmp=(page_sp*)(page_struct_start+start);
+	page_sp* tmp=page_struct_start+start;
 	tmp->info=PAGE_OCP;
 	//printf("see1: %x\n",tmp->index);
 	return (uint64_t)((tmp->index)<<12);

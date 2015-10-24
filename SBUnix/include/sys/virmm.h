@@ -25,7 +25,7 @@
 #define PTE_W		0x002	// Writable
 #define PTE_U		0x004	// User
 #define PTE_EX      0x7FFFFFFFFFFFFFFF //set execute bit 63
-
+#define CLEAR_OFFSET       0xFFFFFFFFFFFFF000
 
 #define PTE_PWT		0x008	// Write-Through
 #define PTE_PCD		0x010	// Cache-Disable

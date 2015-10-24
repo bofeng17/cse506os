@@ -74,7 +74,7 @@ void* get_pt_addr_from_PML4(struct PML4 *pml4,uint64_t vir_addr) {
 
 	if(pml4e & PTE_P){
 		uint64_t pdpt64=get_entry_viraddr(pml4e);
-		pdpt64 &= 0xfffffffffffff000ul;
+		pdpt64 &= CLEAR_OFFSET;
 		pdpt = (struct PDPT *)pdpt64;
 
 	}
@@ -84,17 +84,17 @@ void* get_pt_addr_from_PML4(struct PML4 *pml4,uint64_t vir_addr) {
 	uint64_t pdpte = pdpt->PDPTE[pdpte_index];
 	if(pdpte & PTE_P){
 		uint64_t pdt64=get_entry_viraddr(pdpte);
-		pdt64 &=0xfffffffffffff000;
+		pdt64 &=CLEAR_OFFSET;
 		pdt = (struct PDT*)pdt64;
 
 	}
 	else
 		pdt = (struct PDT*)pdt_alloc(pdpt, pdpte_index);
 
-	uint64_t pdte = pdt->PDTE[pdpte_index];
+	uint64_t pdte = pdt->PDTE[pdte_index];
 	if(pdte & PTE_P){
 		uint64_t pt64=get_entry_viraddr(pdte);
-		pt64 &=0xfffffffffffff000;
+		pt64 &=CLEAR_OFFSET;
         pt = (struct PT*)pt64;
 
 	}

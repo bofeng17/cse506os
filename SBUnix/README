@@ -1,1 +1,17 @@
-use sh run.sh (or ./run.sh) to make and run
+Member			SBUID:
+Bo Feng			110533595
+Qingqing Cao		110452148
+
+Note:(1) The display of time since boot is located in lower-right corner, in HH:MM:SS.TTT(one thousandth second) manner.(2) The display of the last pressed glyph is located next to the clock. Control and Shift key are supported.
+
+Copyright (c) 2015 by Bo Feng & Qingqing Cao.  All rights reserved.
+PS:
+The code segments which 
+	a) configure the work mode of 8253 PIT
+	b) remap INT number of IRQ, and configure the 8259 PIC
+	c) put char to console and set console color
+are partly copied from Copyright (c) James Molloy 2008 - james@jamesmolloy.co.uk
+
+
+To boot the system in QEMU, run:
+  qemu-system-x86_64 -curses -cdrom $USER.iso -drive id=disk,file=$USER.img,if=none -device ahci,id=ahci -device ide-drive,drive=disk,bus=ahci.0 -net nic -net user,hostfwd=tcp::10080-:80 -net user,hostfwd=tcp::10023-:23 --no-reboot -gdb tcp::9998

@@ -147,18 +147,18 @@ uint32_t find_free_pages(uint32_t num)
 	//return start;
 }
 
-uint32_t allocate_page()
+uint64_t allocate_page()
 {
 	uint32_t start=find_first_free();
 	//return (uint64_t)(0xffffffff80200000+start);
 	page_sp* tmp=(page_sp*)(page_struct_start+start);
 	tmp->info=PAGE_OCP;
 	//printf("see1: %x\n",tmp->index);
-	return (uint32_t)((tmp->index)<<12);
+	return (uint64_t)((tmp->index)<<12);
 
 }
 
-uint32_t allocate_pages(uint32_t num)
+uint64_t allocate_pages(uint32_t num)
 {
 	uint32_t i;
 	uint32_t start=find_free_pages(num);
@@ -171,7 +171,7 @@ uint32_t allocate_pages(uint32_t num)
 		temp->info=PAGE_OCP;
 	}
 	//return (uint64_t)(start<<12)
-	return (uint32_t)((tmp->index)<<12);
+	return (uint64_t)((tmp->index)<<12);
 }
 
 

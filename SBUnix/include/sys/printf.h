@@ -26,7 +26,7 @@ enum vga_color {
 const size_t VGA_WIDTH = 80;
 const size_t VGA_HEIGHT = 25;
 
-uint16_t* console_buffer = (uint16_t*) 0xB8000;
+uint16_t* console_buffer = (uint16_t*) 0xFFFFFFFF800B8000;
 
 static inline uint8_t make_color(enum vga_color fg, enum vga_color bg) {
     return fg | bg << 4;

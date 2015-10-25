@@ -15,4 +15,11 @@ extern void timer_init();
 
 extern int printf(const char *fmt, ...);
 
+#define DEBUG 0
+#if DEBUG
+#define dprintf printf
+#else
+#define dprintf(...)
+#endif
+
 #endif

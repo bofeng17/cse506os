@@ -3,8 +3,11 @@
 #include <stdlib.h>
 #include <sys/physical.h>
 
-extern char physfree, kernofs;
+static uint64_t physfree = 0;
 static uint32_t page_inuse_num = 0;
+//static uint32_t num_for_init=0;
+//static uint64_t kmalloc_base = 0; //the start of kmalloc usable physical address
+
 extern uint32_t page_index;
 extern uint32_t page_num;
 //age_sp* page_struct_start=(page_sp*)(&kernofs+physfree);
@@ -19,7 +22,7 @@ int init_phy_page(uint32_t num, uint32_t page_num, uint32_t page_index) {
 		printf("ERROR: number is too big to init page");
 	}
 
-	printf("struct start=%p\n",page_struct_start);
+	dprintf("struct start=%p\n", page_struct_start);
 
 	page_sp* page_tmp;
 	uint32_t i = 0;
@@ -146,3 +149,13 @@ uint64_t allocate_pages(uint32_t num) {
 	return (uint64_t)((tmp->index) << 12);
 }
 
+//get initial page numbers
+uint32_t get_num_init(uint64_t kfree) {
+	physfree = kfree;
+	return ((physfree >> 12) + 256 + 1);
+}
+
+//get the start of kmalloc usable physical address
+uint64_t get_kmalloc_base() {
+	return get_num_init(physfree) << 12;
+}

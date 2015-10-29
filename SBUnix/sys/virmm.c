@@ -114,7 +114,7 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr) {
 //begin mapping physical memory from 0 to 10MB
 
 uint64_t initial_mapping() {
-	uint64_t map_size = 0xA00000; //physical size 10MB
+	uint64_t map_size = 0x2000000; //physical size 32MB
 
 	uint64_t vir_addr = 0xFFFFFFFF80000000UL;
 	uint64_t phy_addr = 0x0;
@@ -135,7 +135,7 @@ void set_CR3(struct PML4 *pml4) {
 }
 
 void load_CR3() {
-	printf("pml4 %x", pml4);
+	dprintf("pml4 %x\n", pml4);
 	set_CR3(pml4);
 }
 

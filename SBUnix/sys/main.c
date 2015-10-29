@@ -7,7 +7,7 @@
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE]; //stakc used by boot
 uint32_t* loader_stack; //points to top of the OS loader stack. Seems loader is 32-bit instead of 64-bit
-extern char kernmem, physbase; //only symbols-only declared here. Defined in linker script
+extern char kernmem, physbase, kernofs; //only symbols-only declared here. Defined in linker script
 struct tss_t tss;
 
 size_t console_row;
@@ -16,6 +16,8 @@ uint32_t page_index = 0;
 uint32_t page_num = 0;
 uint64_t length = 0;
 uint32_t first = 0;
+uint32_t num_for_init=0;
+uint64_t kmalloc_base=0;//the start of kmalloc usable physical address
 page_sp* page_struct_start;
 
 void start(uint32_t* modulep, void* physbase, void* physfree) {
@@ -29,10 +31,12 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 	for (smap = (struct smap_t*) (modulep + 2);
 			smap < (struct smap_t*) ((char*) modulep + modulep[1] + 2 * 4);
 			++smap) {
-		if (smap->type == 1 /* memory */&& smap->length != 0) {
+		if (smap->type == 1 /* mem
+		ory */&& smap->length != 0) {
 			length = smap->length;
 			page_num = length >> 12;
 			page_index = (uint32_t)((smap->base) >> 12);
+			
 			printf("smaplength is %x, smapbase is %x\n", smap->length,
 					smap->base);
 
@@ -41,12 +45,14 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 		}
 	}
 
-	page_struct_start = (page_sp*) physfree;
-
+	page_struct_start = (page_sp*)(0xffffffff80000000UL + physfree);
+    num_for_init=(((uint64_t) physfree >>12)+256+1);
+    kmalloc_base=(num_for_init<<12);
+    //printf("vmalloc_base=%x\n",kmalloc_base);
 	printf("tarfs in [%p:%p]\n", &_binary_tarfs_start, &_binary_tarfs_end);
 	dprintf("page_num=%x\n", page_num);
 	dprintf("page index=%x\n", page_index);
-	init_phy_page(0x500, page_num, page_index);
+	init_phy_page(num_for_init, page_num, page_index);
 
 #if DEBUG
 	page_sp* page_tmp = (page_sp*) (page_struct_start) + 100;
@@ -64,6 +70,7 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 //	uint64_t pagecount = initial_mapping();
 	initial_mapping();
 	load_CR3();
+	init_phy_page(8192, page_num, page_index);//init first 32mb as used, kmalloc take over
 
 	while (1)
 		;

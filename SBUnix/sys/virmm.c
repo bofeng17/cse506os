@@ -25,7 +25,7 @@ uint64_t get_entry_viraddr(uint64_t entry) {
 void* set_pdpt(struct PML4 *pml4, uint64_t pml4_index) {
 	struct PDPT *pdpt = (struct PDPT *) allocate_page();
 	uint64_t pdpt_entry = (uint64_t) pdpt;
-	pdpt_entry |= (PTE_P | PTE_W | PTE_U);
+	pdpt_entry |= (PTE_P | PTE_W);
 	//pdpt_entry &= PTE_EX; // clear executable bit
 	pml4->PML4E[pml4_index] = pdpt_entry;
 
@@ -36,7 +36,7 @@ void* set_pdpt(struct PML4 *pml4, uint64_t pml4_index) {
 void* set_pdt(struct PDPT *pdpt, uint64_t pdpt_index) {
 	struct PDT *pdt = (struct PDT*) allocate_page();
 	uint64_t pdt_entry = (uint64_t) pdt;
-	pdt_entry |= (PTE_P | PTE_W | PTE_U);
+	pdt_entry |= (PTE_P | PTE_W);
 	//pdt_entry &= PTE_EX; // clear executable bit
 	pdpt->PDPTE[pdpt_index] = pdt_entry;
 
@@ -47,7 +47,7 @@ void* set_pdt(struct PDPT *pdpt, uint64_t pdpt_index) {
 void* set_pt(struct PDT *pdt, uint64_t pdt_index) {
 	struct PT *pt = (struct PT *) allocate_page();
 	uint64_t pt_entry = (uint64_t) pt;
-	pt_entry |= (PTE_P | PTE_W | PTE_U);
+	pt_entry |= (PTE_P | PTE_W);
 	//pt_entry &= PTE_EX; // clear executable bit
 	pdt->PDTE[pdt_index] = pt_entry;
 
@@ -104,7 +104,7 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr) {
 	}
 
 	uint64_t pte = phy_addr;
-	pte |= (PTE_P | PTE_W | PTE_U);
+	pte |= (PTE_P | PTE_W);
 	//pte &= PTE_EX; // clear executable bit
 	uint64_t pte_index = get_pte_index(vir_addr);
 	pt->PTE[pte_index] = pte;

@@ -55,7 +55,6 @@ struct PT {
 	uint64_t PTE[TABLE_SIZE];
 };
 
-
 void init_pagetables();
 
 uint64_t initial_mapping();

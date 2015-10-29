@@ -8,7 +8,6 @@ static uint32_t page_inuse_num = 0;
 //static uint32_t num_for_init=0;
 //static uint64_t kmalloc_base = 0; //the start of kmalloc usable physical address
 
-extern uint32_t page_index;
 extern uint32_t page_num;
 //age_sp* page_struct_start=(page_sp*)(&kernofs+physfree);
 //page_sp* page_struct_start=(page_sp*)(0xffffffff80350000);

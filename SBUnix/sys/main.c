@@ -7,7 +7,7 @@
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE]; //stakc used by boot
 uint32_t* loader_stack; //points to top of the OS loader stack. Seems loader is 32-bit instead of 64-bit
-extern char kernmem, physbase, kernofs; //only symbols-only declared here. Defined in linker script
+extern char kernmem, physbase; //only symbols-only declared here. Defined in linker script
 struct tss_t tss;
 
 size_t console_row;

@@ -7,7 +7,7 @@ extern char physfree, kernofs;
 static uint32_t page_inuse_num = 0;
 extern uint32_t page_index;
 extern uint32_t page_num;
-//page_sp* page_struct_start=(page_sp*)(uint32_t)(&physfree);
+//age_sp* page_struct_start=(page_sp*)(&kernofs+physfree);
 //page_sp* page_struct_start=(page_sp*)(0xffffffff80350000);
 //int page_num=((page_length)>>12);
 extern page_sp* page_struct_start;
@@ -19,7 +19,7 @@ int init_phy_page(uint32_t num, uint32_t page_num, uint32_t page_index) {
 		printf("ERROR: number is too big to init page");
 	}
 
-	//printf("physfree=%x\n",physfree);
+	printf("struct start=%p\n",page_struct_start);
 
 	page_sp* page_tmp;
 	uint32_t i = 0;

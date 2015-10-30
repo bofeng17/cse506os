@@ -151,7 +151,7 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
         } else {
             print_char(stack[i] - 10 + 'A');//print A-F
         }
-        if (i % 4 == 0) {
+        if (i % 4 == 0 && mode == ptr_p) {
             print_char(' ');
         }
     }

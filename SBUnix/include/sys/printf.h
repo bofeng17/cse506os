@@ -42,9 +42,9 @@ void console_putchar(char c);
 void print_char(char); 	 //%c
 void print_string(char*);//%s
 void print_int(int, int); 	 //%d
-void print_hex_or_ptr(uint64_t,int);// %x, %p
 #define hex_x 0
 #define ptr_p 1
+void print_hex_or_ptr(uint64_t,int);// %x, %p
 
 int printf(const char *format, ...);
 

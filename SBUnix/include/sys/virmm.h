@@ -39,21 +39,25 @@
 struct PML4 {
 	uint64_t PML4E[TABLE_SIZE];
 };
+typedef struct PML4* pml4_t;
 
 //page directory pointer table
 struct PDPT {
 	uint64_t PDPTE[TABLE_SIZE];
 };
+typedef struct PDPT* pdpt_t;
 
 //page directory
 struct PDT {
 	uint64_t PDTE[TABLE_SIZE];
 };
+typedef struct PDT* pdt_t;
 
 //page table
 struct PT {
 	uint64_t PTE[TABLE_SIZE];
 };
+typedef struct PT* pt_t;
 
 void init_pagetables();
 

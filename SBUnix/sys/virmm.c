@@ -22,8 +22,8 @@ uint64_t get_entry_viraddr(uint64_t entry) {
 }
 
 // set up page directory pointer table
-void* set_pdpt(struct PML4 *pml4, uint64_t pml4_index) {
-	struct PDPT *pdpt = (struct PDPT *) allocate_page();
+void* set_pdpt(pml4_t pml4, uint64_t pml4_index) {
+	pdpt_t pdpt = (pdpt_t) allocate_page();
 	uint64_t pdpt_entry = (uint64_t) pdpt;
 	pdpt_entry |= (PTE_P | PTE_W);
 	//pdpt_entry &= PTE_EX; // clear executable bit
@@ -33,8 +33,8 @@ void* set_pdpt(struct PML4 *pml4, uint64_t pml4_index) {
 }
 
 // set up page directory table
-void* set_pdt(struct PDPT *pdpt, uint64_t pdpt_index) {
-	struct PDT *pdt = (struct PDT*) allocate_page();
+void* set_pdt(pdpt_t pdpt, uint64_t pdpt_index) {
+	pdt_t pdt = (pdt_t) allocate_page();
 	uint64_t pdt_entry = (uint64_t) pdt;
 	pdt_entry |= (PTE_P | PTE_W);
 	//pdt_entry &= PTE_EX; // clear executable bit
@@ -44,8 +44,8 @@ void* set_pdt(struct PDPT *pdpt, uint64_t pdpt_index) {
 }
 
 // set up page table
-void* set_pt(struct PDT *pdt, uint64_t pdt_index) {
-	struct PT *pt = (struct PT *) allocate_page();
+void* set_pt(pdt_t pdt, uint64_t pdt_index) {
+	pt_t pt = (pt_t) allocate_page();
 	uint64_t pt_entry = (uint64_t) pt;
 	pt_entry |= (PTE_P | PTE_W);
 	//pt_entry &= PTE_EX; // clear executable bit
@@ -54,19 +54,19 @@ void* set_pt(struct PDT *pdt, uint64_t pdt_index) {
 	return (void *) pt;
 }
 
-struct PML4 *pml4;
+pml4_t pml4; //global PML4
 
 void init_pagetables() {
 
-	//setup each level addr pointer
-	pml4 = (struct PML4 *) allocate_page();
+	//setup level 4 page directory
+	pml4 = (pml4_t) allocate_page();
 }
 
 void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr) {
 
-	struct PDPT *pdpt;
-	struct PDT *pdt;
-	struct PT *pt;
+	pdpt_t pdpt;
+	pdt_t pdt;
+	pt_t pt;
 
 	uint64_t pml4e_index = get_pml4e_index(vir_addr);
 
@@ -75,10 +75,10 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr) {
 	if (pml4e & PTE_P) {
 		uint64_t pdpt64 = get_entry_viraddr(pml4e);
 		pdpt64 &= CLEAR_OFFSET;
-		pdpt = (struct PDPT *) pdpt64;
+		pdpt = (pdpt_t) pdpt64;
 
 	} else {
-		pdpt = (struct PDPT*) set_pdpt(pml4, pml4e_index);
+		pdpt = (pdpt_t) set_pdpt(pml4, pml4e_index);
 	}
 
 	uint64_t pdpte_index = get_pdpte_index(vir_addr);
@@ -86,10 +86,10 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr) {
 	if (pdpte & PTE_P) {
 		uint64_t pdt64 = get_entry_viraddr(pdpte);
 		pdt64 &= CLEAR_OFFSET;
-		pdt = (struct PDT*) pdt64;
+		pdt = (pdt_t) pdt64;
 
 	} else {
-		pdt = (struct PDT*) set_pdt(pdpt, pdpte_index);
+		pdt = (pdt_t) set_pdt(pdpt, pdpte_index);
 	}
 
 	uint64_t pdte_index = get_pdte_index(vir_addr);
@@ -97,10 +97,10 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr) {
 	if (pdte & PTE_P) {
 		uint64_t pt64 = get_entry_viraddr(pdte);
 		pt64 &= CLEAR_OFFSET;
-		pt = (struct PT*) pt64;
+		pt = (pt_t) pt64;
 
 	} else {
-		pt = (struct PT*) set_pt(pdt, pdte_index);
+		pt = (pt_t) set_pt(pdt, pdte_index);
 	}
 
 	uint64_t pte = phy_addr;
@@ -129,7 +129,7 @@ uint64_t initial_mapping() {
 	return page_count;
 }
 
-void set_CR3(struct PML4 *pml4) {
+void set_CR3(pml4_t pml4) {
 	uint64_t PMBR = (uint64_t) pml4;
 	__asm volatile("mov %0, %%cr3":: "b"(PMBR));
 }

@@ -1,6 +1,10 @@
 #include <sys/defs.h>
-#define MAX_PROCESS_NUMBER 128
+#define PROCESS_NUMBER 128
+#define KSTACK_NUMBER 32
+
 #define NAME_LENGTH 32
+#define TASK 1
+#define KSTACK 0
 
 /*task state enumeration*/
 enum TASK_STATE

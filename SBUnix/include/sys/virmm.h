@@ -3,7 +3,8 @@
 
 #define TABLE_SIZE 512// 2^9=512 or in hex 0x1000
 #define PAGE_SIZE	0x1000 //4KB
-
+#define VIR_START 0xFFFFFFFF80000000UL
+#define PHY_START 0x0
 /*References:
  * I.AMD64 Architecture Programmer’s Manual Volume 2: System Programming
  * 		Figure 5-1       on p119
@@ -36,31 +37,44 @@
 #define PTE_COW		0x100	// Copy-on-write
 
 //page map level 4 page table definition
-struct PML4 {
-	uint64_t PML4E[TABLE_SIZE];
+struct PML4
+{
+  uint64_t PML4E[TABLE_SIZE];
 };
 typedef struct PML4* pml4_t;
 
 //page directory pointer table
-struct PDPT {
-	uint64_t PDPTE[TABLE_SIZE];
+struct PDPT
+{
+  uint64_t PDPTE[TABLE_SIZE];
 };
 typedef struct PDPT* pdpt_t;
 
 //page directory
-struct PDT {
-	uint64_t PDTE[TABLE_SIZE];
+struct PDT
+{
+  uint64_t PDTE[TABLE_SIZE];
 };
 typedef struct PDT* pdt_t;
 
 //page table
-struct PT {
-	uint64_t PTE[TABLE_SIZE];
+struct PT
+{
+  uint64_t PTE[TABLE_SIZE];
 };
 typedef struct PT* pt_t;
 
-void init_pagetables();
+void
+init_mm ();
 
-uint64_t initial_mapping();
+uint64_t
+initial_mapping ();
 
-void load_CR3();
+void
+load_CR3 ();
+
+void*
+kmalloc (int flag);
+
+void
+kfree (void* addr, int flag);

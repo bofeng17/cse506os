@@ -76,15 +76,32 @@ set_pt (pdt_t pdt, uint64_t pdt_index)
 pml4_t pml4; //global PML4
 uint64_t ktask_base;
 uint64_t kstack_base;
+int task_bitmap[PROCESS_NUMBER];
+int stack_bitmap[KSTACK_NUMBER];
 
 void
-init_pagetables ()
+init_mm ()
 {
 
   //setup level 4 page directory
   pml4 = (pml4_t) allocate_page ();
-  ktask_base = get_kmalloc_base ();
-  kstack_base = get_kmalloc_base () + MAX_PROCESS_NUMBER * sizeof(task_struct);
+  ktask_base = get_kmalloc_base () + VIR_START;
+  kstack_base = ktask_base + PROCESS_NUMBER * sizeof(task_struct);
+
+  dprintf ("ktask_base : %p\n", ktask_base);
+  dprintf ("kstack_base : %p\n", kstack_base);
+  memset ((void *) ktask_base, 0, PROCESS_NUMBER * 0x1000);
+  memset ((void *) kstack_base, 0, KSTACK_NUMBER * 0x1000);
+
+  memset (task_bitmap, 0, PROCESS_NUMBER);
+  memset (stack_bitmap, 0, KSTACK_NUMBER);
+
+//  int i = 0;
+//  for (i = 0; i < PROCESS_NUMBER; i++)
+//    dprintf ("task_bimap[%d] is: %d ", i, task_bitmap[i]);
+//  for (i = 0; i < KSTACK_NUMBER; i++)
+//    dprintf ("stack_bitmap[%d] is: %d ", i, task_bitmap[i]);
+
 }
 
 void
@@ -154,8 +171,8 @@ initial_mapping ()
 {
   uint64_t map_size = 0x2000000; //physical size 32MB
 
-  uint64_t vir_addr = 0xFFFFFFFF80000000UL;
-  uint64_t phy_addr = 0x0;
+  uint64_t vir_addr = VIR_START;
+  uint64_t phy_addr = PHY_START;
   uint64_t page_count = 0;
   while (phy_addr < map_size)
     {
@@ -182,13 +199,6 @@ load_CR3 ()
   set_CR3 (pml4);
 }
 
-/* allocate 4K size usable kernel virtual memory
- * flag,1 indicates task_struct or
- *  	0 for kernel_stack
- */
-#define TASK 1
-#define KSTACK 0
-
 uint64_t
 get_base (int flag)
 {
@@ -197,19 +207,61 @@ get_base (int flag)
   else
     return kstack_base;
 }
+
+/* allocate 4K size usable kernel virtual memory
+ * flag,1 indicates task_struct or
+ *  	0 for kernel_stack
+ */
+
 void*
-kmalloc (size_t size, int flag)
+kmalloc (int flag)
 {
+  int i = 0;
   uint64_t base = get_base (flag);
-  base += size;
-  memset ((void *) base, 0, size);
+  if (flag)
+    {
+      while (i < PROCESS_NUMBER)
+	{
+	  if (task_bitmap[i] == 0)
+	    {
+	      task_bitmap[i] = 1;
+	      break;
+	    }
+	  else
+	    i++;
+	}
+    }
+  else
+    {
+      while (i < KSTACK_NUMBER)
+	{
+	  if (stack_bitmap[i] == 0)
+	    {
+	      stack_bitmap[i] = 1;
+	      break;
+	    }
+	  else
+	    i++;
+	}
+    }
+
+  base += i * 0x1000;
+  dprintf ("kmalloc return base %p\n", base);
+
+  memset ((void *) base, 0, 0x1000);
 
   return (void *) (base);
 
 }
 
 void
-kfree (void* addr)
+kfree (void* addr, int flag)
 {
-
+  memset ((void *) addr, 0, 0x1000);
+  uint64_t base = get_base (flag);
+  int bitmap_pos = ((uint64_t) addr - base) / 0x1000;
+  if (flag)
+    task_bitmap[bitmap_pos] = 0;
+  else
+    stack_bitmap[bitmap_pos] = 0;
 }

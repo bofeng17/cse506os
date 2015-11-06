@@ -3,6 +3,8 @@
 #include <sys/idt.h>
 #include <sys/tarfs.h>
 #include <sys/virmm.h>
+#include <sys/process.h>
+#include <stdlib.h>
 
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE]; //stakc used by boot
@@ -55,7 +57,7 @@ start (uint32_t* modulep, void* physbase, void* physfree)
   dprintf ("page_num=%x\n", page_num);
   dprintf ("page index=%x\n", page_index);
   init_phy_page (get_num_init ((uint64_t) physfree), page_num, page_index);
-  dprintf ("kmalloc base: %x\n", get_kmalloc_base ());
+//  dprintf ("kmalloc base: %x\n", get_kmalloc_base ());
 
 #if DEBUG
   page_sp* page_tmp = (page_sp*) (page_struct_start) + 100;
@@ -68,13 +70,28 @@ start (uint32_t* modulep, void* physbase, void* physfree)
 
   dprintf ("kernmem starts in %p\n", &kernmem);
 
-  init_pagetables ();
+  init_mm ();  //uint64_t pagecount = initial_mapping();
 
-//	uint64_t pagecount = initial_mapping();
   initial_mapping ();	// map 32MB physical memory to virtual memory
   load_CR3 ();
+
   init_phy_page (8192, page_num, page_index); //init first 32mb as used, kmalloc take over
-  dprintf ("kmalloc base: %x\n", get_kmalloc_base ());
+
+//  int* ttest1 = kmalloc (TASK);
+//  dprintf ("sizeof ttest1 is:%d", sizeof(ttest1));
+//  dprintf (" ttest1[999] is:%d\n", ttest1[999]);
+//
+//
+//  int* stest1 = kmalloc (KSTACK);
+//  dprintf ("sizeof test2 is:%d", sizeof(stest1));
+//  dprintf (" stest1[999] is:%d\n", stest1[999]);
+//
+//  int* ttest2 = kmalloc (TASK);
+//  dprintf ("sizeof ttest2 is:%d", sizeof(ttest2));
+//  dprintf (" ttest2[999] is:%d\n", ttest2[999]);
+//  int* stest2 = kmalloc (KSTACK);
+//  dprintf ("sizeof stest2 is:%d", sizeof(stest2));
+//  dprintf (" stest2[999] is:%d\n", stest2[999]);
 
   while (1)
     ;

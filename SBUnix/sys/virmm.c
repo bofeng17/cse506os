@@ -1,7 +1,7 @@
 #include <sys/virmm.h>
 #include <sys/process.h>
 #include <sys/sbunix.h>
-#include <stdlib.h>
+#include <sys/stdlib.h>
 
 uint64_t
 get_pml4e_index (uint64_t addr)
@@ -73,7 +73,7 @@ set_pt (pdt_t pdt, uint64_t pdt_index)
   return (void *) pt;
 }
 
-pml4_t pml4; //global PML4
+pml4_t global_PML4;
 uint64_t ktask_base;
 uint64_t kstack_base;
 int task_bitmap[PROCESS_NUMBER];
@@ -84,7 +84,7 @@ init_mm ()
 {
 
   //setup level 4 page directory
-  pml4 = (pml4_t) allocate_page ();
+  global_PML4 = (pml4_t) allocate_page ();
   ktask_base = get_kmalloc_base () + VIR_START;
   kstack_base = ktask_base + PROCESS_NUMBER * sizeof(task_struct);
 
@@ -114,7 +114,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
 
   uint64_t pml4e_index = get_pml4e_index (vir_addr);
 
-  uint64_t pml4e = pml4->PML4E[pml4e_index];
+  uint64_t pml4e = global_PML4->PML4E[pml4e_index];
 
   if (pml4e & PTE_P)
     {
@@ -125,7 +125,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
     }
   else
     {
-      pdpt = (pdpt_t) set_pdpt (pml4, pml4e_index);
+      pdpt = (pdpt_t) set_pdpt (global_PML4, pml4e_index);
     }
 
   uint64_t pdpte_index = get_pdpte_index (vir_addr);
@@ -166,7 +166,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
 
 //begin mapping physical memory from 0 to 10MB
 
-uint64_t
+void
 initial_mapping ()
 {
   uint64_t map_size = 0x2000000; //physical size 32MB
@@ -182,21 +182,22 @@ initial_mapping ()
       page_count++;
     }
 
-  return page_count;
+  set_CR3 ((uint64_t) global_PML4);
 }
 
 void
-set_CR3 (pml4_t pml4)
+set_CR3 (uint64_t CR3)
 {
-  uint64_t PMBR = (uint64_t) pml4;
-  __asm volatile("mov %0, %%cr3":: "b"(PMBR));
+  __asm volatile("mov %0, %%cr3":: "b"(CR3));
 }
 
-void
-load_CR3 ()
+uint64_t
+get_CR3 ()
 {
-  dprintf ("pml4 %x\n", pml4);
-  set_CR3 (pml4);
+  uint64_t cur_cr3;
+  __asm volatile("mov %%cr3, %0" : "=r" (cur_cr3));
+
+  return cur_cr3;
 }
 
 uint64_t

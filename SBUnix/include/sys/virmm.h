@@ -67,11 +67,14 @@ typedef struct PT* pt_t;
 void
 init_mm ();
 
-uint64_t
+void
 initial_mapping ();
 
+uint64_t
+get_CR3 ();
+
 void
-load_CR3 ();
+set_CR3 (uint64_t CR3);
 
 void*
 kmalloc (int flag);

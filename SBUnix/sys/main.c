@@ -4,7 +4,7 @@
 #include <sys/tarfs.h>
 #include <sys/virmm.h>
 #include <sys/process.h>
-#include <stdlib.h>
+#include <sys/stdlib.h>
 
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE]; //stakc used by boot
@@ -73,7 +73,6 @@ start (uint32_t* modulep, void* physbase, void* physfree)
   init_mm ();  //uint64_t pagecount = initial_mapping();
 
   initial_mapping ();	// map 32MB physical memory to virtual memory
-  load_CR3 ();
 
   init_phy_page (8192, page_num, page_index); //init first 32mb as used, kmalloc take over
 

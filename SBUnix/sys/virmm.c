@@ -86,7 +86,7 @@ init_mm ()
   //setup level 4 page directory
   global_PML4 = (pml4_t) allocate_page ();
   ktask_base = get_kmalloc_base () + VIR_START;
-  kstack_base = ktask_base + PROCESS_NUMBER * sizeof(task_struct);
+  kstack_base = ktask_base + PROCESS_NUMBER * 0x1000;
 
   dprintf ("ktask_base : %p\n", ktask_base);
   dprintf ("kstack_base : %p\n", kstack_base);
@@ -266,3 +266,4 @@ kfree (void* addr, int flag)
   else
     stack_bitmap[bitmap_pos] = 0;
 }
+

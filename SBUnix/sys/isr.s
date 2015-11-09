@@ -6,7 +6,7 @@
     pushq 		%rsi
     pushq 		%rdi
     pushq 		%rbp
-    pushq 		%rsp
+    pushq 		%rsp # %rsp is saved in task_struct rather than on stack in context swtich
     pushq 		%r8
     pushq 		%r9
     pushq 		%r10
@@ -15,9 +15,11 @@
     pushq 		%r13
     pushq 		%r14
     pushq 		%r15
+    pushfq # must be saved on context switch. not sure for other interrupts
 .endm
 
 .macro pop_al
+    popfq
     popq		%r15
     popq		%r14
     popq		%r13

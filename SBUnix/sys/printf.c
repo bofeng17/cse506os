@@ -46,6 +46,7 @@ int printf(const char *format, ...) {
     int 		printed = 0;
     int 		desire_length = 0;
     int 		val_int = 0;
+    uint64_t    val_long = 0;
     char 		val_char = 0;
     char* 		val_string = NULL;
     
@@ -55,12 +56,11 @@ int printf(const char *format, ...) {
         if (*format == '%') {
             desire_length = 0;
             format++;
+            if (*format <= 0x39 && *format >= 0x30) {
+                desire_length = *format - 0x30;
+                format ++;
+            }
             switch (*format){
-                case '2':
-                    desire_length = -1;
-                case '3':
-                    desire_length+=3;
-                    format++;
                 case 'd':
                     val_int = va_arg(val, int);
                     print_int(val_int,desire_length);
@@ -74,12 +74,12 @@ int printf(const char *format, ...) {
                     print_string(val_string);
                     break;
                 case 'x':
-                    val_int = va_arg(val, int);
-                    print_hex((unsigned int)val_int);
+                    val_long = va_arg(val, uint64_t);
+                    print_hex_or_ptr(val_long, hex_x);
                     break;
                 case 'p':
-                    val_int = va_arg(val, int);
-                    print_ptr(val_int);
+                    val_long = va_arg(val, uint64_t);
+                    print_hex_or_ptr(val_long, ptr_p);
                     break;
             }
         } else if (*format == '\n'){
@@ -131,20 +131,11 @@ void print_int(int arg, int desire_length) {
     }
 }
 
-void print_hex(int arg) {
-    print_hex_base((uint64_t)arg,0);
-}
-
-void print_ptr(uint64_t arg){
-    print_hex_base(arg,1);
-}
-
-void print_hex_base(uint64_t arg,int mode) {
+//mode = hex or ptr
+void print_hex_or_ptr(uint64_t arg,int mode) {
     int stack[16],top=-1;
     for (int i = 0; i < 16; i ++) stack[i] = 0; 
     print_string("0x");
-    if (mode == 0)//if print_hex revoke this function, print 32-bit value
-        arg = (uint32_t)arg;
     while (arg/16){
         top++;
         stack[top] = arg%16;
@@ -152,20 +143,16 @@ void print_hex_base(uint64_t arg,int mode) {
     }
     top++;
     stack[top]=arg;
-    if (mode == 1)//if print_ptr revoke this function, print full 64-bit address
+    if (mode == ptr_p)//if %p, print full 64-bit address
         top = 15;
     for (int i = top; i >= 0; i --){
         if (stack[i] < 10) {
-	    print_char(stack[i]+'0');
-	} else {
-	    switch (stack[i]) {
-		case 10: print_char('A'); break;
-		case 11: print_char('B'); break;
-		case 12: print_char('C'); break;
-		case 13: print_char('D'); break;
-		case 14: print_char('E'); break;
-		case 15: print_char('F'); break;
-	    }
+            print_char(stack[i]+'0');//print 0-9
+        } else {
+            print_char(stack[i] - 10 + 'A');//print A-F
+        }
+        if (i % 4 == 0 && mode == ptr_p) {
+            print_char(' ');
         }
     }
 }

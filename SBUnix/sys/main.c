@@ -19,6 +19,10 @@ uint32_t page_num = 0;
 uint64_t length = 0;
 uint32_t first = 0;
 page_sp* page_struct_start;
+task_struct* idle;
+task_struct* testa;
+task_struct* testb;
+task_struct* testc;
 
 void
 start (uint32_t* modulep, void* physbase, void* physfree)
@@ -76,6 +80,35 @@ start (uint32_t* modulep, void* physbase, void* physfree)
 
   init_phy_page (8192, page_num, page_index); //init first 32mb as used, kmalloc take over
 
+
+  //create_thread_idle();
+  //printf("testidle cr3=%p\n", idle->cr3);
+
+    idle =create_thread_idle();
+  testa=create_thread_a();
+  testb=create_thread_b();
+    testc=create_thread_c();
+
+    /*
+     __asm__ __volatile__ (
+       "jmp %0;"
+        ::"r"(testa->rip)
+    );
+     */
+
+
+  //context_switch(idle, testa);
+
+  //schedule();
+
+
+  
+   
+   //context_switch(testb, testa);
+    
+
+  //context_switch(testb, testa);
+  //create_thread_b();
 //  int* ttest1 = kmalloc (TASK);
 //  dprintf ("sizeof ttest1 is:%d", sizeof(ttest1));
 //  dprintf (" ttest1[999] is:%d\n", ttest1[999]);

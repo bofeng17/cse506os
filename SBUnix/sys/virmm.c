@@ -266,4 +266,3 @@ kfree (void* addr, int flag)
   else
     stack_bitmap[bitmap_pos] = 0;
 }
-

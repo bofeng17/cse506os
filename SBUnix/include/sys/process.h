@@ -85,3 +85,16 @@ typedef struct task_struct
   char cur_dir[NAME_LENGTH]; /* current directory */
 
 } task_struct;
+
+void function_a();
+void function_b();
+void function_c();
+void function_idle();
+task_struct* create_thread_a();
+task_struct* create_thread_b();
+task_struct* create_thread_c();
+task_struct* create_thread_idle();
+void context_switch(task_struct *, task_struct *); 
+void schedule();
+ void swith(task_struct* , task_struct* );
+

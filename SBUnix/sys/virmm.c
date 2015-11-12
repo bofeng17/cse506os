@@ -76,8 +76,10 @@ set_pt (pdt_t pdt, uint64_t pdt_index)
 pml4_t global_PML4;
 uint64_t ktask_base;
 uint64_t kstack_base;
+uint64_t kmm_base;
 int task_bitmap[PROCESS_NUMBER];
 int stack_bitmap[KSTACK_NUMBER];
+int mm_bitmap[MM_NUMBER];
 
 void
 init_mm ()
@@ -85,17 +87,20 @@ init_mm ()
 
   //setup level 4 page directory
   global_PML4 = (pml4_t) allocate_page ();
+
   ktask_base = get_kmalloc_base () + VIR_START;
-  kstack_base = ktask_base + PROCESS_NUMBER * 0x1000;
+  kstack_base = ktask_base + PROCESS_NUMBER * PAGE_SIZE;
+  kmm_base = kstack_base + KSTACK_NUMBER * PAGE_SIZE;
 
   dprintf ("ktask_base : %p\n", ktask_base);
   dprintf ("kstack_base : %p\n", kstack_base);
-  memset ((void *) ktask_base, 0, PROCESS_NUMBER * 0x1000);
-  memset ((void *) kstack_base, 0, KSTACK_NUMBER * 0x1000);
+  memset ((void *) ktask_base, 0, PROCESS_NUMBER * PAGE_SIZE);
+  memset ((void *) kstack_base, 0, KSTACK_NUMBER * PAGE_SIZE);
+  memset ((void *) kmm_base, 0, MM_NUMBER * PAGE_SIZE);
 
   memset (task_bitmap, 0, PROCESS_NUMBER);
   memset (stack_bitmap, 0, KSTACK_NUMBER);
-
+  memset (mm_bitmap, 0, MM_NUMBER);
 //  int i = 0;
 //  for (i = 0; i < PROCESS_NUMBER; i++)
 //    dprintf ("task_bimap[%d] is: %d ", i, task_bitmap[i]);
@@ -203,10 +208,17 @@ get_CR3 ()
 uint64_t
 get_base (int flag)
 {
-  if (flag)
-    return ktask_base;
-  else
-    return kstack_base;
+  switch (flag)
+    {
+    case TASK:
+      return ktask_base;
+    case KSTACK:
+      return kstack_base;
+    case MM:
+      return kmm_base;
+    default:
+      return 0;
+    };
 }
 
 /* allocate 4K size usable kernel virtual memory
@@ -219,8 +231,9 @@ kmalloc (int flag)
 {
   int i = 0;
   uint64_t base = get_base (flag);
-  if (flag)
+  switch (flag)
     {
+    case TASK:
       while (i < PROCESS_NUMBER)
 	{
 	  if (task_bitmap[i] == 0)
@@ -231,9 +244,8 @@ kmalloc (int flag)
 	  else
 	    i++;
 	}
-    }
-  else
-    {
+      break;
+    case KSTACK:
       while (i < KSTACK_NUMBER)
 	{
 	  if (stack_bitmap[i] == 0)
@@ -244,12 +256,27 @@ kmalloc (int flag)
 	  else
 	    i++;
 	}
+      break;
+    case MM:
+      while (i < MM_NUMBER)
+	{
+	  if (mm_bitmap[i] == 0)
+	    {
+	      mm_bitmap[i] = 1;
+	      break;
+	    }
+	  else
+	    i++;
+	}
+      break;
+    default:
+      return NULL;
     }
 
-  base += i * 0x1000;
+  base += i * PAGE_SIZE;
   dprintf ("kmalloc return base %p\n", base);
 
-  memset ((void *) base, 0, 0x1000);
+  memset ((void *) base, 0, PAGE_SIZE);
 
   return (void *) (base);
 
@@ -258,11 +285,23 @@ kmalloc (int flag)
 void
 kfree (void* addr, int flag)
 {
-  memset ((void *) addr, 0, 0x1000);
+  memset ((void *) addr, 0, PAGE_SIZE);
   uint64_t base = get_base (flag);
-  int bitmap_pos = ((uint64_t) addr - base) / 0x1000;
-  if (flag)
-    task_bitmap[bitmap_pos] = 0;
-  else
-    stack_bitmap[bitmap_pos] = 0;
+  int bitmap_pos = ((uint64_t) addr - base) / PAGE_SIZE;
+  switch (flag)
+    {
+    case TASK:
+      task_bitmap[bitmap_pos] = 0;
+      break;
+    case KSTACK:
+      stack_bitmap[bitmap_pos] = 0;
+      break;
+    case MM:
+      mm_bitmap[bitmap_pos] = 0;
+      break;
+    default:
+      printf ("CANNOT FREE %p!\n", addr);
+      return;
+    }
+
 }

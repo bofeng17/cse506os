@@ -1,11 +1,12 @@
 #include <sys/defs.h>
 #define PROCESS_NUMBER 128
-#define KSTACK_NUMBER 32
+#define KSTACK_NUMBER PROCESS_NUMBER
+#define MM_NUMBER PROCESS_NUMBER
 
 #define NAME_LENGTH 32
 #define KSTACK 0
 #define TASK 1
-#define MM_STRUCT 2
+#define MM 2
 
 /*task state enumeration*/
 enum TASK_STATE

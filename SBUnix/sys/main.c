@@ -5,6 +5,7 @@
 #include <sys/virmm.h>
 #include <sys/process.h>
 #include <sys/stdlib.h>
+#include <sys/test_threads.h>
 
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE]; //stakc used by boot
@@ -19,10 +20,6 @@ uint32_t page_num = 0;
 uint64_t length = 0;
 uint32_t first = 0;
 page_sp* page_struct_start;
-task_struct* idle;
-task_struct* testa;
-task_struct* testb;
-task_struct* testc;
 
 void
 start (uint32_t* modulep, void* physbase, void* physfree)
@@ -54,77 +51,42 @@ start (uint32_t* modulep, void* physbase, void* physfree)
     }
 
   page_struct_start = (page_sp*) (0xffffffff80000000UL + physfree);
-//    num_for_init=(((uint64_t) physfree >>12)+256+1);
-//    kmalloc_base=(num_for_init<<12);
-  //printf("vmalloc_base=%x\n",kmalloc_base);
+
   printf ("tarfs in [%p:%p]\n", &_binary_tarfs_start, &_binary_tarfs_end);
   dprintf ("page_num=%x\n", page_num);
   dprintf ("page index=%x\n", page_index);
   init_phy_page (get_num_init ((uint64_t) physfree), page_num, page_index);
-//  dprintf ("kmalloc base: %x\n", get_kmalloc_base ());
-
-#if DEBUG
-  page_sp* page_tmp = (page_sp*) (page_struct_start) + 100;
-
-  dprintf("see: %x\n", page_tmp->index);
-#endif
 
   first = allocate_page ();
   dprintf ("first free is %x\n", first);
 
   dprintf ("kernmem starts in %p\n", &kernmem);
 
-  init_mm ();  //uint64_t pagecount = initial_mapping();
+  init_mm ();  //initialize kernel memory
 
   initial_mapping ();	// map 32MB physical memory to virtual memory
 
   init_phy_page (8192, page_num, page_index); //init first 32mb as used, kmalloc take over
 
+  task_struct* idle = create_idle_thread ();
 
-  //create_thread_idle();
-  //printf("testidle cr3=%p\n", idle->cr3);
+  create_thread ((uint64_t) & func_a, "a thread");
+  create_thread ((uint64_t) & func_b, "b thread");
+//  create_thread ((uint64_t)&func_c, "c thread");
+  print_threads (idle);
 
-    idle =create_thread_idle();
-  testa=create_thread_a();
-  testb=create_thread_b();
-    testc=create_thread_c();
-
-    /*
-     __asm__ __volatile__ (
-       "jmp %0;"
-        ::"r"(testa->rip)
-    );
-     */
-
-
-  //context_switch(idle, testa);
-
-  //schedule();
-
-
-  
-   
-   //context_switch(testb, testa);
-    
-
-  //context_switch(testb, testa);
-  //create_thread_b();
-//  int* ttest1 = kmalloc (TASK);
-//  dprintf ("sizeof ttest1 is:%d", sizeof(ttest1));
-//  dprintf (" ttest1[999] is:%d\n", ttest1[999]);
-//
-//
-//  int* stest1 = kmalloc (KSTACK);
-//  dprintf ("sizeof test2 is:%d", sizeof(stest1));
-//  dprintf (" stest1[999] is:%d\n", stest1[999]);
-//
-//  int* ttest2 = kmalloc (TASK);
-//  dprintf ("sizeof ttest2 is:%d", sizeof(ttest2));
-//  dprintf (" ttest2[999] is:%d\n", ttest2[999]);
-//  int* stest2 = kmalloc (KSTACK);
-//  dprintf ("sizeof stest2 is:%d", sizeof(stest2));
-//  dprintf (" stest2[999] is:%d\n", stest2[999]);
-
+  dprintf ("begin scheduling\n");
+  int i = 0;
+  while (1)
+    {
+      dprintf ("I'm idle %d \n", i++);
+      schedule ();
+//      __asm__ __volatile__ ("hlt");
+      if (i == 10)
+	{
+	  create_thread ((uint64_t) & func_c, "c thread");
+	}
+    }
   while (1)
     ;
 
@@ -136,7 +98,7 @@ boot (void)
 // note: function changes rsp, local stack variables can't be practically used
 //	register char *s, *v;
   __asm__(
-      "movq %%rsp, %0;" //loader_stack points to old rsp, namely, to the top of OS loader stack
+      "movq %%rsp, %0;" //loader_stack points sto old rsp, namely, to the top of OS loader stack
       "movq %1, %%rsp;"//now rsp points to the top of stack[INITIAL_STACK_SIZE];
       :"=g"(loader_stack)
       :"r"(&stack[INITIAL_STACK_SIZE])

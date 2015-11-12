@@ -1,6 +1,6 @@
 #include <sys/sbunix.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/stdio.h>
+#include <sys/stdlib.h>
 #include <sys/physical.h>
 
 static uint64_t physfree = 0;

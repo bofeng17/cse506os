@@ -77,7 +77,8 @@ start (uint32_t* modulep, void* physbase, void* physfree)
   task_struct* thread_b = create_thread ((uint64_t) & func_b, "b thread");
   thread_b->task_state = TASK_READY;
 
-  task_struct* thread_c = create_thread ((uint64_t) & func_c, "c thread");
+  task_struct* thread_c = create_thread ((uint64_t) & func_c, "c thread"); // not ready to run, set to ready in idle schedule
+
 //  create_thread ((uint64_t)&func_c, "c thread");
   print_threads (idle);
 

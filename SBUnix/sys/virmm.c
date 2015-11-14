@@ -74,12 +74,20 @@ set_pt (pdt_t pdt, uint64_t pdt_index)
 }
 
 pml4_t global_PML4;
+
 uint64_t ktask_base;
 uint64_t kstack_base;
-uint64_t kmm_base;
+uint64_t mm_base;
+uint64_t userpt_base;
+uint64_t vma_base;
+uint64_t file_base;
+
 int task_bitmap[PROCESS_NUMBER];
 int stack_bitmap[KSTACK_NUMBER];
 int mm_bitmap[MM_NUMBER];
+int userpt_bitmap[USERPT_NUMBER];
+int vma_bitmap[VMA_NUMBER];
+int file_bitmap[FILE_NUMBER];
 
 void
 init_mm ()
@@ -90,17 +98,26 @@ init_mm ()
 
   ktask_base = get_kmalloc_base () + VIR_START;
   kstack_base = ktask_base + PROCESS_NUMBER * PAGE_SIZE;
-  kmm_base = kstack_base + KSTACK_NUMBER * PAGE_SIZE;
+  mm_base = kstack_base + KSTACK_NUMBER * PAGE_SIZE;
+  userpt_base = mm_base + MM_NUMBER * PAGE_SIZE;
+  vma_base = userpt_base + USERPT_NUMBER * PAGE_SIZE;
+  file_base = vma_base + VMA_NUMBER * PAGE_SIZE;
 
   dprintf ("ktask_base : %p\n", ktask_base);
   dprintf ("kstack_base : %p\n", kstack_base);
   memset ((void *) ktask_base, 0, PROCESS_NUMBER * PAGE_SIZE);
   memset ((void *) kstack_base, 0, KSTACK_NUMBER * PAGE_SIZE);
-  memset ((void *) kmm_base, 0, MM_NUMBER * PAGE_SIZE);
+  memset ((void *) mm_base, 0, MM_NUMBER * PAGE_SIZE);
+  memset ((void *) userpt_base, 0, USERPT_NUMBER * PAGE_SIZE);
+  memset ((void *) vma_base, 0, VMA_NUMBER * PAGE_SIZE);
+  memset ((void *) file_base, 0, FILE_NUMBER * PAGE_SIZE);
 
   memset (task_bitmap, 0, PROCESS_NUMBER);
   memset (stack_bitmap, 0, KSTACK_NUMBER);
   memset (mm_bitmap, 0, MM_NUMBER);
+  memset (userpt_bitmap, 0, USERPT_NUMBER);
+  memset (vma_bitmap, 0, VMA_NUMBER);
+  memset (file_bitmap, 0, FILE_NUMBER);
 //  int i = 0;
 //  for (i = 0; i < PROCESS_NUMBER; i++)
 //    dprintf ("task_bimap[%d] is: %d ", i, task_bitmap[i]);
@@ -215,7 +232,13 @@ get_base (int flag)
     case KSTACK:
       return kstack_base;
     case MM:
-      return kmm_base;
+      return mm_base;
+    case USERPT:
+      return userpt_base;
+    case VMA:
+      return vma_base;
+    case FILE:
+      return file_base;
     default:
       return 0;
     };
@@ -269,12 +292,48 @@ kmalloc (int flag)
 	    i++;
 	}
       break;
+    case USERPT:
+      while (i < USERPT_NUMBER)
+	{
+	  if (userpt_bitmap[i] == 0)
+	    {
+	      userpt_bitmap[i] = 1;
+	      break;
+	    }
+	  else
+	    i++;
+	}
+      break;
+    case VMA:
+      while (i < VMA_NUMBER)
+	{
+	  if (vma_bitmap[i] == 0)
+	    {
+	      vma_bitmap[i] = 1;
+	      break;
+	    }
+	  else
+	    i++;
+	}
+      break;
+    case FILE:
+      while (i < FILE_NUMBER)
+	{
+	  if (file_bitmap[i] == 0)
+	    {
+	      file_bitmap[i] = 1;
+	      break;
+	    }
+	  else
+	    i++;
+	}
+      break;
     default:
       return NULL;
     }
 
   base += i * PAGE_SIZE;
-  dprintf ("kmalloc return base %p\n", base);
+  dprintf ("kmalloc return %d base %p\n", flag, base);
 
   memset ((void *) base, 0, PAGE_SIZE);
 
@@ -298,6 +357,15 @@ kfree (void* addr, int flag)
       break;
     case MM:
       mm_bitmap[bitmap_pos] = 0;
+      break;
+    case USERPT:
+      userpt_bitmap[bitmap_pos] = 0;
+      break;
+    case VMA:
+      vma_bitmap[bitmap_pos] = 0;
+      break;
+    case FILE:
+      file_bitmap[bitmap_pos] = 0;
       break;
     default:
       printf ("CANNOT FREE %p!\n", addr);

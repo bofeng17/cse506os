@@ -4,9 +4,6 @@
 #define MM_NUMBER PROCESS_NUMBER
 
 #define NAME_LENGTH 32
-#define KSTACK 0
-#define TASK 1
-#define MM 2
 
 /*task state enumeration*/
 enum TASK_STATE

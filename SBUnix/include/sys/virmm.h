@@ -36,6 +36,14 @@
 #define PTE_MBZ		0x180	// Bits must be zero
 #define PTE_COW		0x100	// Copy-on-write
 
+//flags for kmalloc
+#define TASK 0
+#define KSTACK 1
+#define MM 2
+#define USERPT 3//use page table
+#define VMA 4
+#define FILE 5
+
 //page map level 4 page table definition
 struct PML4
 {

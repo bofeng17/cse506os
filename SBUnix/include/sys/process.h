@@ -99,3 +99,6 @@ context_switch (task_struct *, task_struct *);
 
 void
 schedule ();
+
+void
+clear_zombie (task_struct*);

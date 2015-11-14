@@ -8,6 +8,7 @@
 
 task_struct* front;
 task_struct* end;
+task_struct* current;
 
 int track_task[PROCESS_NUMBER];
 
@@ -58,7 +59,7 @@ create_idle_thread ()
   idle->pid = assign_pid ();
   idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
   //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
-  idle->task_state = TASK_RUNNING;
+  idle->task_state = TASK_READY;
   idle->sleep_time = 0;
   idle->cr3 = get_CR3 ();
   strcpy (idle->task_name, "idle thread");
@@ -68,6 +69,7 @@ create_idle_thread ()
   front = idle;
   end = idle;
   end->next = front;
+  current = idle;
 
   return idle;
 }
@@ -181,3 +183,10 @@ context_switch (task_struct *prev, task_struct *next)
 
 }
 
+void
+exit (int status)
+{
+  // current = current->next;
+  current->task_state = TASK_ZOMBIE;
+  schedule ();
+}

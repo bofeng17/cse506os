@@ -69,9 +69,15 @@ start (uint32_t* modulep, void* physbase, void* physfree)
   init_phy_page (8192, page_num, page_index); //init first 32mb as used, kmalloc take over
 
   task_struct* idle = create_idle_thread ();
+  idle->task_state = TASK_READY;
 
-  create_thread ((uint64_t) & func_a, "a thread");
-  create_thread ((uint64_t) & func_b, "b thread");
+  task_struct* thread_a = create_thread ((uint64_t) & func_a, "a thread");
+  thread_a->task_state = TASK_READY;
+
+  task_struct* thread_b = create_thread ((uint64_t) & func_b, "b thread");
+  thread_b->task_state = TASK_READY;
+
+  task_struct* thread_c = create_thread ((uint64_t) & func_c, "c thread");
 //  create_thread ((uint64_t)&func_c, "c thread");
   print_threads (idle);
 
@@ -84,7 +90,7 @@ start (uint32_t* modulep, void* physbase, void* physfree)
 //      __asm__ __volatile__ ("hlt");
       if (i == 10)
 	{
-	  create_thread ((uint64_t) & func_c, "c thread");
+	  thread_c->task_state = TASK_READY;
 	}
     }
   while (1)

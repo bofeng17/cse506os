@@ -28,6 +28,8 @@ allocate_pages (uint32_t);
 //get initial page numbers
 uint32_t
 get_num_init (uint64_t physfree);
-
+//alloacte single for vmalloc usage
+uint64_t 
+allocate_page_user();
 uint64_t
 get_kmalloc_base ();

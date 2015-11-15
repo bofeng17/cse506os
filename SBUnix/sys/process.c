@@ -82,6 +82,48 @@ create_idle_thread ()
 }
 
 task_struct*
+create_thread_init ()
+{
+
+  task_struct * new_task = (task_struct*) (kmalloc (TASK));
+
+  new_task->ppid = 0;
+  new_task->pid = assign_pid ();
+  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+  new_task->rip = (uint64_t) & func_init;
+  new_task->task_state = TASK_NEW;
+  new_task->sleep_time = 0;
+  new_task->cr3 = get_CR3 ();
+  strcpy (new_task->task_name, "init");
+
+  mm_struct* mstruct = kmalloc (MM);
+  mstruct->mmap = NULL;
+
+  /** set in do_fork
+   mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
+   mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
+
+   mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
+   mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
+
+   mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
+   *
+   */
+
+  new_task->mm = mstruct;
+
+  new_task->mm = NULL;
+  new_task->wait_pid = 0;
+
+  end->next = new_task;
+  end = new_task;
+  end->next = front;
+
+  return new_task;
+
+}
+
+task_struct*
 create_thread (uint64_t thread, char * thread_name)
 {
 
@@ -206,21 +248,6 @@ create_user_process (char* bin_name)
 
   strcpy (new_task->task_name, bin_name);
 
-  mm_struct* mstruct = kmalloc (MM);
-  mstruct->mmap = NULL;
-
-  /** set in do_fork
-   mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
-   mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
-
-   mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
-   mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
-
-   mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
-   *
-   */
-
-  new_task->mm = mstruct;
   new_task->wait_pid = 0;
 
   end->next = new_task;

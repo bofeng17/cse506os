@@ -94,6 +94,9 @@ func_init ();
 task_struct *
 create_idle_thread ();
 
+task_struct*
+create_thread_init ();
+
 task_struct *
 create_thread (uint64_t, char *);
 

@@ -99,16 +99,15 @@ create_thread_init ()
   mm_struct* mstruct = kmalloc (MM);
   mstruct->mmap = NULL;
 
-  /** set in do_fork
-   mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
-   mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
+  // set in do_fork
+  mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
+  mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
 
-   mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
-   mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
+  mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
+  mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
 
-   mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
-   *
-   */
+  mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
+  //
 
   new_task->mm = mstruct;
 

@@ -57,7 +57,15 @@ set_pdpt (pml4_t pml4, uint64_t pml4_index, int flag)
 {
   pdpt_t pdpt = (pdpt_t) alloc_pt (flag);
   uint64_t pdpt_entry = (uint64_t) pdpt;
+
+  if (flag == USER)
+    {
+      pdpt_entry -= VIR_START;
+      pdpt_entry |= PTE_U;
+    }
+
   pdpt_entry |= (PTE_P | PTE_W);
+
   //pdpt_entry &= PTE_EX; // clear executable bit
   pml4->PML4E[pml4_index] = pdpt_entry;
 
@@ -70,7 +78,15 @@ set_pdt (pdpt_t pdpt, uint64_t pdpt_index, int flag)
 {
   pdt_t pdt = (pdt_t) alloc_pt (flag);
   uint64_t pdt_entry = (uint64_t) pdt;
+
+  if (flag == USER)
+    {
+      pdt_entry -= VIR_START;
+      pdt_entry |= PTE_U;
+    }
+
   pdt_entry |= (PTE_P | PTE_W);
+
   //pdt_entry &= PTE_EX; // clear executable bit
   pdpt->PDPTE[pdpt_index] = pdt_entry;
 
@@ -83,7 +99,14 @@ set_pt (pdt_t pdt, uint64_t pdt_index, int flag)
 {
   pt_t pt = (pt_t) alloc_pt (flag);
   uint64_t pt_entry = (uint64_t) pt;
+  if (flag == USER)
+    {
+      pt_entry -= VIR_START;
+      pt_entry |= PTE_U;
+    }
+
   pt_entry |= (PTE_P | PTE_W);
+
   //pt_entry &= PTE_EX; // clear executable bit
   pdt->PDTE[pdt_index] = pt_entry;
 
@@ -174,8 +197,12 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
   pt_t pt;
 
   uint64_t pml4e_index = get_pml4e_index (vir_addr);
-
-  uint64_t pml4e = global_PML4->PML4E[pml4e_index];
+  uint64_t pml4e = 0;
+//  if (flag == USER)
+//    pml4e =
+//	((pml4_t) get_entry_viraddr ((uint64_t) global_PML4))->PML4E[pml4e_index];
+//  if (flag == KERN)
+  pml4e = global_PML4->PML4E[pml4e_index];
 
   if (pml4e & PTE_P)
     {
@@ -190,7 +217,9 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
     }
 
   uint64_t pdpte_index = get_pdpte_index (vir_addr);
+
   uint64_t pdpte = pdpt->PDPTE[pdpte_index];
+
   if (pdpte & PTE_P)
     {
       uint64_t pdt64 = get_entry_viraddr (pdpte);
@@ -219,6 +248,9 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
 
   uint64_t pte = phy_addr;
   pte |= (PTE_P | PTE_W);
+  if (flag == USER)
+    pte |= PTE_U;
+
   //pte &= PTE_EX; // clear executable bit
   uint64_t pte_index = get_pte_index (vir_addr);
   pt->PTE[pte_index] = pte;
@@ -244,6 +276,7 @@ initial_mapping ()
     }
 
   set_CR3 ((uint64_t) global_PML4);
+  global_PML4 = (pml4_t) get_entry_viraddr ((uint64_t) global_PML4);
 }
 
 void
@@ -431,6 +464,8 @@ umalloc (size_t size)
       map_virmem_to_phymem (vmalloc_base, allocate_page_user (), USER);
       vmalloc_base += PAGE_SIZE;
     }
+
+  memset ((void *) ret_addr, 0, size);
 
   return ret_addr;
 }

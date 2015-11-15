@@ -14,7 +14,7 @@
  *
  */
 
-#define USER_VIR_START 0x1000000000000000// user virtual memory starting addr
+#define USER_VIR_START 0x0000000000400000// user virtual memory starting addr
 
 #define PML4_SHIFT_BITS 39
 #define PDPT_SHIFT_BITS 30

@@ -14,6 +14,8 @@
  *
  */
 
+#define USER_VIR_START 0x1000000000000000// user virtual memory starting addr
+
 #define PML4_SHIFT_BITS 39
 #define PDPT_SHIFT_BITS 30
 #define PDT_SHIFT_BITS 21
@@ -35,6 +37,10 @@
 #define PTE_PS		0x080	// Page Size
 #define PTE_MBZ		0x180	// Bits must be zero
 #define PTE_COW		0x100	// Copy-on-write
+
+//allocate page table flag
+#define KERN 0
+#define USER 1
 
 //flags for kmalloc
 #define TASK 0
@@ -89,3 +95,6 @@ kmalloc (int flag);
 
 void
 kfree (void* addr, int flag);
+
+void*
+umalloc (size_t size);

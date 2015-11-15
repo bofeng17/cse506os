@@ -50,6 +50,13 @@ assign_pid ()
 //    }
 //}
 
+void
+func_init ()
+{
+
+  exit (0);
+}
+
 task_struct *
 create_idle_thread ()
 {
@@ -181,6 +188,46 @@ context_switch (task_struct *prev, task_struct *next)
   //Here we should
   //Ref. <Understanding the Linux kernel>: page 108 step 9
 
+}
+
+task_struct*
+create_user_process (char* bin_name)
+{
+  task_struct * new_task = (task_struct*) (kmalloc (TASK));
+
+  new_task->ppid = 0;
+  new_task->pid = assign_pid ();
+  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+
+  new_task->task_state = TASK_NEW;
+  new_task->sleep_time = 0;
+
+  new_task->cr3 = get_CR3 ();
+
+  strcpy (new_task->task_name, bin_name);
+
+  mm_struct* mstruct = kmalloc (MM);
+  mstruct->mmap = NULL;
+
+  /** set in do_fork
+   mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
+   mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
+
+   mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
+   mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
+
+   mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
+   *
+   */
+
+  new_task->mm = mstruct;
+  new_task->wait_pid = 0;
+
+  end->next = new_task;
+  end = new_task;
+  end->next = front;
+
+  return new_task;
 }
 
 void

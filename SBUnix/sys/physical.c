@@ -178,7 +178,8 @@ allocate_pages (uint32_t num)
   return (uint64_t) ((tmp->index) << 12);
 }
 
-uint64_t allocate_page_user()
+uint64_t
+allocate_page_user ()
 {
   uint32_t i = 8192;
   //uint32_t start=0;
@@ -190,26 +191,26 @@ uint64_t allocate_page_user()
       //printf("page_num:%x",page_num);
       page_sp* tmp = (page_struct_start + i);
       if (tmp->info & PAGE_OCP)
-  {
-    //printf("find one! %x",i);
-    continue;
-  }
+	{
+	  //printf("find one! %x",i);
+	  continue;
+	}
       else
-  {
-    //tmp->info=PAGE_OCP;
-    //printf("find one! %x",i);
-    //return i;
-    page_sp* tmp = page_struct_start + i;
-    tmp->info = PAGE_OCP;
-    return (uint64_t) ((tmp->index) << 12);
+	{
+	  //tmp->info=PAGE_OCP;
+	  //printf("find one! %x",i);
+	  //return i;
+	  page_sp* tmp = page_struct_start + i;
+	  tmp->info = PAGE_OCP;
+	  return (uint64_t) ((tmp->index) << 12);
 
-  }
+	}
       //start=i;
     }
 
   //return start;
-    printf("WARNING: all the physical pages are used!");
-    return 0;
+  printf ("WARNING: all the physical pages are used!");
+  return 0;
 }
 
 //get initial page numbers
@@ -225,4 +226,11 @@ uint64_t
 get_kmalloc_base ()
 {
   return get_num_init (physfree) << 12;
+}
+
+void
+phy_free (uint64_t addr)
+{
+  uint32_t tmp = (addr >> 12);
+  set_free (tmp);
 }

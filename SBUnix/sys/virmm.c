@@ -34,11 +34,28 @@ get_entry_viraddr (uint64_t entry)
   return (0xFFFFFFFF80000000UL | entry);
 }
 
+void*
+alloc_pt (int flag)
+{
+  if (flag == KERN)
+    {
+      return (void*) allocate_page ();
+    }
+  else
+
+  if (flag == USER)
+    {
+      return kmalloc (USERPT);
+    }
+  else
+    return NULL;
+}
+
 // set up page directory pointer table
 void*
-set_pdpt (pml4_t pml4, uint64_t pml4_index)
+set_pdpt (pml4_t pml4, uint64_t pml4_index, int flag)
 {
-  pdpt_t pdpt = (pdpt_t) allocate_page ();
+  pdpt_t pdpt = (pdpt_t) alloc_pt (flag);
   uint64_t pdpt_entry = (uint64_t) pdpt;
   pdpt_entry |= (PTE_P | PTE_W);
   //pdpt_entry &= PTE_EX; // clear executable bit
@@ -49,9 +66,9 @@ set_pdpt (pml4_t pml4, uint64_t pml4_index)
 
 // set up page directory table
 void*
-set_pdt (pdpt_t pdpt, uint64_t pdpt_index)
+set_pdt (pdpt_t pdpt, uint64_t pdpt_index, int flag)
 {
-  pdt_t pdt = (pdt_t) allocate_page ();
+  pdt_t pdt = (pdt_t) alloc_pt (flag);
   uint64_t pdt_entry = (uint64_t) pdt;
   pdt_entry |= (PTE_P | PTE_W);
   //pdt_entry &= PTE_EX; // clear executable bit
@@ -62,9 +79,9 @@ set_pdt (pdpt_t pdpt, uint64_t pdpt_index)
 
 // set up page table
 void*
-set_pt (pdt_t pdt, uint64_t pdt_index)
+set_pt (pdt_t pdt, uint64_t pdt_index, int flag)
 {
-  pt_t pt = (pt_t) allocate_page ();
+  pt_t pt = (pt_t) alloc_pt (flag);
   uint64_t pt_entry = (uint64_t) pt;
   pt_entry |= (PTE_P | PTE_W);
   //pt_entry &= PTE_EX; // clear executable bit
@@ -74,6 +91,9 @@ set_pt (pdt_t pdt, uint64_t pdt_index)
 }
 
 pml4_t global_PML4;
+//pml4_t user_global_PML4;
+
+uint64_t vmalloc_base;
 
 uint64_t ktask_base;
 uint64_t kstack_base;
@@ -94,7 +114,7 @@ init_mm ()
 {
 
   //setup level 4 page directory
-  global_PML4 = (pml4_t) allocate_page ();
+  global_PML4 = (pml4_t) alloc_pt (KERN);
 
   ktask_base = get_kmalloc_base () + VIR_START;
   kstack_base = ktask_base + PROCESS_NUMBER * PAGE_SIZE;
@@ -124,10 +144,29 @@ init_mm ()
 //  for (i = 0; i < KSTACK_NUMBER; i++)
 //    dprintf ("stack_bitmap[%d] is: %d ", i, task_bitmap[i]);
 
+  vmalloc_base = USER_VIR_START;
 }
 
+//pml4_t
+//get_pml4 (int flag)
+//{
+//  if (flag == KERN)
+//    return kern_global_PML4;
+//
+//  if (flag == USER)
+//    return user_global_PML4;
+//
+//  return NULL;
+//}
+//
+//pml4_t
+//set_user_pml4 ()
+//{
+//  return (pml4_t) alloc_pt (USER);
+//}
+
 void
-map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
+map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
 {
 
   pdpt_t pdpt;
@@ -147,7 +186,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
     }
   else
     {
-      pdpt = (pdpt_t) set_pdpt (global_PML4, pml4e_index);
+      pdpt = (pdpt_t) set_pdpt (global_PML4, pml4e_index, flag);
     }
 
   uint64_t pdpte_index = get_pdpte_index (vir_addr);
@@ -161,7 +200,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
     }
   else
     {
-      pdt = (pdt_t) set_pdt (pdpt, pdpte_index);
+      pdt = (pdt_t) set_pdt (pdpt, pdpte_index, flag);
     }
 
   uint64_t pdte_index = get_pdte_index (vir_addr);
@@ -175,7 +214,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr)
     }
   else
     {
-      pt = (pt_t) set_pt (pdt, pdte_index);
+      pt = (pt_t) set_pt (pdt, pdte_index, flag);
     }
 
   uint64_t pte = phy_addr;
@@ -198,7 +237,7 @@ initial_mapping ()
   uint64_t page_count = 0;
   while (phy_addr < map_size)
     {
-      map_virmem_to_phymem (vir_addr, phy_addr);
+      map_virmem_to_phymem (vir_addr, phy_addr, KERN);
       phy_addr += PAGE_SIZE;
       vir_addr += PAGE_SIZE;
       page_count++;
@@ -372,4 +411,26 @@ kfree (void* addr, int flag)
       return;
     }
 
+}
+
+void*
+umalloc (size_t size)
+{
+//  user_global_PML4 = (pml4_t) get_CR3 ();
+
+  void* ret_addr = (void*) vmalloc_base;
+
+  int page_num = size / PAGE_SIZE;
+  if (size % PAGE_SIZE)
+    {
+      page_num += 1;
+    }
+
+  while (page_num-- > 0)
+    {
+      map_virmem_to_phymem (vmalloc_base, allocate_page_user (), USER);
+      vmalloc_base += PAGE_SIZE;
+    }
+
+  return ret_addr;
 }

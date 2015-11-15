@@ -2,8 +2,8 @@
 #define PROCESS_NUMBER 128
 #define KSTACK_NUMBER PROCESS_NUMBER
 #define MM_NUMBER PROCESS_NUMBER
-#define USERPT_NUMBER PROCESS_NUMBER
-#define VMA_NUMBER PROCESS_NUMBER
+#define USERPT_NUMBER (PROCESS_NUMBER*4)
+#define VMA_NUMBER (PROCESS_NUMBER*10)
 #define FILE_NUMBER PROCESS_NUMBER
 
 #define NAME_LENGTH 32
@@ -87,6 +87,9 @@ typedef struct task_struct
   char cur_dir[NAME_LENGTH]; /* current directory */
 
 } task_struct;
+
+void
+func_init ();
 
 task_struct *
 create_idle_thread ();

@@ -1,12 +1,14 @@
 #include <sys/defs.h>
+
+#define KERNPT_NUMBER 128
 #define PROCESS_NUMBER 128
 #define KSTACK_NUMBER PROCESS_NUMBER
 #define MM_NUMBER PROCESS_NUMBER
+#define USERPT_NUMBER (PROCESS_NUMBER*10)
+#define VMA_NUMBER (PROCESS_NUMBER*10)
+#define FILE_NUMBER PROCESS_NUMBER
 
 #define NAME_LENGTH 32
-#define KSTACK 0
-#define TASK 1
-#define MM 2
 
 /*task state enumeration*/
 enum TASK_STATE
@@ -88,8 +90,14 @@ typedef struct task_struct
 
 } task_struct;
 
+void
+func_init ();
+
 task_struct *
 create_idle_thread ();
+
+task_struct*
+create_thread_init ();
 
 task_struct *
 create_thread (uint64_t, char *);
@@ -99,3 +107,6 @@ context_switch (task_struct *, task_struct *);
 
 void
 schedule ();
+
+void
+clear_zombie (task_struct*);

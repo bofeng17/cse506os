@@ -8,6 +8,7 @@
 
 task_struct* front;
 task_struct* end;
+task_struct* current;
 
 int track_task[PROCESS_NUMBER];
 
@@ -49,6 +50,13 @@ assign_pid ()
 //    }
 //}
 
+void
+func_init ()
+{
+
+  exit (0);
+}
+
 task_struct *
 create_idle_thread ()
 {
@@ -58,7 +66,7 @@ create_idle_thread ()
   idle->pid = assign_pid ();
   idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
   //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
-  idle->task_state = TASK_RUNNING;
+  idle->task_state = TASK_READY;
   idle->sleep_time = 0;
   idle->cr3 = get_CR3 ();
   strcpy (idle->task_name, "idle thread");
@@ -68,8 +76,50 @@ create_idle_thread ()
   front = idle;
   end = idle;
   end->next = front;
+  current = idle;
 
   return idle;
+}
+
+task_struct*
+create_thread_init ()
+{
+
+  task_struct * new_task = (task_struct*) (kmalloc (TASK));
+
+  new_task->ppid = 0;
+  new_task->pid = assign_pid ();
+  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+  new_task->rip = (uint64_t) & func_init;
+  new_task->task_state = TASK_NEW;
+  new_task->sleep_time = 0;
+  new_task->cr3 = get_CR3 ();
+  strcpy (new_task->task_name, "init");
+
+  mm_struct* mstruct = kmalloc (MM);
+  mstruct->mmap = NULL;
+
+  // set in do_fork
+  mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
+  mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
+
+  mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
+  mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
+
+  mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
+  //
+
+  new_task->mm = mstruct;
+
+  new_task->mm = NULL;
+  new_task->wait_pid = 0;
+
+  end->next = new_task;
+  end = new_task;
+  end->next = front;
+
+  return new_task;
+
 }
 
 task_struct*
@@ -181,3 +231,35 @@ context_switch (task_struct *prev, task_struct *next)
 
 }
 
+task_struct*
+create_user_process (char* bin_name)
+{
+  task_struct * new_task = (task_struct*) (kmalloc (TASK));
+
+  new_task->ppid = 0;
+  new_task->pid = assign_pid ();
+  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+
+  new_task->task_state = TASK_NEW;
+  new_task->sleep_time = 0;
+
+  new_task->cr3 = get_CR3 ();
+
+  strcpy (new_task->task_name, bin_name);
+
+  new_task->wait_pid = 0;
+
+  end->next = new_task;
+  end = new_task;
+  end->next = front;
+
+  return new_task;
+}
+
+void
+exit (int status)
+{
+  // current = current->next;
+  current->task_state = TASK_ZOMBIE;
+  schedule ();
+}

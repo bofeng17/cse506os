@@ -14,6 +14,8 @@
  *
  */
 
+#define USER_VIR_START 0x0000000000400000// user virtual memory starting addr
+
 #define PML4_SHIFT_BITS 39
 #define PDPT_SHIFT_BITS 30
 #define PDT_SHIFT_BITS 21
@@ -35,6 +37,15 @@
 #define PTE_PS		0x080	// Page Size
 #define PTE_MBZ		0x180	// Bits must be zero
 #define PTE_COW		0x100	// Copy-on-write
+
+//flags for kmalloc
+#define KERNPT 0 // kernel page table
+#define TASK 1
+#define KSTACK 2
+#define MM 3
+#define USERPT 4 //user page table
+#define VMA 5
+#define FILE 6
 
 //page map level 4 page table definition
 struct PML4
@@ -81,3 +92,6 @@ kmalloc (int flag);
 
 void
 kfree (void* addr, int flag);
+
+void*
+umalloc (size_t size);

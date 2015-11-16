@@ -5,7 +5,7 @@
 #include <sys/virmm.h>
 #include <sys/process.h>
 #include <sys/stdlib.h>
-#include <sys/test_threads.h>
+//#include <sys/test_threads.h>
 
 #define INITIAL_STACK_SIZE 4096
 char stack[INITIAL_STACK_SIZE]; //stakc used by boot
@@ -69,23 +69,35 @@ start (uint32_t* modulep, void* physbase, void* physfree)
   init_phy_page (8192, page_num, page_index); //init first 32mb as used, kmalloc take over
 
   task_struct* idle = create_idle_thread ();
+  idle->task_state = TASK_READY;
 
-  create_thread ((uint64_t) & func_a, "a thread");
-  create_thread ((uint64_t) & func_b, "b thread");
-//  create_thread ((uint64_t)&func_c, "c thread");
-  print_threads (idle);
+  task_struct* init = create_thread_init ();
+  init->task_state = TASK_READY;
+//  task_struct* thread_a = create_thread ((uint64_t) & func_a, "a thread");
+//  thread_a->task_state = TASK_READY;
+//
+//  task_struct* thread_b = create_thread ((uint64_t) & func_b, "b thread");
+//  thread_b->task_state = TASK_READY;
+//
+//  task_struct* thread_c = create_thread ((uint64_t) & func_c, "c thread"); // not ready to run, set to ready in idle schedule
+//
+//  create_thread ((uint64_t) & func_c, "c thread");
+//  print_threads (idle);
 
   dprintf ("begin scheduling\n");
+//  int* testVmalloc = vmalloc (PAGE_SIZE);
+//  testVmalloc[100] = 10;
+//  dprintf ("testVmalloc[100] is %d", testVmalloc[100]);
   int i = 0;
   while (1)
     {
       dprintf ("I'm idle %d \n", i++);
       schedule ();
 //      __asm__ __volatile__ ("hlt");
-      if (i == 10)
-	{
-	  create_thread ((uint64_t) & func_c, "c thread");
-	}
+//      if (i == 100000)
+//	{
+//	  thread_c->task_state = TASK_READY;
+//	}
     }
   while (1)
     ;

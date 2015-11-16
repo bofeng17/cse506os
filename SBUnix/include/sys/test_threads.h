@@ -7,26 +7,27 @@ void
 func_a ()
 {
   int i = 0;
-  while (1)
+  while (i < 3)
     {
       dprintf (" aaaaaaa thread %d \n", i++);
       schedule ();
 //      __asm__ __volatile__ ("hlt");
     }
+  exit (0);
 }
 
 void
 func_b ()
 {
   int i = 0;
-  while (1)
+  while (i < 6)
     {
       dprintf (" bbbbbbbb thread %d \n", i++);
       schedule ();
 
 //      __asm__ __volatile__ ("hlt");
     }
-
+  exit (0);
 }
 
 void

@@ -14,17 +14,19 @@
 upper kenerl memory
 
 -----------------
-FILE (5)
+FILE (6)
 -----------------file_base
-VMA (4)
+VMA (5)
 -----------------vma_base
-USERPT (3)
+USERPT (4)
 -----------------userpt_base
-MM (2)
+MM (3)
 -----------------mm_base
-KSTACK (1)
+KSTACK (2)
 -----------------kstack_base
-TASK (0)
------------------kmalloc (task_base) 0MB
+TASK (1)
+-----------------task_base
+KERNPT(0)
+-----------------kmalloc base (physfree 4k aligned)  
 
 ```

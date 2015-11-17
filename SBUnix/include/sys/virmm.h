@@ -47,6 +47,11 @@
 #define VMA 5
 #define FILE 6
 
+#define VM_READ         0x00000001      /* currently active flags */
+#define VM_WRITE        0x00000002
+#define VM_EXEC         0x00000004
+#define VM_SHARED       0x00000008
+
 //page map level 4 page table definition
 struct PML4
 {

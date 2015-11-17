@@ -100,6 +100,17 @@ void do_syscall () {
                          "mov %%r8, %%rsi;"
                          "mov %%r9, %%rdx;"
                          :"=D"(parm.r10),"=S"(parm.r8),"=d"(parm.r9));
+    switch (syscall_no) {
+        case SYS_read:
+            //do_read();
+            break;
+        case SYS_write:
+            //do_write();
+            break;
+        default:
+            printf("Syscall wasn't implemented");
+            break;
+    }
 }
 
 

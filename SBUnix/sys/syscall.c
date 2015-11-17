@@ -1,53 +1,69 @@
 #include <sys/sbunix.h>
-#include <sys/defs.h>
+#include <sys/syscall.h>
 
-
-void func_test_syscall () {
-    printf("Just a simple test");
-    //__asm__ __volatile__("hlt");
-}
+void ring3_test ();
+void do_syscall ();
 
 void syscall_init(){
     uint32_t hi, lo;
     uint32_t msr;
     
-    //uint32_t test_hi, test_lo;
-    
-    
-    msr = 0xc0000080;//%EFER |= $0x1m; To set EFER.SCE bit, otherwise execute sysret will cause #UD exception
+    // set EFER.SCE bit, i.e. %EFER |= $0x1m, otherwise execute sysret will cause #UD exception
+    msr = 0xc0000080;
     __asm__ __volatile__("rdmsr;"
                          "or $0x1, %%rax;"
                          "wrmsr"
                          :: "c"(msr));
     
+    //write STAR MSR
+    msr = 0xc0000081;
     hi = 0x00130008;//SYSRET CS == 0x0020, SS == 0x0018 || SYSCALL CS == 0x0008, SS == 0x0010
     lo = 0x00000000;//reserved
-    msr = 0xc0000081;//write STAR MSR
     __asm__ __volatile__("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
     
-//    __asm__ __volatile__("rdmsr" : "=a"(test_lo), "=d"(test_hi) : "c"(msr));
-//    printf("%x %x\n",test_hi,test_lo);
     
-    //get confused here
-    hi = (uint32_t)((uint64_t)func_test_syscall >> 32);//lo target RIP
-    lo = (uint32_t)(uint64_t)func_test_syscall;//high target RIP
-    msr = 0xc0000082;//write LSTAR MSR
+    // write LSTAR MSR
+    msr = 0xc0000082;
+    hi = (uint32_t)((uint64_t)do_syscall >> 32);//lo target RIP
+    lo = (uint32_t)(uint64_t)do_syscall;//high target RIP
     __asm__ __volatile__("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
     
-//    __asm__ __volatile__("rdmsr" : "=a"(test_lo), "=d"(test_hi) : "c"(msr));
-//    printf("%x %x\n",test_hi,test_lo);
     
+    // write FMASK MSR
+    msr = 0xc0000084;
     hi = 0x00000000;//reserved
     lo = 0x00000000;//set EFLAGS Mask
-    msr = 0xc0000084;//write FMASK MSR
     __asm__ __volatile__("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
-    
-//    __asm__ __volatile__("rdmsr" : "=a"(test_lo), "=d"(test_hi) : "c"(msr));
-//    printf("%x %x\n",test_hi,test_lo);
-    
 }
 
-void iret_try(){
+int64_t sysret_to_ring3(){
+    __asm__ __volatile__("cli");
+    
+    //mov rip in rcx & mov rflags into r11
+    __asm__ __volatile__("pushfq;"
+                         "orq $0x200, (%%rsp);"//enable interrupt after switch to ring3
+                         "pop %%r11;"
+                         : : "c"((uint64_t)ring3_test));
+    
+    __asm__ __volatile__("mov $0x101000, %%rsp;"
+                         ::);
+    //    __asm__ __volatile__("mov $0x17, %%rax;"
+    //                         ::);
+    
+    __asm__ __volatile__("rex.w sysret");
+    return 0;
+}
+
+void syscall_to_ring0(){
+    __asm__ __volatile__("rex.w syscall");//must use rex.w
+    /*
+     * notes for syscall handler
+     * 1) mustn't change r11 & rcx
+     * 2) save rsp, otherwise rsp has to be saved by libc wrapper
+     */
+}
+
+void iret_to_ring3(){
     __asm__ __volatile__("cli;"
                          "mov $0x1b, %%ax;"//ds,es,fs,gs
                          "mov %%ax, %%ds;"
@@ -62,39 +78,28 @@ void iret_try(){
                          "pushq $0x23;"//cs
                          "pushq %%rcx;"//rip
                          "iretq;"
-                         : : "c"((uint64_t)func_test_syscall));
+                         : : "c"((uint64_t)ring3_test));
 }
 
-int64_t syscall_try (){
-    //int64_t ret;
-    //uint32_t n=1;
-    
-    __asm__ __volatile__("cli");
-    
-   //mov rip in rcx & mov rflags into r11
-    __asm__ __volatile__("pushfq;"
-                         "orq $0x200, (%%rsp);"
-                         "pop %%r11;"
-                         : : "c"((uint64_t)func_test_syscall));
-    
-    __asm__ __volatile__("mov $0x101000, %%rsp;"
-                         ::);
-//    __asm__ __volatile__("mov $0x17, %%rax;"
-//                         ::);
-    
-    __asm__ __volatile__("rex.w sysret"
-                         :
-                         :
-                         : );
-    return 0;
+// test whether succeed switching to ring 3
+void ring3_test () {
+    printf("Just a simple test");
+    syscall_to_ring0();
+    //__asm__ __volatile__("hlt");
 }
-//
-//int64_t syscall_try (){
-//    int64_t ret;
-//    uint32_t n=1;
-//    __asm__ __volatile__("syscall"
-//                         :"=a"(ret)
-//                         :"a"(n)
-//                         : "memory");
-//    return ret;
-//}
+
+// kernel sys_call dispatcher
+void do_syscall () {
+    uint16_t syscall_no;
+    syscall_parameters parm;
+    __asm__ __volatile__("nop"
+                         :"=a"(syscall_no));
+    __asm__ __volatile__("nop"
+                         :"=D"(parm.rdi),"=S"(parm.rsi),"=d"(parm.rdx));
+    __asm__ __volatile__("mov %%r10, %%rdi;"
+                         "mov %%r8, %%rsi;"
+                         "mov %%r9, %%rdx;"
+                         :"=D"(parm.r10),"=S"(parm.r8),"=d"(parm.r9));
+}
+
+

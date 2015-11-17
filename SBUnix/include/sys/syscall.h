@@ -1,6 +1,8 @@
 #ifndef _SYS_SYSCALL_H
 #define _SYS_SYSCALL_H
 
+#include <sys/defs.h>
+
 #define SYS_exit       60
 #define SYS_brk        12
 #define SYS_fork       57
@@ -21,5 +23,14 @@
 #define SYS_dup        32
 #define SYS_dup2       33
 #define SYS_getdents   78
+
+typedef struct {
+    uint64_t rdi;
+    uint64_t rsi;
+    uint64_t rdx;
+    uint64_t r10;
+    uint64_t r8;
+    uint64_t r9;
+} syscall_parameters;
 
 #endif

@@ -30,33 +30,59 @@ idt_init ()
 
 void
 _x86_64_asm_lidt (struct idtr_t* idtr);
+
+
 void
-page_fault_handler ()
+cpu_exception_handler ()
 {
-  printf ("page fault\n");
-  __asm__ __volatile__ ("hlt");
+    uint8_t exception_no;
+    __asm__ __volatile__("":"=a"(exception_no));
+    printf("CPU exception %d happens!",exception_no);
+    __asm__ __volatile__("hlt");
 }
+
 void
 reload_idt ()
 {
   idt_init ();
   _x86_64_asm_lidt (&idtr);
-//  int i = 0;
-//  for (i = 0; i < 0x20; i++)
-//    {
-//      idt_set_gate (i, (uint64_t) page_fault_handler, 0x08, 0x8E);
-//    }
-  idt_set_gate (0x0e, (uint64_t) page_fault_handler, 0x08, 0x8E);
+    //register CPU exception handler exception0
+    idt_set_gate (0x00, (uint64_t) exception0, 0x08, 0x8E);
+    idt_set_gate (0x01, (uint64_t) exception1, 0x08, 0x8E);
+    idt_set_gate (0x02, (uint64_t) exception2, 0x08, 0x8E);
+    idt_set_gate (0x03, (uint64_t) exception3, 0x08, 0x8E);
+    idt_set_gate (0x04, (uint64_t) exception4, 0x08, 0x8E);
+    idt_set_gate (0x05, (uint64_t) exception5, 0x08, 0x8E);
+    idt_set_gate (0x06, (uint64_t) exception6, 0x08, 0x8E);
+    idt_set_gate (0x07, (uint64_t) exception7, 0x08, 0x8E);
+    idt_set_gate (0x08, (uint64_t) exception8, 0x08, 0x8E);
+    idt_set_gate (0x09, (uint64_t) exception9, 0x08, 0x8E);
+    idt_set_gate (0x0A, (uint64_t) exception10, 0x08, 0x8E);
+    idt_set_gate (0x0B, (uint64_t) exception11, 0x08, 0x8E);
+    idt_set_gate (0x0C, (uint64_t) exception12, 0x08, 0x8E);
+    idt_set_gate (0x0D, (uint64_t) exception13, 0x08, 0x8E);
+    idt_set_gate (0x0E, (uint64_t) exception14, 0x08, 0x8E);
+    idt_set_gate (0x0F, (uint64_t) exception15, 0x08, 0x8E);
+    idt_set_gate (0x10, (uint64_t) exception16, 0x08, 0x8E);
+    idt_set_gate (0x11, (uint64_t) exception17, 0x08, 0x8E);
+    idt_set_gate (0x12, (uint64_t) exception18, 0x08, 0x8E);
+    idt_set_gate (0x13, (uint64_t) exception19, 0x08, 0x8E);
+    idt_set_gate (0x14, (uint64_t) exception20, 0x08, 0x8E);
+    idt_set_gate (0x15, (uint64_t) exception21, 0x08, 0x8E);
+    idt_set_gate (0x16, (uint64_t) exception22, 0x08, 0x8E);
+    idt_set_gate (0x17, (uint64_t) exception23, 0x08, 0x8E);
+    idt_set_gate (0x18, (uint64_t) exception24, 0x08, 0x8E);
+    idt_set_gate (0x19, (uint64_t) exception25, 0x08, 0x8E);
+    idt_set_gate (0x1A, (uint64_t) exception26, 0x08, 0x8E);
+    idt_set_gate (0x1B, (uint64_t) exception27, 0x08, 0x8E);
+    idt_set_gate (0x1C, (uint64_t) exception28, 0x08, 0x8E);
+    idt_set_gate (0x1D, (uint64_t) exception29, 0x08, 0x8E);
+    idt_set_gate (0x1E, (uint64_t) exception30, 0x08, 0x8E);
+    idt_set_gate (0x1F, (uint64_t) exception31, 0x08, 0x8E);
+    //register timer & kerboard interrupt handler
   idt_set_gate (0x20, (uint64_t) isr32, 0x08, 0x8E);
   idt_set_gate (0x21, (uint64_t) isr33, 0x08, 0x8E);
-// test idt
-//  print idtr(register)
-//	printf("%x\n",idt[0].base_lo);
-//	printf("%x\n",idt[0].sel);
-//	printf("%x\n",idt[0].always0);
-//	printf("%x\n",idt[0].flags);
-//	printf("%x\n",idt[0].base_hi);
-//	idt_set_gate( 1, (uint32_t)isr1 , sel, flags);
+
 }
 
 void

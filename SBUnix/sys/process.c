@@ -97,7 +97,6 @@ create_thread_init ()
   strcpy (new_task->task_name, "init");
 
   mm_struct* mstruct = kmalloc (MM);
-  mstruct->mmap = NULL;
 
   // set in do_fork
   mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
@@ -107,8 +106,31 @@ create_thread_init ()
   mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
 
   mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
-  //
 
+  vma_struct* vma_code = kmalloc (VMA);
+  vma_struct* vma_data = kmalloc (VMA);
+  vma_struct* vma_stack = kmalloc (VMA);
+
+  vma_code->vm_mm = mstruct;
+  vma_data->vm_mm = mstruct;
+  vma_stack->vm_mm = mstruct;
+
+  vma_code->vm_start = mstruct->start_code;
+  vma_code->vm_end = mstruct->end_code;
+  vma_code->permission_flag = VM_READ | VM_EXEC;
+
+  vma_data->vm_start = mstruct->start_data;
+  vma_data->vm_end = mstruct->end_data;
+  vma_data->permission_flag = VM_READ | VM_WRITE;
+
+  vma_stack->vm_start = mstruct->start_stack;
+  vma_stack->permission_flag = VM_READ;
+
+  vma_code->vm_next = vma_data;
+  vma_data->vm_next = vma_stack;
+  vma_stack->vm_next = NULL;
+
+  mstruct->mmap = vma_code;
   new_task->mm = mstruct;
 
   new_task->mm = NULL;

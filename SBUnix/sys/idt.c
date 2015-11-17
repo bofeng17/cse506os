@@ -37,7 +37,7 @@ cpu_exception_handler ()
 {
     uint8_t exception_no;
     __asm__ __volatile__("":"=a"(exception_no));
-    printf("CPU exception %d happens!",exception_no);
+    printf("CPU exception %x happens!",exception_no);
     __asm__ __volatile__("hlt");
 }
 

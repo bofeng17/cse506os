@@ -24,4 +24,16 @@ struct posix_header_ustar {
 	char pad[12];
 };
 
+struct file{
+	struct posix_header_ustar* file_header;
+	uint64_t size;
+	uint32_t *start;
+};
+
+
+void tarfs_test();
+void* find_file(char*);
+
+
+
 #endif

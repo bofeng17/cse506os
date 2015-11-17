@@ -55,3 +55,44 @@ isr33:
     pop_al
     sti
     iretq
+
+.macro CPU_Exceptions m
+  .globl exception\m
+  exception\m:
+    cli
+    mov $\m, %rax
+    jmp cpu_exception_handler
+.endm
+
+CPU_Exceptions 0
+CPU_Exceptions 1
+CPU_Exceptions 2
+CPU_Exceptions 3
+CPU_Exceptions 4
+CPU_Exceptions 5
+CPU_Exceptions 6
+CPU_Exceptions 7
+CPU_Exceptions 8
+CPU_Exceptions 9
+CPU_Exceptions 10
+CPU_Exceptions 11
+CPU_Exceptions 12
+CPU_Exceptions 13
+CPU_Exceptions 14
+CPU_Exceptions 15
+CPU_Exceptions 16
+CPU_Exceptions 17
+CPU_Exceptions 18
+CPU_Exceptions 19
+CPU_Exceptions 20
+CPU_Exceptions 21
+CPU_Exceptions 22
+CPU_Exceptions 23
+CPU_Exceptions 24
+CPU_Exceptions 25
+CPU_Exceptions 26
+CPU_Exceptions 27
+CPU_Exceptions 28
+CPU_Exceptions 29
+CPU_Exceptions 30
+CPU_Exceptions 31

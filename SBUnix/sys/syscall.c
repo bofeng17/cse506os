@@ -79,6 +79,7 @@ void iret_to_ring3(){
                          "pushq %%rcx;"//rip
                          "iretq;"
                          : : "c"((uint64_t)ring3_test));
+	__asm__ __volatile__();
 }
 
 // test whether succeed switching to ring 3

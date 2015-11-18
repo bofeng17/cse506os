@@ -299,7 +299,7 @@ count_args (char ** args)
 int
 do_execv (char* bin_name, char ** argv, char** envp)
 {
-  int retval = 1; // return code indicates success or not
+  int retval = 0; // return code indicates success or not
   int argc, envc;
   argc = count_args (argv);
   envc = count_args (envp);
@@ -313,8 +313,13 @@ do_execv (char* bin_name, char ** argv, char** envp)
   set_task_struct (execv_task);
 
   // load bin_name elf
-  //retval=load_bin(execv_task);
+  //retval=load_bin(execv_task);// -1 if error
 
+  // setup new task user stack, rsp, argv, envp
+
+  // switch current stack to user stack of created task(execv_task)
+
+  // add execv_task to the run queue
   add_task (execv_task);
 
   return retval;

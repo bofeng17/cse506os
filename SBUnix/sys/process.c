@@ -38,67 +38,21 @@ assign_pid ()
   return -1;
 }
 
-//void
-//function_idle ()
-//{
-//  int i = 0;
-//  while (1)
-//    {
-//      dprintf ("I'm idle %d \n", i++);
-//      schedule ();
-////      __asm__ __volatile__ ("hlt");
-//    }
-//}
-
+//insert new task to run queue
 void
-func_init ()
+add_task (task_struct * task)
 {
-
-  exit (0);
-}
-
-task_struct *
-create_idle_thread ()
-{
-  task_struct * idle = (task_struct*) (kmalloc (TASK));
-
-  idle->ppid = 0;
-  idle->pid = assign_pid ();
-  idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
-  //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
-  idle->task_state = TASK_READY;
-  idle->sleep_time = 0;
-  idle->cr3 = get_CR3 ();
-  strcpy (idle->task_name, "idle thread");
-  idle->mm = NULL;
-  idle->wait_pid = 0;
-
-  front = idle;
-  end = idle;
+  end->next = task;
+  end = task;
   end->next = front;
-  current = idle;
-
-  return idle;
 }
 
-task_struct*
-create_thread_init ()
+//only set task_struct vma_struct and mm_struct
+void
+set_task_struct (task_struct* task)
 {
-
-  task_struct * new_task = (task_struct*) (kmalloc (TASK));
-
-  new_task->ppid = 0;
-  new_task->pid = assign_pid ();
-  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
-  new_task->rip = (uint64_t) & func_init;
-  new_task->task_state = TASK_NEW;
-  new_task->sleep_time = 0;
-  new_task->cr3 = get_CR3 ();
-  strcpy (new_task->task_name, "init");
-
   mm_struct* mstruct = kmalloc (MM);
 
-  // set in do_fork
   mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
   mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
 
@@ -131,14 +85,71 @@ create_thread_init ()
   vma_stack->vm_next = NULL;
 
   mstruct->mmap = vma_code;
-  new_task->mm = mstruct;
+  task->mm = mstruct;
+}
+//void
+//function_idle ()
+//{
+//  int i = 0;
+//  while (1)
+//    {
+//      dprintf ("I'm idle %d \n", i++);
+//      schedule ();
+////      __asm__ __volatile__ ("hlt");
+//    }
+//}
 
-  new_task->mm = NULL;
+task_struct *
+create_idle_thread ()
+{
+  task_struct * idle = (task_struct*) (kmalloc (TASK));
+
+  idle->ppid = 0;
+  idle->pid = assign_pid ();
+  idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+  //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
+  idle->task_state = TASK_READY;
+  idle->sleep_time = 0;
+  idle->cr3 = get_CR3 ();
+  strcpy (idle->task_name, "idle thread");
+  idle->mm = NULL;
+  idle->wait_pid = 0;
+
+  front = idle;
+  end = idle;
+  end->next = front;
+  current = idle;
+
+  return idle;
+}
+
+void
+func_init ()
+{
+
+  exit (0);
+}
+
+task_struct*
+create_thread_init ()
+{
+
+  task_struct * new_task = (task_struct*) (kmalloc (TASK));
+
+  new_task->ppid = 0;
+  new_task->pid = assign_pid ();
+  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+  new_task->rip = (uint64_t) & func_init;
+  new_task->task_state = TASK_NEW;
+  new_task->sleep_time = 0;
+  new_task->cr3 = get_CR3 ();
+  strcpy (new_task->task_name, "init");
+
+  set_task_struct (new_task);
+
   new_task->wait_pid = 0;
 
-  end->next = new_task;
-  end = new_task;
-  end->next = front;
+  add_task (new_task);
 
   return new_task;
 
@@ -161,9 +172,7 @@ create_thread (uint64_t thread, char * thread_name)
   new_task->mm = NULL;
   new_task->wait_pid = 0;
 
-  end->next = new_task;
-  end = new_task;
-  end->next = front;
+  add_task (new_task);
 
   return new_task;
 
@@ -271,11 +280,44 @@ create_user_process (char* bin_name)
 
   new_task->wait_pid = 0;
 
-  end->next = new_task;
-  end = new_task;
-  end->next = front;
+  add_task (new_task);
 
   return new_task;
+}
+
+int
+count_args (char ** args)
+{
+  int i = 0;
+
+  while (args[i++] != NULL)
+    ;
+  return i - 1;
+
+}
+
+int
+do_execv (char* bin_name, char ** argv, char** envp)
+{
+  int retval = 1; // return code indicates success or not
+  int argc, envc;
+  argc = count_args (argv);
+  envc = count_args (envp);
+
+  dprintf ("argc is%d, envc is %d", argc, envc);
+  // create new task
+  task_struct* execv_task = (task_struct*) kmalloc (TASK);
+  execv_task->pid = current->pid;
+  execv_task->ppid = current->ppid;
+
+  set_task_struct (execv_task);
+
+  // load bin_name elf
+  //retval=load_bin(execv_task);
+
+  add_task (execv_task);
+
+  return retval;
 }
 
 void

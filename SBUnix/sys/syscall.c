@@ -63,23 +63,23 @@ void syscall_to_ring0(){
      */
 }
 
-void iret_to_ring3(){
-    __asm__ __volatile__("cli;"
-                         "mov $0x1b, %%ax;"//ds,es,fs,gs
-                         "mov %%ax, %%ds;"
-                         "mov %%ax, %%es;"
-                         "mov %%ax, %%fs;"
-                         "mov %%ax, %%gs;"
-                         "pushq $0x1b;"//ss
-                         "pushq $0x101000;"//rsp
-                         "pushfq;"
-                         "orq $0x200, (%%rsp);"
-                         //"and $0x000000003fffffff, %%rcx;"
-                         "pushq $0x23;"//cs
-                         "pushq %%rcx;"//rip
-                         "iretq;"
-                         : : "c"((uint64_t)ring3_test));
-}
+//void iret_to_ring3(){
+//    __asm__ __volatile__("cli;"
+//                         "mov $0x1b, %%ax;"//ds,es,fs,gs
+//                         "mov %%ax, %%ds;"
+//                         "mov %%ax, %%es;"
+//                         "mov %%ax, %%fs;"
+//                         "mov %%ax, %%gs;"
+//                         "pushq $0x1b;"//ss
+//                         "pushq $0x101000;"//rsp
+//                         "pushfq;"
+//                         "orq $0x200, (%%rsp);"
+//                         //"and $0x000000003fffffff, %%rcx;"
+//                         "pushq $0x23;"//cs
+//                         "pushq %%rcx;"//rip
+//                         "iretq;"
+//                         : : "c"((uint64_t)ring3_test));
+//}
 
 // test whether succeed switching to ring 3
 void ring3_test () {

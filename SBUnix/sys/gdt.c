@@ -36,12 +36,13 @@ struct sys_segment_descriptor {/* ##128 bit long bit field */
 	uint64_t sd_xx3:19;    /* reserved */
 }__attribute__((packed));
 
+// Switch user ds & user cs
 uint64_t gdt[MAX_GDT] = {
 	0,                      /*** NULL descriptor ***/
 	GDT_CS | P | DPL0 | L,  /*** kernel code segment descriptor ***/
 	GDT_DS | P | W | DPL0,  /*** kernel data segment descriptor ***/
-	GDT_CS | P | DPL3 | L,  /*** user code segment descriptor ***/
 	GDT_DS | P | W | DPL3,  /*** user data segment descriptor ***/
+    GDT_CS | P | DPL3 | L,  /*** user code segment descriptor ***/
 	0, 0,                   /*** TSS ***/
 };
 

@@ -10,6 +10,9 @@
 
 #define NAME_LENGTH 32
 
+#define ARGV 10
+#define ENVP 100
+
 /*task state enumeration*/
 enum TASK_STATE
 {

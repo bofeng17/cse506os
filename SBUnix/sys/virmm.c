@@ -461,11 +461,11 @@ kfree (void* addr, int flag)
 }
 
 void*
-umalloc (size_t size)
+umalloc (void* addr, size_t size)
 {
 //  user_global_PML4 = (pml4_t) get_CR3 ();
 
-  void* ret_addr = (void*) vmalloc_base;
+  // void* ret_addr = (void*) vmalloc_base;
 
   int page_num = size / PAGE_SIZE;
   if (size % PAGE_SIZE)
@@ -476,10 +476,11 @@ umalloc (size_t size)
   while (page_num-- > 0)
     {
       map_virmem_to_phymem (vmalloc_base, allocate_page_user (), USERPT);
-      vmalloc_base += PAGE_SIZE;
+      //     vmalloc_base += PAGE_SIZE;
     }
 
-  memset ((void *) ret_addr, 0, size);
+  memset (addr, 0, size);
+//  memset ((void *) ret_addr, 0, size);
 
-  return ret_addr;
+  return addr;
 }

@@ -52,6 +52,8 @@
 #define VM_EXEC         0x00000004
 #define VM_SHARED       0x00000008
 
+#define STACK_TOP 0xffff0000
+
 //page map level 4 page table definition
 struct PML4
 {
@@ -99,4 +101,4 @@ void
 kfree (void* addr, int flag);
 
 void*
-umalloc (size_t size);
+umalloc (void* addr, size_t size);

@@ -479,7 +479,7 @@ umalloc (void* addr, size_t size)
       //     vmalloc_base += PAGE_SIZE;
     }
 
-  memset (addr, 0, size);
+  // memset (addr, 0, size);
 //  memset ((void *) ret_addr, 0, size);
 
   return addr;

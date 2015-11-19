@@ -165,7 +165,8 @@ void* find_file(char* filename)
 		size=get_size_oct(header_start->size);
 		if(!strcmp(header_start->name, filename))//here may be a bug in future,using strcmp
 		{
-			return (uint64_t*)header_start;
+			header_start=(struct posix_header_ustar*)header_start+1;
+			return (void*)header_start;
 		}
         
 		header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);

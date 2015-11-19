@@ -38,6 +38,55 @@ assign_pid ()
   return -1;
 }
 
+//insert new task to run queue
+void
+add_task (task_struct * task)
+{
+  end->next = task;
+  end = task;
+  end->next = front;
+}
+
+//only set task_struct vma_struct and mm_struct
+void
+set_task_struct (task_struct* task)
+{
+  mm_struct* mstruct = kmalloc (MM);
+
+  mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
+  mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
+
+  mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
+  mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
+
+  mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
+
+  vma_struct* vma_code = kmalloc (VMA);
+  vma_struct* vma_data = kmalloc (VMA);
+  vma_struct* vma_stack = kmalloc (VMA);
+
+  vma_code->vm_mm = mstruct;
+  vma_data->vm_mm = mstruct;
+  vma_stack->vm_mm = mstruct;
+
+  vma_code->vm_start = mstruct->start_code;
+  vma_code->vm_end = mstruct->end_code;
+  vma_code->permission_flag = VM_READ | VM_EXEC;
+
+  vma_data->vm_start = mstruct->start_data;
+  vma_data->vm_end = mstruct->end_data;
+  vma_data->permission_flag = VM_READ | VM_WRITE;
+
+  vma_stack->vm_start = mstruct->start_stack;
+  vma_stack->permission_flag = VM_READ;
+
+  vma_code->vm_next = vma_data;
+  vma_data->vm_next = vma_stack;
+  vma_stack->vm_next = NULL;
+
+  mstruct->mmap = vma_code;
+  task->mm = mstruct;
+}
 //void
 //function_idle ()
 //{
@@ -49,13 +98,6 @@ assign_pid ()
 ////      __asm__ __volatile__ ("hlt");
 //    }
 //}
-
-void
-func_init ()
-{
-
-  exit (0);
-}
 
 task_struct *
 create_idle_thread ()
@@ -81,6 +123,13 @@ create_idle_thread ()
   return idle;
 }
 
+void
+func_init ()
+{
+
+  exit (0);
+}
+
 task_struct*
 create_thread_init ()
 {
@@ -96,27 +145,11 @@ create_thread_init ()
   new_task->cr3 = get_CR3 ();
   strcpy (new_task->task_name, "init");
 
-  mm_struct* mstruct = kmalloc (MM);
-  mstruct->mmap = NULL;
+  set_task_struct (new_task);
 
-  // set in do_fork
-  mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
-  mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
-
-  mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
-  mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
-
-  mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
-  //
-
-  new_task->mm = mstruct;
-
-  new_task->mm = NULL;
   new_task->wait_pid = 0;
 
-  end->next = new_task;
-  end = new_task;
-  end->next = front;
+  add_task (new_task);
 
   return new_task;
 
@@ -139,9 +172,7 @@ create_thread (uint64_t thread, char * thread_name)
   new_task->mm = NULL;
   new_task->wait_pid = 0;
 
-  end->next = new_task;
-  end = new_task;
-  end->next = front;
+  add_task (new_task);
 
   return new_task;
 
@@ -249,11 +280,49 @@ create_user_process (char* bin_name)
 
   new_task->wait_pid = 0;
 
-  end->next = new_task;
-  end = new_task;
-  end->next = front;
+  add_task (new_task);
 
   return new_task;
+}
+
+int
+count_args (char ** args)
+{
+  int i = 0;
+
+  while (args[i++] != NULL)
+    ;
+  return i - 1;
+
+}
+
+int
+do_execv (char* bin_name, char ** argv, char** envp)
+{
+  int retval = 0; // return code indicates success or not
+  int argc, envc;
+  argc = count_args (argv);
+  envc = count_args (envp);
+
+  dprintf ("argc is%d, envc is %d", argc, envc);
+  // create new task
+  task_struct* execv_task = (task_struct*) kmalloc (TASK);
+  execv_task->pid = current->pid;
+  execv_task->ppid = current->ppid;
+
+  set_task_struct (execv_task);
+
+  // load bin_name elf
+  //retval=load_bin(execv_task);// -1 if error
+
+  // setup new task user stack, rsp, argv, envp
+
+  // switch current stack to user stack of created task(execv_task)
+
+  // add execv_task to the run queue
+  add_task (execv_task);
+
+  return retval;
 }
 
 void

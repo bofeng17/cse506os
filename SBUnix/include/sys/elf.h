@@ -6,9 +6,9 @@
 
 #define PAGE_SIZE 0x1000
 
-#define PH_TYPE_X 1
-#define PH_TYPE_W 2
-#define PH_TYPE_R 4
+#define PH_TYPE_X 0x1
+#define PH_TYPE_W 0x2
+#define PH_TYPE_R 0x4
 
 
 

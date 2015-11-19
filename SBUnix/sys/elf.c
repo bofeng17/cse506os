@@ -28,7 +28,7 @@ void load_elf(task_struct* task, void* file_start)
 		if(pgh->p_type==PT_LOAD)//if the program header is loadable
 		{
 			//warning: didn't do the alignment, maybe a bug in future
-			if(pgh->p_type==PH_TYPE_X)//then its the .text section
+			if(pgh->p_flag&PH_TYPE_X)//then its the .text section
 			{
 				task->mm->start_code=pgh->p_vaddr;
 				task->mm->end_code=pgh->p_vaddr+pgh->p_memsz;
@@ -76,7 +76,7 @@ void load_elf(task_struct* task, void* file_start)
 void test_elf()
 {
 	//printf("lalala");
-	/*int i;
+	int i;
 	void* file_start=find_file("bin/hello");
 	elf_h *elfh=(elf_h*)(file_start);
 	printf("ELF TESTING: file_start: %x\n", file_start);
@@ -106,10 +106,10 @@ void test_elf()
 		printf("memsz: %x ", pgh[i].p_memsz);
 		printf("align: %x ", pgh[i].p_align);
 		printf("\n");
-	}*/
+	}
 
 
-    void* file_start=find_file("bin/hello");
+    //void* file_start=find_file("bin/hello");
 	task_struct* new_task=kmalloc(TASK);
 	mm_struct* new_mm=kmalloc(MM);
 	new_task->mm=new_mm;

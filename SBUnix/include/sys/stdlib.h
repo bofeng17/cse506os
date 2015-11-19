@@ -90,4 +90,7 @@ int
 closedir (void *dir);
 void *
 memset (void *s, int ch, size_t n);
+
+//void *
+//memcpy (void *dest, const void *src, uint64_t n);
 #endif

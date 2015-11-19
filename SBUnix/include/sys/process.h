@@ -111,3 +111,5 @@ schedule ();
 
 void
 clear_zombie (task_struct*);
+
+extern task_struct *current;

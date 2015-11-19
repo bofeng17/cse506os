@@ -53,35 +53,32 @@ set_task_struct (task_struct* task)
 {
   mm_struct* mstruct = kmalloc (MM);
 
-  mstruct->start_code = (uint64_t) umalloc (PAGE_SIZE);
-  mstruct->end_code = mstruct->start_code + PAGE_SIZE; // need to be set actual code size of the binary file
-
-  mstruct->start_data = (uint64_t) umalloc (PAGE_SIZE);
-  mstruct->end_data = mstruct->start_data + PAGE_SIZE; // need to be set actual data size of the binary file
-
-  mstruct->start_stack = (uint64_t) umalloc (PAGE_SIZE);
-
   vma_struct* vma_code = kmalloc (VMA);
   vma_struct* vma_data = kmalloc (VMA);
   vma_struct* vma_stack = kmalloc (VMA);
+  vma_struct* vma_heap = kmalloc (VMA);
 
   vma_code->vm_mm = mstruct;
   vma_data->vm_mm = mstruct;
   vma_stack->vm_mm = mstruct;
+  vma_heap->vm_mm = mstruct;
 
   vma_code->vm_start = mstruct->start_code;
   vma_code->vm_end = mstruct->end_code;
   vma_code->permission_flag = VM_READ | VM_EXEC;
+  vma_code->vm_next = vma_data;
 
   vma_data->vm_start = mstruct->start_data;
   vma_data->vm_end = mstruct->end_data;
   vma_data->permission_flag = VM_READ | VM_WRITE;
+  vma_data->vm_next = vma_heap;
+
+  vma_heap->vm_start = mstruct->brk;
+  vma_heap->permission_flag = VM_READ | VM_WRITE;
+  vma_heap->vm_next = vma_stack;
 
   vma_stack->vm_start = mstruct->start_stack;
   vma_stack->permission_flag = VM_READ;
-
-  vma_code->vm_next = vma_data;
-  vma_data->vm_next = vma_stack;
   vma_stack->vm_next = NULL;
 
   mstruct->mmap = vma_code;
@@ -305,6 +302,7 @@ do_execv (char* bin_name, char ** argv, char** envp)
   envc = count_args (envp);
 
   dprintf ("argc is%d, envc is %d", argc, envc);
+
   // create new task
   task_struct* execv_task = (task_struct*) kmalloc (TASK);
   execv_task->pid = current->pid;
@@ -313,10 +311,77 @@ do_execv (char* bin_name, char ** argv, char** envp)
   set_task_struct (execv_task);
 
   // load bin_name elf
+
   //retval=load_bin(execv_task);// -1 if error
 
-  // setup new task user stack, rsp, argv, envp
+  // map bss
+  umalloc ((void*) execv_task->mm->end_data, execv_task->mm->bss);
 
+  // map data segment
+  uint64_t data_size = execv_task->mm->end_data - execv_task->mm->start_data;
+  umalloc ((void*) execv_task->mm->start_data, data_size);
+
+  //map code/text segment
+  uint64_t code_size = execv_task->mm->end_code - execv_task->mm->start_code;
+  umalloc ((void*) execv_task->mm->start_code, code_size);
+
+  //allocate heap
+  execv_task->mm->start_brk = (uint64_t) umalloc (
+      (void*) execv_task->mm->end_code, 10 * PAGE_SIZE);
+
+  execv_task->mm->start_stack = (uint64_t) umalloc ((void*) STACK_TOP,
+						    PAGE_SIZE);
+
+  // setup new task user stack, rsp, argv, envp
+  void* rsp = (void*) (STACK_TOP);
+
+  void* tmp = rsp;
+  *((int*) tmp--) = 0;
+
+  int i = 0;
+  int j = 0;
+  if (envp != NULL)
+    {
+      while (envp[i] != NULL)
+	{
+	  dprintf ("%s\n", envp[i]);
+	  j = 0;
+	  while (envp[i][j] != '\0')
+	    {
+	      *((char*) tmp--) = envp[i][j++];
+	      //printf("%c\n",*((char*)tmp+1) );
+	      //printf("%c\n",envp[i][j-1] );
+	    }
+	  i++;
+	  //printf("%s\n",(char*)tmp+1 );
+	}
+
+      *((int*) tmp--) = 0;
+    }
+
+  i = 0;
+
+  if (argv != NULL)
+    {
+      while (argv[i] != NULL)
+	{
+	  dprintf ("%s\n", argv[i]);
+	  j = 0;
+	  while (argv[i][j] != '\0')
+	    {
+	      *((char*) tmp--) = argv[i][j++];
+	      //printf("%c\n",*((char*)tmp+1) );
+	    }
+
+	  i++;
+	  //printf("%s\n",(char*)tmp+1 );
+	}
+    }
+
+  *((int*) tmp) = argc;
+  rsp = tmp;
+
+  execv_task->rsp = (uint64_t) rsp;
   // switch current stack to user stack of created task(execv_task)
 
   // add execv_task to the run queue

@@ -290,16 +290,16 @@ do_execv (char* bin_name, char ** argv, char** envp)
 
   load_elf (execv_task, file); // -1 if error
 
-  // map bss
-  umalloc ((void*) execv_task->mm->end_data, execv_task->mm->bss);
-
-  // map data segment
-  uint64_t data_size = execv_task->mm->end_data - execv_task->mm->start_data;
-  umalloc ((void*) execv_task->mm->start_data, data_size);
-
-  //map code/text segment
-  uint64_t code_size = execv_task->mm->end_code - execv_task->mm->start_code;
-  umalloc ((void*) execv_task->mm->start_code, code_size);
+//  // map bss
+//  umalloc ((void*) execv_task->mm->end_data, execv_task->mm->bss);
+//
+//  // map data segment
+//  uint64_t data_size = execv_task->mm->end_data - execv_task->mm->start_data;
+//  umalloc ((void*) execv_task->mm->start_data, data_size);
+//
+//  //map code/text segment
+//  uint64_t code_size = execv_task->mm->end_code - execv_task->mm->start_code;
+//  umalloc ((void*) execv_task->mm->start_code, code_size);
 
   //allocate heap
   execv_task->mm->start_brk = (uint64_t) umalloc (
@@ -386,7 +386,7 @@ create_user_process (char* bin_name)
   new_task->cr3 = get_CR3 ();
 
   strcpy (new_task->task_name, bin_name);
-  do_execv (bin_name, NULL, NULL);
+  //do_execv (bin_name, NULL, NULL);
 
   new_task->wait_pid = 0;
 

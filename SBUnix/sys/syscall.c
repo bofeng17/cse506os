@@ -48,10 +48,10 @@ int64_t sysret_to_ring3(){
     __asm__ __volatile__("pushfq;"
                          "orq $0x200, (%%rsp);"//enable interrupt after switch to ring3
                          "pop %%r11;"
-                         : : "c"((uint64_t)ring3_test));
+                         : : "c"(current->rip));
     
-    __asm__ __volatile__("mov $0x101000, %%rsp;"
-                         ::);
+    __asm__ __volatile__("mov %%rax, %%rsp;"
+                         ::"a"(current->rsp));
     //    __asm__ __volatile__("mov $0x17, %%rax;"
     //                         ::);
     

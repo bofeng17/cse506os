@@ -7,6 +7,7 @@
 #include <sys/virmm.h>
 #include <sys/string.h>
 #include <sys/gdt.h>
+#include <sys/syscall.h>
 
 task_struct* front;
 task_struct* end;
@@ -131,7 +132,10 @@ func_init ()
   char* envp[4] =
     { "e1", "e2", "e3", NULL };
 
-  do_execv ("bin/hello", argv, envp);
+  do_execv ("bin/test_hello", argv, envp);
+  
+    
+    sysret_to_ring3();
 
   exit (0);
 }

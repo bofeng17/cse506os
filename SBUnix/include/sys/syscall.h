@@ -37,5 +37,6 @@
 // init msr registers
 void syscall_init();
 void do_syscall ();
+int64_t sysret_to_ring3();
 
 #endif

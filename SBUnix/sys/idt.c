@@ -39,8 +39,10 @@ cpu_exception_handler ()
     uint64_t page_fault_address;
     __asm__ __volatile__("":"=a"(exception_no));
     if (exception_no == 0x0E) {
+        //page fault handler begins here
         __asm__ __volatile__("mov %%cr2, %0":"=r"(page_fault_address));
         printf("page fault! Address:%p\n",page_fault_address);
+        //page fault handler ends
     } else {
         printf("CPU exception %x happens!\n",exception_no);
     }

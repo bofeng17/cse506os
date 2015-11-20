@@ -5,6 +5,7 @@
 #include <sys/virmm.h>
 #include <sys/process.h>
 #include <sys/stdlib.h>
+#include <sys/syscall.h>
 //#include <sys/test_threads.h>
 
 #define INITIAL_STACK_SIZE 4096
@@ -126,6 +127,8 @@ boot (void)
 
   reload_idt ();
   timer_init ();
+    
+    syscall_init();
 
   start (
       (uint32_t*) ((char*) (uint64_t) loader_stack[3] + (uint64_t)

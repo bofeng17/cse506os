@@ -3,11 +3,6 @@
 #include <sys/process.h>
 #include <sys/gdt.h>
 
-#include <sys/idt.h>
-
-void ring3_test ();
-void do_syscall ();
-
 // init msr registers 
 void syscall_init(){
     uint32_t hi, lo;
@@ -41,7 +36,7 @@ void syscall_init(){
     __asm__ __volatile__("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
-int64_t sysret_to_ring3(){
+void sysret_to_ring3(){
     __asm__ __volatile__("cli");
     
     //mov rip in rcx & mov rflags into r11
@@ -49,21 +44,12 @@ int64_t sysret_to_ring3(){
                          "orq $0x200, (%%rsp);"//enable interrupt after switch to ring3
                          "pop %%r11;"
                          : : "c"(current->rip));
-    
+    __asm__ __volatile__("pushq %%rbp;"// TODO: rbpn
+                         "mov %%rsp, %%rax;"
+                         :"=a"(tss.rsp0));
     __asm__ __volatile__("mov %%rax, %%rsp;"
                          ::"a"(current->rsp));
-    //    __asm__ __volatile__("mov $0x17, %%rax;"
-    //                         ::);
-    
     __asm__ __volatile__("rex.w sysret");
-    return 0;
-}
-
-// test whether succeed switching to ring 3
-void ring3_test () {
-    printf("Just a simple test");
-    __asm__ __volatile__("rex.w syscall");
-    //__asm__ __volatile__("hlt");
 }
 
 // kernel syscall dispatcher
@@ -144,14 +130,14 @@ void do_syscall () {
                                   "mov $0, %rax;"
                                   "callq printf;");
             break;
-        case 0x10:
-            exception0();
+        case SYS_fork:
+            printf("fork No. 57\n");
             break;
-        case 0x11:
-            exception1();
+        case SYS_execve:
+            printf("execve No. 59\n");
             break;
-        case 0x12:
-            exception2();
+        case SYS_exit:
+            printf("exit No. 60\n");
             break;
         default:
             printf("Syscall wasn't implemented\n");
@@ -167,9 +153,9 @@ void do_syscall () {
     // TODO: syscall assembly instruction switch cs/ss for us, do we have to manually switch ds/es/fs/gs?
     // Must do this before sysret
     __asm__ __volatile__("mov $0xc0000081, %rcx;" // read from STAR MSR
-                         "wrmsr;"
-                         "shl $40, %rdx;"
-                         "shr $56, %rdx;"// now rdx stores ss selector of ring3
+                         "rdmsr;"
+                         "shr $0x10, %rdx;"// now rdx stores ss selector of ring3
+                         "add $0x8, %rdx;"
                          "mov %dx, %ds;"
                          "mov %dx, %es;"
                          "mov %dx, %fs;"

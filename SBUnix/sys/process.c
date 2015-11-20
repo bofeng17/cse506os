@@ -15,6 +15,19 @@ task_struct* current;
 
 int track_task[PROCESS_NUMBER];
 
+int
+count_args (char ** args)
+{
+    if (args == NULL)
+        return 0;
+    int i = 0;
+    
+    while (args[i++] != NULL)
+        ;
+    return i - 1;
+    
+}
+
 void
 init_process_id ()
 {
@@ -227,7 +240,7 @@ test_execv (task_struct* execv_task, char* bin_name, char** argv, char** envp)
 	  //printf("%s\n",(char*)tmp+1 );
 	}
     }
-
+    tmp = (void *)((uint64_t)tmp & 0xfffffff8);
   //  uint64_t tmpaddr = (uint64_t) tmp;
   //  dprintf ("string area begin addr is %p", tmpaddr);
   // set null pointer between string area and envp
@@ -280,7 +293,7 @@ func_init ()
   char* envp[4] =
     { "e1", "e2", "e3", NULL };
 
-  test_execv ("bin/test_hello", argv, envp);
+  test_execv (current, "bin/test_hello", argv, envp);
 
   sysret_to_ring3 ();
 
@@ -416,19 +429,6 @@ context_switch (task_struct *prev, task_struct *next)
   //TODO: movl %eax, last
   //Here we should
   //Ref. <Understanding the Linux kernel>: page 108 step 9
-
-}
-
-int
-count_args (char ** args)
-{
-  if (args == NULL)
-    return 0;
-  int i = 0;
-
-  while (args[i++] != NULL)
-    ;
-  return i - 1;
 
 }
 

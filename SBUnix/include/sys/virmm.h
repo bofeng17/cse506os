@@ -102,3 +102,25 @@ kfree (void* addr, int flag);
 
 void*
 umalloc (void* addr, size_t size);
+
+/* Self-reference:
+ * make 510th entry of PML4, instead of 511th entry which is used by kernel mapping, 
+ * points to the 1st entry of PML4
+ */
+
+/*
+ * level: page table level
+ * entry_correpond_to_vir: the virtual address specifying which entry to write
+ *                e.g. when a page fault happens, the virtual addr. causing it
+                       is read from CR2 register and passed to this parameter
+ * entry_val_phy: the physical addr. of page frame/next level page table
+ *                to be written to the entry specified by entry_correpond_to_vir
+ */
+void self_ref_write (int level, uint64_t entry_correpond_to_vir, uint64_t entry_val_phy);
+
+/*
+ * entry_correpond_to_vir: same to self_ref_write
+ * return: the physical addr. of page frame/next level page table
+ *         read from the entry specified by entry_correpond_to_vir
+ */
+uint64_t self_ref_read (int level, uint64_t entry_correpond_to_vir);

@@ -125,6 +125,12 @@ create_idle_thread ()
 void
 func_init ()
 {
+  char* argv[2] =
+    { "argv1", "argv2test" };
+  char* envp[3] =
+    { "envp1", "envp2test", "envp33" };
+
+  do_execv ("bin/hello", argv, envp);
 
   exit (0);
 }
@@ -308,18 +314,22 @@ do_execv (char* bin_name, char ** argv, char** envp)
   execv_task->mm->start_stack = (uint64_t) umalloc ((void*) STACK_TOP,
 						    PAGE_SIZE);
 
-  execv_task->mm->start_stack = (uint64_t) umalloc (
-      (void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
+  umalloc ((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
   // setup new task user stack, rsp, argv, envp
   void* rsp = (void*) (STACK_TOP);
 
   void* tmp = rsp;
-  *((int*) tmp--) = 0;
+  memset (tmp, 0, 1);
+  tmp = tmp - 8;
+
+  //*((int*) tmp--) = 0;
 
   int i = 0;
   int j = 0;
   if (envp != NULL)
     {
+      int envc = count_args (envp);
+      dprintf ("%d\n", envc);
       while (envp[i] != NULL)
 	{
 	  dprintf ("%s\n", envp[i]);
@@ -334,7 +344,8 @@ do_execv (char* bin_name, char ** argv, char** envp)
 	  //printf("%s\n",(char*)tmp+1 );
 	}
 
-      *((int*) tmp--) = 0;
+      memset (tmp, 0, 1);
+      tmp = tmp - 8;
     }
 
   i = 0;

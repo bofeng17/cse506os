@@ -68,6 +68,10 @@ void ring3_test () {
 
 // kernel syscall dispatcher
 void do_syscall () {
+    
+    //TODO: 16bytes stack alignment at syscall
+    
+    
     /* 
      * local variables must bind to callee saved registers
      * if not, it may be bind by compiler to RCX/R11, which are caller saved
@@ -130,11 +134,15 @@ void do_syscall () {
      */
     switch (syscall_no) {
         case SYS_read:
-            __asm__ __volatile__ ("mov %r14, %rdx");
+            __asm__ __volatile__ ("mov %r14, %rdx;");
             //ret_val = do_read();
             break;
         case SYS_write:
             //ret_val = do_write();
+            __asm__ __volatile__ ("mov %r14, %rdx;");
+            __asm__ __volatile__ ("mov %rsi, %rdi;"
+                                  "mov $0, %rax;"
+                                  "callq printf;");
             break;
         case 0x10:
             exception0();

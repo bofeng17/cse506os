@@ -1,3 +1,6 @@
+#ifndef _PROCESS_H
+#define _PROCESS_H
+
 #include <sys/defs.h>
 
 #define KERNPT_NUMBER 128
@@ -94,6 +97,9 @@ typedef struct task_struct
 
 } task_struct;
 
+int
+do_execv (char*, char**, char**);
+
 void
 func_init ();
 
@@ -115,4 +121,8 @@ schedule ();
 void
 clear_zombie (task_struct*);
 
+task_struct*
+create_user_process (char* bin_name);
+
 extern task_struct *current;
+#endif

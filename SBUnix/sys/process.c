@@ -1,6 +1,8 @@
 #include <sys/sbunix.h>
 #include <sys/stdio.h> //kernel should not include user header files
 #include <sys/stdlib.h>//kernel should not include user header files
+#include <sys/tarfs.h>
+#include <sys/elf.h>
 #include <sys/process.h>
 #include <sys/virmm.h>
 #include <sys/string.h>
@@ -123,6 +125,12 @@ create_idle_thread ()
 void
 func_init ()
 {
+  char* argv[2] =
+    { "argv1", "argv2test" };
+  char* envp[3] =
+    { "envp1", "envp2test", "envp33" };
+
+  do_execv ("bin/hello", argv, envp);
 
   exit (0);
 }
@@ -259,29 +267,6 @@ context_switch (task_struct *prev, task_struct *next)
 
 }
 
-task_struct*
-create_user_process (char* bin_name)
-{
-  task_struct * new_task = (task_struct*) (kmalloc (TASK));
-
-  new_task->ppid = 0;
-  new_task->pid = assign_pid ();
-  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
-
-  new_task->task_state = TASK_NEW;
-  new_task->sleep_time = 0;
-
-  new_task->cr3 = get_CR3 ();
-
-  strcpy (new_task->task_name, bin_name);
-
-  new_task->wait_pid = 0;
-
-  add_task (new_task);
-
-  return new_task;
-}
-
 int
 count_args (char ** args)
 {
@@ -297,11 +282,7 @@ int
 do_execv (char* bin_name, char ** argv, char** envp)
 {
   int retval = 0; // return code indicates success or not
-  int argc, envc;
-  argc = count_args (argv);
-  envc = count_args (envp);
-
-  dprintf ("argc is%d, envc is %d", argc, envc);
+  int argc = 1;
 
   // create new task
   task_struct* execv_task = (task_struct*) kmalloc (TASK);
@@ -311,19 +292,20 @@ do_execv (char* bin_name, char ** argv, char** envp)
   set_task_struct (execv_task);
 
   // load bin_name elf
+  void* file = find_file (bin_name);
 
-  //retval=load_bin(execv_task);// -1 if error
+  load_elf (execv_task, file); // -1 if error
 
-  // map bss
-  umalloc ((void*) execv_task->mm->end_data, execv_task->mm->bss);
-
-  // map data segment
-  uint64_t data_size = execv_task->mm->end_data - execv_task->mm->start_data;
-  umalloc ((void*) execv_task->mm->start_data, data_size);
-
-  //map code/text segment
-  uint64_t code_size = execv_task->mm->end_code - execv_task->mm->start_code;
-  umalloc ((void*) execv_task->mm->start_code, code_size);
+//  // map bss
+//  umalloc ((void*) execv_task->mm->end_data, execv_task->mm->bss);
+//
+//  // map data segment
+//  uint64_t data_size = execv_task->mm->end_data - execv_task->mm->start_data;
+//  umalloc ((void*) execv_task->mm->start_data, data_size);
+//
+//  //map code/text segment
+//  uint64_t code_size = execv_task->mm->end_code - execv_task->mm->start_code;
+//  umalloc ((void*) execv_task->mm->start_code, code_size);
 
   //allocate heap
   execv_task->mm->start_brk = (uint64_t) umalloc (
@@ -332,16 +314,22 @@ do_execv (char* bin_name, char ** argv, char** envp)
   execv_task->mm->start_stack = (uint64_t) umalloc ((void*) STACK_TOP,
 						    PAGE_SIZE);
 
+  umalloc ((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
   // setup new task user stack, rsp, argv, envp
   void* rsp = (void*) (STACK_TOP);
 
   void* tmp = rsp;
-  *((int*) tmp--) = 0;
+  memset (tmp, 0, 1);
+  tmp = tmp - 8;
+
+  //*((int*) tmp--) = 0;
 
   int i = 0;
   int j = 0;
   if (envp != NULL)
     {
+      int envc = count_args (envp);
+      dprintf ("%d\n", envc);
       while (envp[i] != NULL)
 	{
 	  dprintf ("%s\n", envp[i]);
@@ -356,13 +344,17 @@ do_execv (char* bin_name, char ** argv, char** envp)
 	  //printf("%s\n",(char*)tmp+1 );
 	}
 
-      *((int*) tmp--) = 0;
+      memset (tmp, 0, 1);
+      tmp = tmp - 8;
     }
 
   i = 0;
 
   if (argv != NULL)
     {
+      argc = count_args (argv);
+      dprintf ("argc is%d\n", argc);
+
       while (argv[i] != NULL)
 	{
 	  dprintf ("%s\n", argv[i]);
@@ -388,6 +380,30 @@ do_execv (char* bin_name, char ** argv, char** envp)
   add_task (execv_task);
 
   return retval;
+}
+
+task_struct*
+create_user_process (char* bin_name)
+{
+  task_struct * new_task = (task_struct*) (kmalloc (TASK));
+
+  new_task->ppid = 0;
+  new_task->pid = assign_pid ();
+  new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc (KSTACK); //what is init_kern
+
+  new_task->task_state = TASK_NEW;
+  new_task->sleep_time = 0;
+
+  new_task->cr3 = get_CR3 ();
+
+  strcpy (new_task->task_name, bin_name);
+  //do_execv (bin_name, NULL, NULL);
+
+  new_task->wait_pid = 0;
+
+  add_task (new_task);
+
+  return new_task;
 }
 
 void

@@ -113,7 +113,7 @@ set_pt (pdt_t pdt, uint64_t pdt_index, int flag)
 
 pml4_t global_PML4;
 
-uint64_t vmalloc_base;
+//uint64_t vmalloc_base;
 
 uint64_t kernpt_base; // kernel page table start address
 uint64_t ktask_base; // kernel task_struct start address
@@ -170,7 +170,7 @@ init_mm ()
   //setup level 4 page directory
   global_PML4 = (pml4_t) kmalloc (KERNPT);
 
-  vmalloc_base = USER_VIR_START;
+//  vmalloc_base = USER_VIR_START;
 }
 
 //pml4_t
@@ -475,11 +475,11 @@ umalloc (void* addr, size_t size)
 
   while (page_num-- > 0)
     {
-      map_virmem_to_phymem (vmalloc_base, allocate_page_user (), USERPT);
+      map_virmem_to_phymem ((uint64_t) addr, allocate_page_user (), USERPT);
       //     vmalloc_base += PAGE_SIZE;
     }
 
-  memset (addr, 0, size);
+  // memset (addr, 0, size);
 //  memset ((void *) ret_addr, 0, size);
 
   return addr;

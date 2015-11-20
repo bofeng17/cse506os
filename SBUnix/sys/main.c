@@ -73,6 +73,7 @@ start (uint32_t* modulep, void* physbase, void* physfree)
 
   task_struct* init = create_thread_init ();
   init->task_state = TASK_READY;
+
 //  task_struct* thread_a = create_thread ((uint64_t) & func_a, "a thread");
 //  thread_a->task_state = TASK_READY;
 //
@@ -83,6 +84,9 @@ start (uint32_t* modulep, void* physbase, void* physfree)
 //
 //  create_thread ((uint64_t) & func_c, "c thread");
 //  print_threads (idle);
+
+//  task_struct* hello = create_user_process ("bin/hello");
+//  hello->task_state = TASK_READY;
 
   dprintf ("begin scheduling\n");
 //  int* testVmalloc = vmalloc (PAGE_SIZE);

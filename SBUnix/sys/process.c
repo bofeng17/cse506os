@@ -125,10 +125,11 @@ create_idle_thread ()
 void
 func_init ()
 {
-  char* argv[2] =
-    { "argv1", "argv2test" };
-  char* envp[3] =
-    { "envp1", "envp2test", "envp33" };
+  char* argv[3] =
+    { "a1", "a2", NULL };
+
+  char* envp[4] =
+    { "e1", "e2", "e3", NULL };
 
   do_execv ("bin/hello", argv, envp);
 
@@ -270,6 +271,8 @@ context_switch (task_struct *prev, task_struct *next)
 int
 count_args (char ** args)
 {
+  if (args == NULL)
+    return 0;
   int i = 0;
 
   while (args[i++] != NULL)
@@ -283,7 +286,7 @@ do_execv (char* bin_name, char ** argv, char** envp)
 {
   int retval = 0; // return code indicates success or not
   int argc = 1;
-
+  int envc = 0;
   // create new task
   task_struct* execv_task = (task_struct*) kmalloc (TASK);
   execv_task->pid = current->pid;
@@ -308,8 +311,11 @@ do_execv (char* bin_name, char ** argv, char** envp)
 //  umalloc ((void*) execv_task->mm->start_code, code_size);
 
   //allocate heap
+  uint64_t initial_heap_size = 10 * PAGE_SIZE;
   execv_task->mm->start_brk = (uint64_t) umalloc (
-      (void*) execv_task->mm->end_code, 10 * PAGE_SIZE);
+      (void*) execv_task->mm->end_data, initial_heap_size);
+
+  execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
   execv_task->mm->start_stack = (uint64_t) umalloc ((void*) STACK_TOP,
 						    PAGE_SIZE);
@@ -318,59 +324,107 @@ do_execv (char* bin_name, char ** argv, char** envp)
   // setup new task user stack, rsp, argv, envp
   void* rsp = (void*) (STACK_TOP);
 
-  void* tmp = rsp;
-  memset (tmp, 0, 1);
-  tmp = tmp - 8;
+  void* tmp = rsp - 1;
 
-  //*((int*) tmp--) = 0;
-
+  // save envp string to the top area of user stack
   int i = 0;
   int j = 0;
   if (envp != NULL)
     {
-      int envc = count_args (envp);
-      dprintf ("%d\n", envc);
+      envc = count_args (envp);
+      dprintf ("envc is %d\n", envc);
+      i = envc - 1;
       while (envp[i] != NULL)
 	{
 	  dprintf ("%s\n", envp[i]);
+
+	  tmp = (char*) tmp - strlen (envp[i]);
+
 	  j = 0;
 	  while (envp[i][j] != '\0')
 	    {
-	      *((char*) tmp--) = envp[i][j++];
+	      *((char*) tmp++) = envp[i][j++];
 	      //printf("%c\n",*((char*)tmp+1) );
 	      //printf("%c\n",envp[i][j-1] );
 	    }
-	  i++;
+	  tmp = (char*) tmp - strlen (envp[i]);
+	  envp[i] = (char*) tmp;
+
+	  tmp = (char*) tmp - 1;
+	  *((char*) tmp) = '\0';
+
+	  //dprintf ("tmp is %p", tmp);
+	  i--;
 	  //printf("%s\n",(char*)tmp+1 );
 	}
 
-      memset (tmp, 0, 1);
-      tmp = tmp - 8;
     }
 
   i = 0;
 
+  // save envp string to the top area of user stack
   if (argv != NULL)
     {
       argc = count_args (argv);
-      dprintf ("argc is%d\n", argc);
+      dprintf ("argc is %d\n", argc);
 
+      i = argc - 1;
       while (argv[i] != NULL)
 	{
 	  dprintf ("%s\n", argv[i]);
+	  tmp = (char*) tmp - strlen (argv[i]);
 	  j = 0;
 	  while (argv[i][j] != '\0')
 	    {
-	      *((char*) tmp--) = argv[i][j++];
+	      *((char*) tmp++) = argv[i][j++];
 	      //printf("%c\n",*((char*)tmp+1) );
 	    }
+	  tmp = (char*) tmp - strlen (argv[i]);
+	  argv[i] = (char*) tmp;
 
-	  i++;
+	  tmp = (char*) tmp - 1;
+	  *((char*) tmp) = '\0';
+	  i--;
 	  //printf("%s\n",(char*)tmp+1 );
 	}
     }
 
-  *((int*) tmp) = argc;
+//  uint64_t tmpaddr = (uint64_t) tmp;
+//  dprintf ("string area begin addr is %p", tmpaddr);
+  // set null pointer between string area and envp
+  memset (tmp, 0, 1);
+  tmp -= 8;	      // uint64_t is 8 bytes
+
+  // store envp pointers in the proper place of user stack
+  if (envc > 0)
+    {
+      while (envc-- > 0)
+	{
+	  // envp[envc] = (char*) tmp--;
+	  *((uint64_t*) tmp) = (uint64_t) envp[envc];
+	  tmp = (uint64_t*) tmp - 1;
+	}
+
+    }
+
+  // store argv pointers in the proper place of user stack
+  if (argc > 1)
+    {
+      // set 0 between envp and argv
+      memset (tmp, 0, 1);
+      tmp -= 8; // uint64_t is 8 bytes
+
+      int argc2 = argc;
+      while (argc2-- > 1)
+	{
+	  //argv[argc2] = (char*) tmp--;
+	  *((uint64_t*) tmp) = (uint64_t) argv[argc2];
+	  tmp = (uint64_t*) tmp - 1;
+	}
+
+    }
+
+  *((uint64_t*) tmp) = argc;
   rsp = tmp;
 
   execv_task->rsp = (uint64_t) rsp;

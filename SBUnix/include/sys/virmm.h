@@ -52,7 +52,7 @@
 #define VM_EXEC         0x00000004
 #define VM_SHARED       0x00000008
 
-#define STACK_TOP 0xffff0000
+#define STACK_TOP 0x00000000ffffffff
 
 //page map level 4 page table definition
 struct PML4

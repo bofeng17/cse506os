@@ -97,6 +97,9 @@ typedef struct task_struct
 
 } task_struct;
 
+int
+do_execv (char*, char**, char**);
+
 void
 func_init ();
 

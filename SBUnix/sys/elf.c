@@ -8,6 +8,26 @@
 #include <sys/elf.h>
 #include <sys/string.h>
 
+void *memmove(void *dest, const void *src, size_t n)
+{
+	const char *s;
+	char *d;
+
+	s = src;
+	d = dest;
+	if (s < d && s + n > d) {
+		s += n;
+		d += n;
+		while (n-- > 0)
+			*--d = *--s;
+	} else {
+		while (n-- > 0)
+			*d++ = *s++;
+	}
+
+	return dest;
+}
+
 
 
 void load_elf(task_struct* task, void* file_start)
@@ -15,6 +35,7 @@ void load_elf(task_struct* task, void* file_start)
 
 	
 	int i;
+	
 
 	elf_h *elfh=(elf_h*)file_start;//find elf header
 	//dprintf("LOAD_ELF: elf header \n");
@@ -32,12 +53,30 @@ void load_elf(task_struct* task, void* file_start)
 			{
 				task->mm->start_code=pgh->p_vaddr;
 				task->mm->end_code=pgh->p_vaddr+pgh->p_memsz;
+				//map code/text segment
+				uint64_t code_size = task->mm->end_code - task->mm->start_code;
+                umalloc ((void*) task->mm->start_code, code_size);
+
+                 memmove((void*)task->mm->start_code, (void*)file_start + pgh->p_offset, pgh->p_filesz);
+
+
 			}
 			else//its the .data section
 			{
 				task->mm->bss=pgh->p_memsz-pgh->p_filesz;
+				//map bss
+				umalloc ((void*) task->mm->end_data, task->mm->bss);
+
 				task->mm->start_data=pgh->p_vaddr;
 				task->mm->end_data=pgh->p_vaddr+pgh->p_filesz;
+				// map data segment
+				uint64_t data_size = task->mm->end_data - task->mm->start_data;
+                umalloc ((void*) task->mm->start_data, data_size);
+
+
+                memmove((void*)task->mm->start_data, (void*)file_start + pgh->p_offset, pgh->p_filesz);
+                // WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
+                
 			}
 
 
@@ -46,27 +85,9 @@ void load_elf(task_struct* task, void* file_start)
 		pgh++;
 	}
 
-
-	//task->mm->start_code=(uint64_t)(task->mm->start_code/PAGE_SIZE)*PAGE_SIZE;
-	//task->mm->end_code=(uint64_t)(task->mm->end_code/PAGE_SIZE)*PAGE_SIZE;
 	
 
-	/*//then do mapping for virtual address of code sec
-	uint64_t start_add=(new_mm->start_code/PAGE_SIZE)*PAGE_SIZE+PAGE_SIZE;
-	uint64_t end_add=(new_mm->end_code/PAGE_SIZE)*PAGE_SIZE;
-	uint64_t add_size=start_add-end_add;
-	uint64_t add_pgnum=add_size/PAGE_SIZE;*/
-
-	/*while(add_pgnum!=0)
-	{
-		page_sp* new_page=alloc_page();
-		//map(start_add, new_page);
-		start_add+=PAGE_SIZE;
-		add_pgnum--；
-	}
-
-	return new_task;*/
-
+	
 }
 
 

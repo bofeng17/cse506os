@@ -38,7 +38,7 @@ typedef struct vma_struct
 
   uint64_t permission_flag; /* Flags read, write, execute permissions */
   struct file *vm_file; /* Reference to file descriptors for file opened for writing */
-
+  uint64_t file_offset; /* the vm_start byte in memory corresoonding to file_offset byte in file, used by demand paging*/
 } vma_struct;
 
 typedef struct mm_struct

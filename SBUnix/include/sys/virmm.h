@@ -1,3 +1,6 @@
+#ifndef _VIRMM_H
+#define _VIRMM_H
+
 #include <sys/defs.h> //includes typedef for uint64_t etc.
 #include <sys/physical.h>
 
@@ -124,3 +127,12 @@ void self_ref_write (int level, uint64_t entry_correpond_to_vir, uint64_t entry_
  *         read from the entry specified by entry_correpond_to_vir
  */
 uint64_t self_ref_read (int level, uint64_t entry_correpond_to_vir);
+
+
+/* 
+ * check whether the given virt addr is in an addr range described by VMA
+ * ret 1 if found, otherwise 0
+ */
+int check_vma(uint64_t virt_addr);
+
+#endif

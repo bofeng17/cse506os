@@ -26,7 +26,8 @@
 
 // init msr registers
 void syscall_init();
-void do_syscall ();
 void sysret_to_ring3();
+void do_syscall ();
+void do_exit (int status);
 
 #endif

@@ -144,7 +144,7 @@ void do_syscall () {
             printf("execve No. 59\n");
             break;
         case SYS_exit:
-            printf("exit No. 60\n");
+            __asm__ __volatile__ ("callq exit;");
             break;
         default:
             printf("Syscall wasn't implemented\n");

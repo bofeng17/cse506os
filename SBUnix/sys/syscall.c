@@ -37,7 +37,6 @@ void syscall_init(){
 }
 
 void sysret_to_ring3(){
-    // TODO: when to disable interrupt?
     __asm__ __volatile__("cli");
     
     // manually switch ds/es/fs/gs
@@ -50,14 +49,14 @@ void sysret_to_ring3(){
                          "mov %dx, %fs;"
                          "mov %dx, %gs;");
     
-    //mov rip in rcx & mov rflags into r11
+    // mov rip in rcx & mov rflags into r11
     __asm__ __volatile__("pushfq;"
                          "orq $0x200, (%%rsp);"//enable interrupt after switch to ring3
                          "pop %%r11;"
                          : : "c"(current->rip));
     
     // switch stack
-    __asm__ __volatile__("pushq %%rbp;"// TODO: rbp
+    __asm__ __volatile__("pushq %%rbp;"// TODO: save rbp, causing kernel stack non-empty
                          "mov %%rsp, %%rax;"
                          :"=a"(tss.rsp0));
     __asm__ __volatile__("mov %%rax, %%rsp;"
@@ -71,16 +70,17 @@ void sysret_to_ring3(){
 void do_syscall () {
     
     //TODO: 16bytes stack alignment at syscall
-    
+    //TODO: do we need to enable alignment checking?
     
     /* 
      * local variables must bind to callee saved registers
      * if not, it may be bind by compiler to RCX/R11, which are caller saved
      */
-    //syscall_parameters parm;
     register uint64_t syscall_no __asm__("r12");// bind to r12
     //TODO: return value type?
     register int64_t ret_val __asm__("r13") = 0;// bind to r13
+    
+    __asm__ __volatile__ ("cli");
     
     // store syscall number(rax) in r12, because rax will be used later
     // store rdx in r14
@@ -88,8 +88,7 @@ void do_syscall () {
                          "mov %%rdx, %%r14;"// store rdx in r14
                          :"=a"(syscall_no));
   
-    // TODO: syscall assembly instruction switch cs/ss for us, do we have to manually switch ds/es/fs/gs?
-    // by guess, yes.
+    // manually switch ds/es/fs/gs
     __asm__ __volatile__("mov %ss, %ax;"
                          "mov %ax, %ds;"
                          "mov %ax, %es;"
@@ -97,7 +96,6 @@ void do_syscall () {
                          "mov %ax, %gs;");
     
     // switch stack
-    // TODO: do we need to save rbp?
     __asm__ __volatile__("pushq %%rbp;"
                          "mov %%rsp, %%rax;"
                          :"=a"(current->rsp));// "=a"(current->rsp uses rdx
@@ -120,10 +118,18 @@ void do_syscall () {
     __asm__ __volatile__ ("mov %r10, %rcx;"
                           "mov %r14, %rdx");
     
+    __asm__ __volatile__ ("sti");
+    
     // call correpsonding syscall service routine according to syscall no
     /* 
      * TODO: must check whether switch body modifies rdi, rsi, rdx, rcx, r8, r9
      *       now it changes rdx, so...line swtich+2
+     */
+    /* 
+     * Template:
+     * __asm__ __volatile__ ("mov %r14, %rdx;");
+     * __asm__ __volatile__ ("callq do_xxx;"
+     *                       :"=a"(ret_val));
      */
     switch (syscall_no) {
         case SYS_read:
@@ -133,9 +139,10 @@ void do_syscall () {
         case SYS_write:
             //ret_val = do_write();
             __asm__ __volatile__ ("mov %r14, %rdx;");
-            __asm__ __volatile__ ("mov %rsi, %rdi;"
-                                  "mov $0, %rax;"
-                                  "callq printf;");
+            __asm__ __volatile__ ("mov %%rsi, %%rdi;"
+                                  "mov $0, %%rax;"
+                                  "callq printf;"
+                                  :"=a"(ret_val));
             break;
         case SYS_fork:
             printf("fork No. 57\n");
@@ -144,21 +151,17 @@ void do_syscall () {
             printf("execve No. 59\n");
             break;
         case SYS_exit:
-            __asm__ __volatile__ ("callq exit;");
+            __asm__ __volatile__ ("callq do_exit;"
+                                  :"=a"(ret_val));
             break;
         default:
             printf("Syscall wasn't implemented\n");
             break;
     }
     
-    /* TODO: put return value in rax
-     * by guess, individual service routine already stores return value in rax, 
-     * shall we explicit do that again?
-     */
+    __asm__ __volatile__("cli");
     
-    
-    // TODO: syscall assembly instruction switch cs/ss for us, do we have to manually switch ds/es/fs/gs?
-    // Must do this before sysret
+    // manually switch ds/es/fs/gs, must do this before sysret
     __asm__ __volatile__("mov $0xc0000081, %rcx;" // read from STAR MSR
                          "rdmsr;"
                          "shr $0x10, %rdx;"
@@ -181,9 +184,6 @@ void do_syscall () {
     __asm__ __volatile__("mov %%rax, %%rsp;"
                          "popq %%rbp;"
                          ::"a"(current->rsp));
-    
-    // TODO: when to turn off interrupt?
-    __asm__ __volatile__("cli");
     
     // return to ring3
     __asm__ __volatile__("pop %%r14;"// pop callee saved registers, which are saved by compiler

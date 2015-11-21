@@ -34,23 +34,6 @@ get_vir_from_phy (uint64_t phy_addr)
   return (VIR_START | phy_addr);
 }
 
-//void*
-//alloc_pt (int flag)
-//{
-//  if (flag == KERN)
-//    {
-//      return (void*) allocate_page ();
-//    }
-//  else
-//
-//  if (flag == USER)
-//    {
-//      return kmalloc (USERPT);
-//    }
-//  else
-//    return NULL;
-//}
-
 // set up page directory pointer table
 void*
 set_pdpt (pml4_t pml4, uint64_t pml4_index, int flag)
@@ -254,8 +237,34 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
 
 }
 
-//begin mapping physical memory from 0 to 10MB
+void
+test_selfref (uint64_t testaddr)
+{
+  // uint64_t testaddr = 0xFFFFFFFF80600100;
 
+  uint64_t l4inx = get_pml4e_index (testaddr);
+  void* l4vir = &global_PML4->PML4E[l4inx];
+  uint64_t l4val = global_PML4->PML4E[l4inx];
+  dprintf ("=========================\n");
+
+  dprintf ("testaddr is: %x\n", testaddr);
+
+  dprintf ("(page walk)PML4 entry addr is: %x, value is: %x \n", l4vir, l4val);
+
+  uint64_t l4vir_ref = self_ref_read (PML4, testaddr);
+  dprintf ("(self refer) PML4 entry addr is: %x,", l4vir_ref);
+
+  uint64_t l4val_ref = *((uint64_t*) l4vir_ref);
+  dprintf ("value is: %x \n", l4val_ref);
+  dprintf ("=========================\n");
+
+//  uint64_t testaddr2 = 0x0000000012345678;
+//  uint64_t l1vir_ref2 = self_ref_read (PT, testaddr2);
+//  dprintf ("l1vir_ref2 is: %x \n", l1vir_ref2);
+
+}
+
+//begin mapping physical memory from 0 to 32MB
 void
 initial_mapping ()
 {
@@ -272,7 +281,13 @@ initial_mapping ()
       page_count++;
     }
 
+//use self-reference trick
+  global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
+      | PTE_P;
+
   set_CR3 ((uint64_t) global_PML4 - VIR_START);
+
+  test_selfref (0xFFFFFFFF80600100);
 //  global_PML4 = (pml4_t) get_entry_viraddr ((uint64_t) global_PML4);
 }
 
@@ -319,7 +334,6 @@ get_base (int flag)
  * flag,1 indicates task_struct or
  *  	0 for kernel_stack
  */
-
 void*
 kmalloc (int flag)
 {
@@ -483,4 +497,89 @@ umalloc (void* addr, size_t size)
 //  memset ((void *) ret_addr, 0, size);
 
   return addr;
+}
+
+//================================PML4 Self Reference Bits
+//                              |                 36 bits (or)             |
+//                              |   510   ||   510   ||   510   ||   510   |
+//binary is 0000 0000 0000 0000 1111 1111 0111 1111 1011 1111 1101 1111 1110 0000 0000 0000
+// hex is 0x0    0    0    0    F    F    7    F    B    F    D    F    E    0    0    0
+// hex is 0x0000FF7FBFDFE000
+#define PML4_SELF_REF 0x0000FF7FBFDFE000
+//                              |                36 bits mask (and)        |
+//binary is 1111 1111 1111 1111 0000 0000 0000 0000 0000 0000 0000 0000 0000 1111 1111 1111
+// hex is 0xF    F    F    F    0    0    0    0    0    0    0    0    0    F    F    F
+// hex is 0xFFFF000000000FFF
+#define PML4_SELF_REF_MASK 0xFFFF000000000FFF
+
+//================================PDPT Self Reference Bits
+//                              |            27 bits            |
+//                              |   510   ||   510   ||   510   |
+//binary is 0000 0000 0000 0000 1111 1111 0111 1111 1011 1111 1100 0000 0000 0000 0000 0000
+// hex is 0x0    0    0    0    F    F    7    F    B    F    C    0    0    0    0    0
+// hex is 0x0000FF7FBFC00000
+#define PDPT_SELF_REF 0x0000FF7FBFC00000
+//                              |            27 bits mask       |
+//binary is 1111 1111 1111 1111 0000 0000 0000 0000 0000 0000 0001 1111 1111 1111 1111 1111
+// hex is 0xF    F    F    F    0    0    0    0    0    0    1    F    F    F    F    F
+// hex is 0xFFFF0000001FFFFF
+#define PDPT_SELF_REF_MASK 0xFFFF0000001FFFFF
+
+//================================PDT Self Reference Bits
+//                              |       18 bits      |
+//                              |   510   ||   510   |
+//binary is 0000 0000 0000 0000 1111 1111 0111 1111 1000 0000 0000 0000 0000 0000 0000 0000
+// hex is 0x0    0    0    0    F    F    7    F    8    0    0    0    0    0    0    0
+// hex is 0x0000FF7F80000000
+#define PDT_SELF_REF 0x0000FF7F80000000
+//                              |     18 bits mask   |
+//binary is 1111 1111 1111 1111 0000 0000 0000 0000 0011 1111 1111 1111 1111 1111 1111 1111
+// hex is 0xF    F    F    F    0    0    0    0    3    F    F    F    F    F    F    F
+// hex is 0xFFFF00003FFFFFFF
+#define PDT_SELF_REF_MASK 0xFFFF00003FFFFFFF
+
+//================================PT Self Reference Bits
+//                              |  9 bits |
+//                              |   510   |
+//binary is 0000 0000 0000 0000 1111 1111 0000 0000 0000 0000 0000 0000 0000 0000 0000 0000
+// hex is 0x0    0    0    0    F    F    0    0    0    0    0    0    0    0    0    0
+// hex is 0x0000FF0000000000
+//                              |9bitsMask|
+//binary is 1111 1111 1111 1111 0000 0000 0111 1111 1111 1111 1111 1111 1111 1111 1111 1111
+// hex is 0xF    F    F    F    0    0    7    F    F    F    F    F    F    F    F    F
+// hex is 0xFFFF007FFFFFFFFF
+
+#define SELF_REF_BITS_MASK  0xFFFF007FFFFFFFFF
+#define SELF_REF_BITS       0x0000FF0000000000
+
+#define SELF_REF_HIGH16BITS 0xFFFF000000000000
+#define SELF_REF_LOW3BITS  0xFFFFFFFFFFFFFFF8// the ending 3 bits is 000
+
+//set level to one of the PML4, PDPT, PDT, PT
+uint64_t
+self_ref_read (int level, uint64_t vir)
+{
+  int i = 0;
+
+  for (i = level; i > 0; i--)
+    {
+      vir >>= 9;
+      vir &= SELF_REF_BITS_MASK;
+      vir |= SELF_REF_BITS;
+      // dprintf ("i is %d\n", i);
+    }
+
+  vir |= SELF_REF_HIGH16BITS;
+  vir &= SELF_REF_LOW3BITS;
+
+  return vir;
+
+}
+
+//set level to one of the PML4, PDPT, PDT, PT
+void
+self_ref_write (int level, uint64_t vir, uint64_t phy)
+{
+  uint64_t addr = self_ref_read (level, vir);
+  *((uint64_t*) addr) = phy;
 }

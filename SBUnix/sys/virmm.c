@@ -237,6 +237,26 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
 
 }
 
+void
+test_selfref ()
+{
+  uint64_t l4inx = get_pml4e_index (VIR_START);
+  void* l4vir = &global_PML4->PML4E[l4inx];
+  uint64_t l4val = global_PML4->PML4E[l4inx];
+  dprintf ("l4val of l4vir[ %x ] is: %x \n", l4vir, l4val);
+
+  uint64_t l4vir_ref = self_ref_read (PML4, VIR_START);
+  dprintf ("l4vir_ref is: %x ", l4vir_ref);
+
+  uint64_t l4val_ref = *((uint64_t*) l4vir_ref);
+  dprintf ("l4val_ref  is: %x \n", l4val_ref);
+
+//  uint64_t l3inx = get_pdpte_index (VIR_START);
+//  uint64_t l2inx = get_pdte_index (VIR_START);
+//  uint64_t l1inx = get_pte_index (VIR_START);
+
+}
+
 //begin mapping physical memory from 0 to 32MB
 void
 initial_mapping ()
@@ -254,7 +274,13 @@ initial_mapping ()
       page_count++;
     }
 
+//use self-reference trick
+  global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
+      | PTE_P;
+
   set_CR3 ((uint64_t) global_PML4 - VIR_START);
+
+  test_selfref ();
 //  global_PML4 = (pml4_t) get_entry_viraddr ((uint64_t) global_PML4);
 }
 
@@ -466,32 +492,29 @@ umalloc (void* addr, size_t size)
   return addr;
 }
 
-/*
- * level: page table level
- * entry_correpond_to_vir: the virtual address specifying which entry to write
- *                e.g. when a page fault happens, the virtual addr. causing it
- is read from CR2 register and passed to this parameter
- * entry_val_phy: the physical addr. of page frame/next level page table
- *                to be written to the entry specified by entry_correpond_to_vir
- *
- */
-void
-self_ref_write (int level, uint64_t entry_correpond_to_vir,
-		uint64_t entry_val_phy)
+#define SELF_REF_BITS 0xFF00000000000000// the beginning 9 bits is 111111110
+#define SELF_REF_LOW  0xFFFFFFFFFFFFFFF8// the ending 3 bits is 000
+
+//set level to one of the PML4, PDPT, PDT, PT
+uint64_t
+self_ref_read (int level, uint64_t vir)
 {
+  int i = 0;
+  for (i = level - 1; i >= 0; i--)
+    {
+      vir >>= 9;
+      vir |= SELF_REF_BITS;
+      dprintf ("i is %d\n", i);
+    }
+  vir &= SELF_REF_LOW;
+  return vir;
 
 }
 
-/*
- * entry_correpond_to_vir: same to self_ref_write
- * return: the physical addr. of page frame/next level page table
- *         read from the entry specified by entry_correpond_to_vir
- */
-uint64_t
-self_ref_read (int level, uint64_t entry_correpond_to_vir)
+//set level to one of the PML4, PDPT, PDT, PT
+void
+self_ref_write (int level, uint64_t vir, uint64_t phy)
 {
-  uint64_t phy_addr = 0;
-
-  return phy_addr;
-
+  uint64_t addr = self_ref_read (level, vir);
+  *((uint64_t*) addr) = phy;
 }

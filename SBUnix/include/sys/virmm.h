@@ -63,32 +63,32 @@
 #define PT 1
 
 //page map level 4 page table definition
-struct pml4_t
+struct pml4t
 {
   uint64_t PML4E[TABLE_SIZE];
 };
-typedef struct pml4_t* pml4_t;
+typedef struct pml4t* pml4_t;
 
 //page directory pointer table
-struct pdpt_t
+struct pdptt
 {
   uint64_t PDPTE[TABLE_SIZE];
 };
-typedef struct pdpt_t* pdpt_t;
+typedef struct pdptt* pdpt_t;
 
 //page directory
-struct pdt_t
+struct pdtt
 {
   uint64_t PDTE[TABLE_SIZE];
 };
-typedef struct pdt_t* pdt_t;
+typedef struct pdtt* pdt_t;
 
 //page table
-struct pt_t
+struct ptt
 {
   uint64_t PTE[TABLE_SIZE];
 };
-typedef struct pt_t* pt_t;
+typedef struct ptt* pt_t;
 
 void
 init_mm ();
@@ -111,6 +111,9 @@ kfree (void* addr, int flag);
 void*
 umalloc (void* addr, size_t size);
 
+//TODO: remember to set physical page to zero
+void
+ufree (void* addr);
 /* Self-reference:
  * make 510th entry of PML4, instead of 511th entry which is used by kernel mapping, 
  * points to the 1st entry of PML4

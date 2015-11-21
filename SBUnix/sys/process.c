@@ -251,7 +251,7 @@ test_execv (task_struct* execv_task, char* bin_name, char** argv, char** envp)
   tmp = (void *) ((uint64_t) tmp & 0xfffffff8);
 
   // set null pointer between string area and envp
-  memset (tmp, 0, 1);
+  memset (tmp, 0, 8);
   tmp -= 8;	      // uint64_t is 8 bytes
 
   // store envp pointers in the proper place of user stack
@@ -270,7 +270,7 @@ test_execv (task_struct* execv_task, char* bin_name, char** argv, char** envp)
   if (argc > 1)
     {
       // set 0 between envp and argv
-      memset (tmp, 0, 1);
+      memset (tmp, 0, 8);
       tmp -= 8; // uint64_t is 8 bytes
 
       int argc2 = argc;
@@ -442,11 +442,15 @@ context_switch (task_struct *prev, task_struct *next)
 int
 do_execv (char* bin_name, char ** argv, char** envp)
 {
-  int retval = 0; // return code indicates success or not
-  int argc = 1;
-  int envc = 0;
   // create new task
   task_struct* execv_task = (task_struct*) kmalloc (TASK);
+
+  int argc = 0;
+  int envc = 0;
+  int retval = 0;
+
+  char* argv_0 = bin_name;
+
   execv_task->pid = current->pid;
   execv_task->ppid = current->ppid;
 
@@ -456,17 +460,6 @@ do_execv (char* bin_name, char ** argv, char** envp)
   void* file = find_file (bin_name);
 
   load_elf (execv_task, file); // -1 if error
-
-//  // map bss
-//  umalloc ((void*) execv_task->mm->end_data, execv_task->mm->bss);
-//
-//  // map data segment
-//  uint64_t data_size = execv_task->mm->end_data - execv_task->mm->start_data;
-//  umalloc ((void*) execv_task->mm->start_data, data_size);
-//
-//  //map code/text segment
-//  uint64_t code_size = execv_task->mm->end_code - execv_task->mm->start_code;
-//  umalloc ((void*) execv_task->mm->start_code, code_size);
 
   //allocate heap
   uint64_t initial_heap_size = 10 * PAGE_SIZE;
@@ -538,7 +531,7 @@ do_execv (char* bin_name, char ** argv, char** envp)
 	      //printf("%c\n",*((char*)tmp+1) );
 	    }
 	  tmp = (char*) tmp - strlen (argv[i]);
-	  argv[i] = (char*) tmp;
+	  argv[i + 1] = (char*) tmp;
 
 	  tmp = (char*) tmp - 1;
 	  *((char*) tmp) = '\0';
@@ -547,8 +540,24 @@ do_execv (char* bin_name, char ** argv, char** envp)
 	}
     }
 
-//  uint64_t tmpaddr = (uint64_t) tmp;
-//  dprintf ("string area begin addr is %p", tmpaddr);
+  //copy argv_0 (binary name) and set argv0 pointer
+  tmp = (char*) tmp - strlen (argv_0);
+  j = 0;
+  while (argv_0[j] != '\0')
+    {
+      *((char*) tmp++) = argv_0[j++];
+    }
+  tmp = (char*) tmp - strlen (argv_0);
+  argv[0] = (char*) tmp;
+
+  tmp = (char*) tmp - 1;
+  *((char*) tmp) = '\0';
+
+  argc += 1;
+
+  // align last byte
+  tmp = (void *) ((uint64_t) tmp & 0xfffffff8);
+
   // set null pointer between string area and envp
   memset (tmp, 0, 1);
   tmp -= 8;	      // uint64_t is 8 bytes
@@ -573,7 +582,7 @@ do_execv (char* bin_name, char ** argv, char** envp)
       tmp -= 8; // uint64_t is 8 bytes
 
       int argc2 = argc;
-      while (argc2-- > 1)
+      while (argc2-- > 0)
 	{
 	  //argv[argc2] = (char*) tmp--;
 	  *((uint64_t*) tmp) = (uint64_t) argv[argc2];

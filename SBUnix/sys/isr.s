@@ -78,7 +78,17 @@ CPU_Exceptions 10
 CPU_Exceptions 11
 CPU_Exceptions 12
 CPU_Exceptions 13
-CPU_Exceptions 14
+
+# CPU_Exceptions 14
+  .globl exception14
+  exception14:
+    cli
+    push_al # TODO: do we need to manually push all?
+    call page_fault_handler
+    pop_al
+    sti
+    iretq
+
 CPU_Exceptions 15
 CPU_Exceptions 16
 CPU_Exceptions 17

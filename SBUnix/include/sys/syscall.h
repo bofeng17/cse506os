@@ -24,18 +24,10 @@
 #define SYS_dup2       33
 #define SYS_getdents   78
 
-//struct syscall_parm {
-//    uint64_t rdi;
-//    uint64_t rsi;
-//    uint64_t rdx;
-//    uint64_t r10;
-//    uint64_t r8;
-//    uint64_t r9;
-//} __attribute__((packed));
-//typedef struct syscall_parm syscall_parameters;
-
 // init msr registers
 void syscall_init();
+void sysret_to_ring3();
 void do_syscall ();
+void do_exit (int status);
 
 #endif

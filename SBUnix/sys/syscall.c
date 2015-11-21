@@ -3,11 +3,6 @@
 #include <sys/process.h>
 #include <sys/gdt.h>
 
-#include <sys/idt.h>
-
-void ring3_test ();
-void do_syscall ();
-
 // init msr registers 
 void syscall_init(){
     uint32_t hi, lo;
@@ -41,29 +36,35 @@ void syscall_init(){
     __asm__ __volatile__("wrmsr" : : "a"(lo), "d"(hi), "c"(msr));
 }
 
-int64_t sysret_to_ring3(){
+void sysret_to_ring3(){
+    // TODO: when to disable interrupt?
     __asm__ __volatile__("cli");
+    
+    // manually switch ds/es/fs/gs
+    __asm__ __volatile__("mov $0xc0000081, %rcx;" // read from STAR MSR
+                         "rdmsr;"
+                         "shr $0x10, %rdx;"
+                         "add $0x8, %rdx;" // now rdx stores ss selector of ring3
+                         "mov %dx, %ds;"
+                         "mov %dx, %es;"
+                         "mov %dx, %fs;"
+                         "mov %dx, %gs;");
     
     //mov rip in rcx & mov rflags into r11
     __asm__ __volatile__("pushfq;"
                          "orq $0x200, (%%rsp);"//enable interrupt after switch to ring3
                          "pop %%r11;"
-                         : : "c"((uint64_t)ring3_test));
+                         : : "c"(current->rip));
     
-    __asm__ __volatile__("mov $0x101000, %%rsp;"
-                         ::);
-    //    __asm__ __volatile__("mov $0x17, %%rax;"
-    //                         ::);
+    // switch stack
+    __asm__ __volatile__("pushq %%rbp;"// TODO: rbp
+                         "mov %%rsp, %%rax;"
+                         :"=a"(tss.rsp0));
+    __asm__ __volatile__("mov %%rax, %%rsp;"
+                         ::"a"(current->rsp));
     
+    // return to ring3
     __asm__ __volatile__("rex.w sysret");
-    return 0;
-}
-
-// test whether succeed switching to ring 3
-void ring3_test () {
-    printf("Just a simple test");
-    __asm__ __volatile__("rex.w syscall");
-    //__asm__ __volatile__("hlt");
 }
 
 // kernel syscall dispatcher
@@ -86,15 +87,7 @@ void do_syscall () {
     __asm__ __volatile__("pushq %%r14;"// push callee-saved register before using it
                          "mov %%rdx, %%r14;"// store rdx in r14
                          :"=a"(syscall_no));
-    
-//    // read 6 parameters, write into parm struct
-//    __asm__ __volatile__(""
-//                         :"=D"(parm.rdi),"=S"(parm.rsi),"=d"(parm.rdx));
-//    __asm__ __volatile__("mov %%r10, %%rdi;"
-//                         "mov %%r8, %%rsi;"
-//                         "mov %%r9, %%rdx;"
-//                         :"=D"(parm.r10),"=S"(parm.r8),"=d"(parm.r9));
-    
+  
     // TODO: syscall assembly instruction switch cs/ss for us, do we have to manually switch ds/es/fs/gs?
     // by guess, yes.
     __asm__ __volatile__("mov %ss, %ax;"
@@ -144,14 +137,14 @@ void do_syscall () {
                                   "mov $0, %rax;"
                                   "callq printf;");
             break;
-        case 0x10:
-            exception0();
+        case SYS_fork:
+            printf("fork No. 57\n");
             break;
-        case 0x11:
-            exception1();
+        case SYS_execve:
+            printf("execve No. 59\n");
             break;
-        case 0x12:
-            exception2();
+        case SYS_exit:
+            __asm__ __volatile__ ("callq exit;");
             break;
         default:
             printf("Syscall wasn't implemented\n");
@@ -167,9 +160,9 @@ void do_syscall () {
     // TODO: syscall assembly instruction switch cs/ss for us, do we have to manually switch ds/es/fs/gs?
     // Must do this before sysret
     __asm__ __volatile__("mov $0xc0000081, %rcx;" // read from STAR MSR
-                         "wrmsr;"
-                         "shl $40, %rdx;"
-                         "shr $56, %rdx;"// now rdx stores ss selector of ring3
+                         "rdmsr;"
+                         "shr $0x10, %rdx;"
+                         "add $0x8, %rdx;"// now rdx stores ss selector of ring3
                          "mov %dx, %ds;"
                          "mov %dx, %es;"
                          "mov %dx, %fs;"
@@ -189,12 +182,14 @@ void do_syscall () {
                          "popq %%rbp;"
                          ::"a"(current->rsp));
     
-    // return to ring3
-    // TODO: must test whether interrupt is successfully enabled after to ring3
+    // TODO: when to turn off interrupt?
     __asm__ __volatile__("cli");
+    
+    // return to ring3
     __asm__ __volatile__("pop %%r14;"// pop callee saved registers, which are saved by compiler
                          "pop %%r13;"
                          "pop %%r12;"
+                         "add $0x8,%%rsp;" // TODO: be cautious @ manipulating rsp
                          "rex.w sysret"// move ret_val into rax
                          ::"a"(ret_val));
 }

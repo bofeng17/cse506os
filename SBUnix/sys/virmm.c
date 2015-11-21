@@ -34,23 +34,6 @@ get_vir_from_phy (uint64_t phy_addr)
   return (VIR_START | phy_addr);
 }
 
-//void*
-//alloc_pt (int flag)
-//{
-//  if (flag == KERN)
-//    {
-//      return (void*) allocate_page ();
-//    }
-//  else
-//
-//  if (flag == USER)
-//    {
-//      return kmalloc (USERPT);
-//    }
-//  else
-//    return NULL;
-//}
-
 // set up page directory pointer table
 void*
 set_pdpt (pml4_t pml4, uint64_t pml4_index, int flag)
@@ -254,8 +237,7 @@ map_virmem_to_phymem (uint64_t vir_addr, uint64_t phy_addr, int flag)
 
 }
 
-//begin mapping physical memory from 0 to 10MB
-
+//begin mapping physical memory from 0 to 32MB
 void
 initial_mapping ()
 {
@@ -319,7 +301,6 @@ get_base (int flag)
  * flag,1 indicates task_struct or
  *  	0 for kernel_stack
  */
-
 void*
 kmalloc (int flag)
 {
@@ -483,4 +464,34 @@ umalloc (void* addr, size_t size)
 //  memset ((void *) ret_addr, 0, size);
 
   return addr;
+}
+
+/*
+ * level: page table level
+ * entry_correpond_to_vir: the virtual address specifying which entry to write
+ *                e.g. when a page fault happens, the virtual addr. causing it
+ is read from CR2 register and passed to this parameter
+ * entry_val_phy: the physical addr. of page frame/next level page table
+ *                to be written to the entry specified by entry_correpond_to_vir
+ *
+ */
+void
+self_ref_write (int level, uint64_t entry_correpond_to_vir,
+		uint64_t entry_val_phy)
+{
+
+}
+
+/*
+ * entry_correpond_to_vir: same to self_ref_write
+ * return: the physical addr. of page frame/next level page table
+ *         read from the entry specified by entry_correpond_to_vir
+ */
+uint64_t
+self_ref_read (int level, uint64_t entry_correpond_to_vir)
+{
+  uint64_t phy_addr = 0;
+
+  return phy_addr;
+
 }

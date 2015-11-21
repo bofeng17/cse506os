@@ -1,3 +1,6 @@
+#ifndef _VIRMM_H
+#define _VIRMM_H
+
 #include <sys/defs.h> //includes typedef for uint64_t etc.
 #include <sys/physical.h>
 
@@ -54,33 +57,38 @@
 
 #define STACK_TOP 0x00000000ffffffff
 
+#define PML4 4
+#define PDPT 3
+#define PDT 2
+#define PT 1
+
 //page map level 4 page table definition
-struct PML4
+struct pml4_t
 {
   uint64_t PML4E[TABLE_SIZE];
 };
-typedef struct PML4* pml4_t;
+typedef struct pml4_t* pml4_t;
 
 //page directory pointer table
-struct PDPT
+struct pdpt_t
 {
   uint64_t PDPTE[TABLE_SIZE];
 };
-typedef struct PDPT* pdpt_t;
+typedef struct pdpt_t* pdpt_t;
 
 //page directory
-struct PDT
+struct pdt_t
 {
   uint64_t PDTE[TABLE_SIZE];
 };
-typedef struct PDT* pdt_t;
+typedef struct pdt_t* pdt_t;
 
 //page table
-struct PT
+struct pt_t
 {
   uint64_t PTE[TABLE_SIZE];
 };
-typedef struct PT* pt_t;
+typedef struct pt_t* pt_t;
 
 void
 init_mm ();
@@ -112,15 +120,20 @@ umalloc (void* addr, size_t size);
  * level: page table level
  * entry_correpond_to_vir: the virtual address specifying which entry to write
  *                e.g. when a page fault happens, the virtual addr. causing it
-                       is read from CR2 register and passed to this parameter
+ is read from CR2 register and passed to this parameter
  * entry_val_phy: the physical addr. of page frame/next level page table
  *                to be written to the entry specified by entry_correpond_to_vir
  */
-void self_ref_write (int level, uint64_t entry_correpond_to_vir, uint64_t entry_val_phy);
+void
+self_ref_write (int level, uint64_t entry_correpond_to_vir,
+		uint64_t entry_val_phy);
 
 /*
  * entry_correpond_to_vir: same to self_ref_write
  * return: the physical addr. of page frame/next level page table
  *         read from the entry specified by entry_correpond_to_vir
  */
-uint64_t self_ref_read (int level, uint64_t entry_correpond_to_vir);
+uint64_t
+self_ref_read (int level, uint64_t entry_correpond_to_vir);
+
+#endif

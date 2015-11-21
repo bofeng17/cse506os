@@ -149,7 +149,7 @@ func_init ()
 
   sysret_to_ring3 ();
 
-  do_exit (0);
+  //do_exit (0);
 }
 
 task_struct*

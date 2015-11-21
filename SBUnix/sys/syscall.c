@@ -127,7 +127,7 @@ void do_syscall () {
      */
     /* 
      * Template:
-     * __asm__ __volatile__ ("mov %r14, %rdx;");
+     * __asm__ __volatile__ ("mov %r14, %rdx;"); // maybe to removed
      * __asm__ __volatile__ ("callq do_xxx;"
      *                       :"=a"(ret_val));
      */

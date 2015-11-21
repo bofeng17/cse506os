@@ -242,17 +242,14 @@ test_execv (task_struct* execv_task, char* bin_name, char** argv, char** envp)
   tmp = (char*) tmp - strlen (argv_0);
   argv[0] = (char*) tmp;
 
-  tmp = (char*) tmp - 1;
-  *((char*) tmp) = '\0';
-
   argc += 1;
 
   // align last byte
   tmp = (void *) ((uint64_t) tmp & 0xfffffff8);
 
   // set null pointer between string area and envp
-  memset (tmp, 0, 8);
   tmp -= 8;	      // uint64_t is 8 bytes
+  memset (tmp, 0, 8);
 
   // store envp pointers in the proper place of user stack
   if (envc > 0)
@@ -267,13 +264,13 @@ test_execv (task_struct* execv_task, char* bin_name, char** argv, char** envp)
     }
 
   // store argv pointers in the proper place of user stack
-  if (argc > 1)
+  if (argc > 0)
     {
       // set 0 between envp and argv
       memset (tmp, 0, 8);
       tmp -= 8; // uint64_t is 8 bytes
 
-      int argc2 = argc;
+      int argc2 = argc - 1;
       while (argc2-- > 0)
 	{
 	  //argv[argc2] = (char*) tmp--;

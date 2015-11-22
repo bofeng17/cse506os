@@ -565,6 +565,7 @@ int do_fork()
   new_task->pid = assign_pid();
   new_task->ppid = current->pid;
   //assign new pid for child
+  
 
   //copy contents from parent to child
   strcpy(new_task->task_name, current->task_name);

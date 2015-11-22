@@ -224,10 +224,6 @@ void test_selfref(uint64_t testaddr) {
 	dprintf("(self refer) PML4 entry value is: %x \n", l4val_ref);
 	dprintf("=========================\n");
 
-//  uint64_t testaddr2 = 0x0000000012345678;
-//  uint64_t l1vir_ref2 = self_ref_read (PT, testaddr2);
-//  dprintf ("l1vir_ref2 is: %x \n", l1vir_ref2);
-
 }
 
 //begin mapping physical memory from 0 to 32MB

@@ -1,3 +1,6 @@
+#ifndef _PHYSICAL_H
+#define _PHYSICAL_H
+
 #define PAGE_OCP 0x0001
 #define PAGE_FREE 0x0000
 //#define page_num 10000 //to be changed
@@ -37,3 +40,5 @@ get_kmalloc_base ();
 
 void
 phy_free (uint64_t addr);
+
+#endif

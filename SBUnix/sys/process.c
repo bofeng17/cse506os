@@ -427,6 +427,118 @@ create_user_process(char* bin_name) {
 	return new_task;
 }
 
+void set_cow_routine(int flags, uint64_t vaddr) {
+	//read the entry back
+	uint64_t tmp = self_ref_read(flags, vaddr);
+	//set the entry with cow bit
+	tmp = (uint64_t)(tmp | PTE_COW);
+	//write the entry back
+	self_ref_write(flags, vaddr, tmp);
+}
+
+void set_cow() {
+	//calculate the code , data, stack, bss size
+	uint64_t i;
+	uint64_t code_size = current->mm->end_code - current->mm->start_code;
+	uint64_t code_start = current->mm->start_code;
+	uint64_t data_size = current->mm->end_data - current->mm->start_data;
+	uint64_t data_start = current->mm->start_data;
+	uint64_t stack_size = STACK_TOP - current->mm->start_stack;
+	uint64_t stack_start = current->mm->start_stack;
+	uint64_t bss_size = current->mm->bss;
+	uint64_t bss_start = current->mm->end_data;
+
+	//set cow bit for PML4, PDPT of code, 
+	//PML4 and PDPT should able able to cover the length of code
+	set_cow_routine(PML4, code_start);
+	set_cow_routine(PDPT, code_start);
+
+	//set cow bit for PDT, PT of code, 
+	//these two may not able to cover length of code, so we set cow bit for every address
+	for (i = 0; i < code_size; i++) {
+
+		set_cow_routine(PDT, code_start);
+		set_cow_routine(PT, code_start);
+
+		code_start += 1;
+	}
+
+	//set cow bit for PML4, PDPT of data, 
+	//PML4 and PDPT should able able to cover the length of data
+	set_cow_routine(PML4, data_start);
+	set_cow_routine(PDPT, data_start);
+
+	//set cow bit for PDT, PT of data, 
+	//these two may not able to cover length of data, so we set cow bit for every address
+	for (i = 0; i < data_size; i++) {
+
+		set_cow_routine(PDT, data_start);
+		set_cow_routine(PT, data_start);
+
+		data_start += 1;
+	}
+
+	//set cow bit for PML4, PDPT of stack, 
+	//PML4 and PDPT should able able to cover the length of stack
+	set_cow_routine(PML4, stack_start);
+	set_cow_routine(PDPT, stack_start);
+
+	//set cow bit for PDT, PT of stack, 
+	//these two may not able to cover length of stack, so we set cow bit for every address
+	for (i = 0; i < stack_size; i++) {
+
+		set_cow_routine(PDT, stack_start);
+		set_cow_routine(PT, stack_start);
+
+		stack_start += 1;
+	}
+
+	//set cow bit for PML4, PDPT of heap, 
+	//PML4 and PDPT should able able to cover the length of heap
+	set_cow_routine(PML4, bss_start);
+	set_cow_routine(PDPT, bss_start);
+
+	//set cow bit for PDT, PT of heap, 
+	//these two may not able to cover length of heap, so we set cow bit for every address
+	for (i = 0; i < bss_size; i++) {
+		set_cow_routine(PDT, bss_start);
+		set_cow_routine(PT, bss_start);
+
+		bss_start += 1;
+	}
+
+}
+
+int do_fork() {
+	task_struct * new_task = (task_struct*) (kmalloc(TASK));
+	//create a new task struct
+
+	set_task_struct(new_task);
+	new_task->pid = assign_pid();
+	new_task->ppid = current->pid;
+	//assign new pid for child
+
+	//copy contents from parent to child
+	strcpy(new_task->task_name, current->task_name);
+	memcpy((void*) new_task->mm, (void*) current->mm, 0x1000);
+	new_task->cr3 = current->cr3;
+	new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
+	//child has it own kernel stack
+
+	new_task->rip = current->rip;
+	new_task->mm->start_stack = (uint64_t) umalloc((void*) STACK_TOP,
+			PAGE_SIZE);
+	//child has it own stack
+
+	new_task->task_state = TASK_READY;
+
+	set_cow();  //set cow bit
+
+	return new_task->pid;
+	//just return child's pid
+
+}
+
 void do_exit(int status) {
 	// current = current->next;
 	current->task_state = TASK_ZOMBIE;

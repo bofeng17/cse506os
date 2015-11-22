@@ -220,11 +220,8 @@ void test_selfref(uint64_t testaddr) {
 
 	dprintf("(page walk)PML4 entry addr is: %x, value is: %x \n", l4vir, l4val);
 
-	uint64_t l4vir_ref = self_ref_read(PML4, testaddr);
-	dprintf("(self refer) PML4 entry addr is: %x,", l4vir_ref);
-
-	uint64_t l4val_ref = *((uint64_t*) l4vir_ref);
-	dprintf("value is: %x \n", l4val_ref);
+	uint64_t l4val_ref = self_ref_read(PML4, testaddr);
+	dprintf("(self refer) PML4 entry value is: %x \n", l4val_ref);
 	dprintf("=========================\n");
 
 //  uint64_t testaddr2 = 0x0000000012345678;

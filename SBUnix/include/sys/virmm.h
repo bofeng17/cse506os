@@ -141,4 +141,5 @@ self_ref_read(int level, uint64_t vir);
 int
 check_vma(uint64_t virt_addr);
 
+void test_selfref(uint64_t testaddr);
 #endif

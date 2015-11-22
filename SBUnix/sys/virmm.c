@@ -400,6 +400,15 @@ void kfree(void* addr, int flag) {
 
 }
 
+// new umalloc implementation using demand paging
+//void*
+//umalloc(void* addr, size_t size) {
+//
+//
+//	return addr;
+//}
+
+// original  umalloc that sets up page tables and maps vir to phy
 void*
 umalloc(void* addr, size_t size) {
 //  user_global_PML4 = (pml4_t) get_CR3 ();
@@ -415,9 +424,6 @@ umalloc(void* addr, size_t size) {
 		map_virmem_to_phymem((uint64_t) addr, allocate_page_user(), USERPT);
 		//     vmalloc_base += PAGE_SIZE;
 	}
-
-	// memset (addr, 0, size);
-//  memset ((void *) ret_addr, 0, size);
 
 	return addr;
 }

@@ -136,7 +136,8 @@ self_ref_write (int level, uint64_t entry_correpond_to_vir,
  * return: the physical addr. of page frame/next level page table
  *         read from the entry specified by entry_correpond_to_vir
  */
-
+uint64_t
+self_ref_read (int level, uint64_t vir);
 /* 
  * check whether the given virt addr is in an addr range described by VMA
  * ret 1 if found, otherwise 0

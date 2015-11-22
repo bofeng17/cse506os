@@ -63,57 +63,53 @@
 #define PT 1
 
 //page map level 4 page table definition
-struct pml4t
-{
-  uint64_t PML4E[TABLE_SIZE];
+struct pml4t {
+	uint64_t PML4E[TABLE_SIZE];
 };
 typedef struct pml4t* pml4_t;
 
 //page directory pointer table
-struct pdptt
-{
-  uint64_t PDPTE[TABLE_SIZE];
+struct pdptt {
+	uint64_t PDPTE[TABLE_SIZE];
 };
 typedef struct pdptt* pdpt_t;
 
 //page directory
-struct pdtt
-{
-  uint64_t PDTE[TABLE_SIZE];
+struct pdtt {
+	uint64_t PDTE[TABLE_SIZE];
 };
 typedef struct pdtt* pdt_t;
 
 //page table
-struct ptt
-{
-  uint64_t PTE[TABLE_SIZE];
+struct ptt {
+	uint64_t PTE[TABLE_SIZE];
 };
 typedef struct ptt* pt_t;
 
 void
-init_mm ();
+init_mm();
 
 void
-initial_mapping ();
+initial_mapping();
 
 uint64_t
-get_CR3 ();
+get_CR3();
 
 void
-set_CR3 (uint64_t CR3);
+set_CR3(uint64_t CR3);
 
 void*
-kmalloc (int flag);
+kmalloc(int flag);
 
 void
-kfree (void* addr, int flag);
+kfree(void* addr, int flag);
 
 void*
-umalloc (void* addr, size_t size);
+umalloc(void* addr, size_t size);
 
 //TODO: remember to set physical page to zero
 void
-ufree (void* addr);
+ufree(void* addr);
 /* Self-reference:
  * make 510th entry of PML4, instead of 511th entry which is used by kernel mapping, 
  * points to the 1st entry of PML4
@@ -128,7 +124,7 @@ ufree (void* addr);
  *                to be written to the entry specified by entry_correpond_to_vir
  */
 void
-self_ref_write (int level, uint64_t entry_correpond_to_vir,
+self_ref_write(int level, uint64_t entry_correpond_to_vir,
 		uint64_t entry_val_phy);
 
 /*
@@ -137,12 +133,12 @@ self_ref_write (int level, uint64_t entry_correpond_to_vir,
  *         read from the entry specified by entry_correpond_to_vir
  */
 uint64_t
-self_ref_read (int level, uint64_t vir);
+self_ref_read(int level, uint64_t vir);
 /* 
  * check whether the given virt addr is in an addr range described by VMA
  * ret 1 if found, otherwise 0
  */
 int
-check_vma (uint64_t virt_addr);
+check_vma(uint64_t virt_addr);
 
 #endif

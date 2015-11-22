@@ -485,7 +485,7 @@ umalloc(void* addr, size_t size) {
 #define SELF_REF_HIGH16BITS 0xFFFF000000000000
 #define SELF_REF_LOW3BITS  0xFFFFFFFFFFFFFFF8// the ending 3 bits is 000
 
-//set level to one of the PML4, PDPT, PDT, PT
+//return value is entry address
 uint64_t self_ref_read_entry_vir(int level, uint64_t vir) {
 	int i = 0;
 
@@ -503,6 +503,8 @@ uint64_t self_ref_read_entry_vir(int level, uint64_t vir) {
 
 }
 
+//set level to one of the PML4, PDPT, PDT, PT
+// return value is physical address i.e. entry content
 uint64_t self_ref_read(int level, uint64_t vir) {
 	uint64_t addr = self_ref_read_entry_vir(level, vir);
 	return *((uint64_t*) addr);

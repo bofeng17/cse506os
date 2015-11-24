@@ -47,6 +47,7 @@ typedef struct program_header pgm_h;
 
 void
 test_elf ();
-void
-load_elf (task_struct*, void*);
+
+
+void load_elf(task_struct* , struct file* );
 

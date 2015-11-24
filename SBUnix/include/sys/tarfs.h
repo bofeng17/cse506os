@@ -33,6 +33,7 @@ struct file{
 
 void tarfs_test();
 void* find_file(char*);
+struct file* tarfs_open(char *name);
 
 
 

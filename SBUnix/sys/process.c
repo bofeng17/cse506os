@@ -334,7 +334,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	set_task_struct(execv_task);
 
 	// load bin_name elf
-	void* file = find_file(bin_name);
+	struct file* file = tarfs_open(bin_name);
 
 	load_elf(execv_task, file); // -1 if error
 

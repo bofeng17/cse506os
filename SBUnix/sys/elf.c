@@ -30,11 +30,13 @@ void *memmove(void *dest, const void *src, size_t n)
 
 
 
-void load_elf(task_struct* task, void* file_start)
+void load_elf(task_struct* task, struct file* load_file)
 {
 
 	
 	int i;
+
+	void* file_start = (void*)load_file->start;
 	
 
 	elf_h *elfh=(elf_h*)file_start;//find elf header
@@ -59,6 +61,10 @@ void load_elf(task_struct* task, void* file_start)
 
                  memmove((void*)task->mm->start_code, (void*)file_start + pgh->p_offset, pgh->p_filesz);
 
+                 struct vma_struct* vma_tmp = get_vma(task->mm, CODE);
+                 vma_tmp-> vm_file = load_file;
+                 vma_tmp-> file_offset = pgh-> p_offset;
+
 
 			}
 			else//its the .data section
@@ -76,6 +82,10 @@ void load_elf(task_struct* task, void* file_start)
 
                 memmove((void*)task->mm->start_data, (void*)file_start + pgh->p_offset, pgh->p_filesz);
                 // WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
+
+                struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
+                 vma_tmp1-> vm_file = load_file;
+                 vma_tmp1-> file_offset = pgh-> p_offset;
                 
 			}
 

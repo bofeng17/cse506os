@@ -37,7 +37,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
          * pf is caused by demand paging
          * otherwise, contiune checking
          */
-        if (pf_err_code & (!PF_BIT_0)) {
+        if (!(pf_err_code & PF_BIT_0)) {
             // pf caused by demand paging
             
             // TODO: translate VMA permission into pt perm
@@ -52,13 +52,13 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
             if (!self_ref_read(PML4, pf_addr)){
                 // if PDPT isn't in memory, allocate page and map it
                 // TODO: or flag bits
-                self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag);
+                self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
             }
             if (!self_ref_read(PDPT, pf_addr)) {
-                self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag);
+                self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
             }
             if (!self_ref_read(PDT, pf_addr)) {
-                self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag);
+                self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
             }
             if (!self_ref_read(PT, pf_addr)) {
                 // if Page Frame isn't in memory, allocate page and map it
@@ -69,9 +69,9 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 // TODO: check the end of file before copying
                 // Does our memory region page aligned, currently not
                 if (pf_addr < vma->vm_end && pf_addr >= (vma->vm_end & CLEAR_OFFSET)) {// if in last page of a vma
-                    memcpy ((void *)page_frame_des, (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
                 } else {
-                    memcpy ((void *)page_frame_des, (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), 0x1000);// 4KB
                     // tricky way
                     // memcpy ((void *)page_frame_des, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
                 }
@@ -89,10 +89,11 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 pt_perm_flag = PTE_P | PTE_U | PTE_W;
                 page_frame_des = allocate_page_user();
                 page_frame_src = self_ref_read(PT, pf_addr) & CLEAR_FLAG;
+                
                 // Copy content
                 memcpy((void *)page_frame_des, (void *)page_frame_src, 0x1000);
-                // 5 Level in total, how to track it?
-                // Modify page table
+                
+                // Modify PT
                 self_ref_write(PT, pf_addr, page_frame_des | pt_perm_flag);
                 
                 // TODO: reference count of page frame

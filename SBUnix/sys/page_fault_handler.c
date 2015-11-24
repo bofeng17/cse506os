@@ -3,6 +3,7 @@
 #include <sys/virmm.h>
 #include <sys/process.h>
 #include <sys/stdlib.h>
+#include <sys/tarfs.h>
 #include <sys/page_fault_handler.h>
 
 //void page_fault_handler () {
@@ -28,19 +29,22 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
      * check whether the given virt addr is in an addr range described VMA
      * or belong to the autho-growing stack
      */
-    if (in_vma(pf_addr, vma) | belong_to_stack(pf_addr, vma)) {
+    if (in_vma(pf_addr, vma) || belong_to_stack(pf_addr, vma)) {
         /*
          * Level 2 check:
          * if bit 0 of pf_err_code is 0 (page not present)
          * pf is caused by demand paging
          * otherwise, contiune checking
          */
-        if (!(pf_err_code & PF_BIT_0)) {
+        if (pf_err_code & (!PF_BIT_0)) {
             // pf caused by demand paging
             
             // TODO: translate VMA permission into pt perm
-            // PTE_W: depends on vma_perm_flag
-            pt_perm_flag = PTE_P | PTE_U | vma_perm_flag;
+            // doesn't take into account NX bit
+            pt_perm_flag = PTE_P | PTE_U ;
+            if (vma_perm_flag & VM_WRITE) { // VMA has write access right
+                pt_perm_flag |= PTE_W;
+            }
             
             // TODO: need to check conditions in if statement
             // especially for the flag bits and un-zerod page frames
@@ -62,18 +66,30 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 self_ref_write(PT, pf_addr, page_frame_phys|pt_perm_flag);
                 
                 // TODO: check the end of file before copying
-                // Does our memory region page aligned?
-                memcpy ((void *)page_frame_phys, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                // Does our memory region page aligned, currently not
+                if (pf_addr < vma->vm_end && pf_addr >= (vma->vm_end & CLEAR_OFFSET)) {// if in last page of a vma
+                    memcpy ((void *)page_frame_phys, (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
+                } else {
+                    memcpy ((void *)page_frame_phys, (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                    // tricky way
+                    // memcpy ((void *)page_frame_phys, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                }
             }
         } else {
             /*
              * Level 3 check:
-             * if bit 1 is 1 (write operation) & vma allows write & bit 3 is 1 (reserved bit is set to 1)
+             * if bit 1 is 1 (write operation) && vma allows write && bit 3 is 1 (reserved bit is set to 1)
+             * TODO: 3rd condition is too coarse-grained
              */
             
             //TODO: vma_perm_flag check
-            if ((pf_err_code & PF_BIT_1) && vma_perm_flag && (pf_err_code & PF_BIT_3)) {
+            if ((pf_err_code & PF_BIT_1) && (vma_perm_flag & VM_WRITE) && (pf_err_code & PF_BIT_3)) {
                 // pf caused by COW
+                pt_perm_flag = PTE_P | PTE_U | PTE_W;
+                page_frame_phys = allocate_page_user();
+                
+                // Copy content
+                memcpy((void *)page_frame_phys, (void *)(self_ref_read(PT, pf_addr) & CLEAR_FLAG), 0x1000);
                 
                 // TODO: reference count of page frame
                 
@@ -105,7 +121,6 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 __asm__ __volatile__("hlt");
             }
         }
-        
     }
 }
 

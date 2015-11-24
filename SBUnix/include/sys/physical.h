@@ -13,7 +13,7 @@ struct page
   uint64_t info;
   uint64_t next;
   uint64_t index;
-  uint64_t reserved;
+  int64_t ref_count; // -1: free, 0: used by one process, n: used by n+1 process
 }__attribute__((packed));
 
 typedef struct page page_sp;
@@ -40,5 +40,12 @@ get_kmalloc_base ();
 
 void
 phy_free (uint64_t addr);
+
+
+/*
+ * input: a physical address
+ * output: the page frame descriptor of physical page which phys_addr belongs to
+ */
+page_sp *get_page_frame_descriptor (uint64_t phys_addr);
 
 #endif

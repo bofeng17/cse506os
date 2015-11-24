@@ -81,12 +81,25 @@ void set_task_struct(task_struct* task) {
 	vma_heap->vm_next = vma_stack;
 
 	vma_stack->vm_start = mstruct->start_stack;
-	vma_stack->permission_flag = VM_READ;
+	vma_stack->vm_end = STACK_TOP;
+	vma_stack->permission_flag = VM_READ | VM_WRITE;
 	vma_stack->vm_next = NULL;
 
 	mstruct->mmap = vma_code;
 	task->mm = mstruct;
 }
+
+// use flag as one of CODE, DATA, HEAP, STACK
+vma_struct* get_vma(mm_struct* mm, int flag) {
+	vma_struct * ret_vma = mm->mmap;
+
+	while (flag-- > 0) {
+		ret_vma = ret_vma->vm_next;
+	}
+
+	return ret_vma;
+}
+
 //void
 //function_idle ()
 //{

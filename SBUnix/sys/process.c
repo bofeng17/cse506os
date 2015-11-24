@@ -382,19 +382,23 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 
 	// store envp pointers in the proper place of user stack
 	if (envc > 0) {
+		execv_task->mm->env_end = (uint64_t) envp[envc - 1];
 		while (envc-- > 0) {
 			// envp[envc] = (char*) tmp--;
 			*((uint64_t*) tmp) = (uint64_t) envp[envc];
 			tmp = (uint64_t*) tmp - 1;
 		}
+		execv_task->mm->env_start = (uint64_t) envp[0];
+		// set 0 between envp and argv
+		memset(tmp, 0, 8);
+		tmp -= 8; // uint64_t is 8 bytes
 
 	}
 
 	// store argv pointers in the proper place of user stack
 	if (argc > 0) {
-		// set 0 between envp and argv
-		memset(tmp, 0, 8);
-		tmp -= 8; // uint64_t is 8 bytes
+
+		execv_task->mm->arg_end = (uint64_t) argv[argc - 1];
 
 		int argc2 = argc - 1;
 		while (argc2-- > 0) {
@@ -402,7 +406,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 			*((uint64_t*) tmp) = (uint64_t) argv[argc2];
 			tmp = (uint64_t*) tmp - 1;
 		}
-
+		execv_task->mm->arg_start = (uint64_t) argv[0];
 	}
 
 	*((uint64_t*) tmp) = argc;
@@ -545,7 +549,7 @@ int do_fork() {
 
 	new_task->task_state = TASK_READY;
 
-	set_cow();  //set cow bit
+	set_cow();	//set cow bit
 
 	return new_task->pid;
 	//just return child's pid

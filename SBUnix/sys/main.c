@@ -88,8 +88,9 @@ start (uint32_t* modulep, void* physbase, void* physfree)
 //  task_struct* hello = create_user_process ("bin/hello");
 //  hello->task_state = TASK_READY;
 
-    char *ptr_test = (char *)0xffffffff84000000;
-    *ptr_test = 0;
+    
+//    char *ptr_test = (char *)0xffffffff84000000;
+//    *ptr_test = 0;
     
   dprintf ("begin scheduling\n");
 //  int* testVmalloc = vmalloc (PAGE_SIZE);

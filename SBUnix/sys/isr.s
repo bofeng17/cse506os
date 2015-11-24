@@ -84,6 +84,8 @@ CPU_Exceptions 13
   exception14:
     cli
     push_al # TODO: do we need to manually push all?
+    lea 0x90(%rsp), %rdi #
+    mov 0x88(%rsp), %rsi # error-prone: 16*8 for general-purpose registers, 8 for rflags
     call page_fault_handler
     pop_al
     sti

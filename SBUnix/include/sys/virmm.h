@@ -32,6 +32,7 @@
 #define PTE_U		0x004	// User
 #define PTE_EX      0x7FFFFFFFFFFFFFFF //set execute bit 63
 #define CLEAR_OFFSET       0xFFFFFFFFFFFFF000
+#define CLEAR_FLAG         0xFFFFFFFFFFFFF000
 
 #define PTE_PWT		0x008	// Write-Through
 #define PTE_PCD		0x010	// Cache-Disable
@@ -129,12 +130,6 @@ self_ref_write(int level, uint64_t entry_correpond_to_vir,
  */
 uint64_t
 self_ref_read(int level, uint64_t vir);
-/* 
- * check whether the given virt addr is in an addr range described by VMA
- * ret 1 if found, otherwise 0
- */
-int
-check_vma(uint64_t virt_addr);
 
 void test_selfref(uint64_t testaddr);
 #endif

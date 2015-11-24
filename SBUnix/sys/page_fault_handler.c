@@ -97,8 +97,11 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 
                 // TODO: reference count of page frame
                 // Junco TODO: reference count when allocated
-                // if not shared anymore
+                // if not shared due to COW anymore, clear reserve bit, mark as writable again
+                
 //                if (--(get_page_frame_descriptor(page_frame_src))->ref_count) {
+//                    // clear reserve bit, set writable bit here
+//                    self_ref_write(PT, pf_addr, page_frame_src | pt_perm_flag);
 //                }
             } else {
                 // pf caused by illegal access of user, kill user process
@@ -129,6 +132,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
             }
         }
     }
+    __asm__ __volatile__ ("hlt");
 }
 
 int in_vma(uint64_t virt_addr, vma_struct *vma) {

@@ -30,7 +30,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
      * check whether the given virt addr is in an addr range described VMA
      * or belong to the autho-growing stack
      */
-    if (in_vma(pf_addr, vma) || belong_to_stack(pf_addr, vma)) {
+    if ((vma=in_vma(pf_addr, vma)) || belong_to_stack(pf_addr, vma)) {
         /*
          * Level 2 check:
          * if bit 0 of pf_err_code is 0 (page not present)
@@ -42,23 +42,20 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
             
             // TODO: translate VMA permission into pt perm
             // doesn't take into account NX bit
-            pt_perm_flag = PTE_P | PTE_U ;
-            if (vma_perm_flag & VM_WRITE) { // VMA has write access right
-                pt_perm_flag |= PTE_W;
-            }
+            pt_perm_flag = PTE_P | PTE_U | PTE_W;
             
             // TODO: need to check conditions in if statement
             // especially for the flag bits and un-zerod page frames
             if (!self_ref_read(PML4, pf_addr)){
                 // if PDPT isn't in memory, allocate page and map it
                 // TODO: or flag bits
-                self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
+                self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag);
             }
             if (!self_ref_read(PDPT, pf_addr)) {
-                self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
+                self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag);
             }
             if (!self_ref_read(PDT, pf_addr)) {
-                self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
+                self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag);
             }
             if (!self_ref_read(PT, pf_addr)) {
                 // if Page Frame isn't in memory, allocate page and map it
@@ -69,11 +66,16 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 // TODO: check the end of file before copying
                 // Does our memory region page aligned, currently not
                 if (pf_addr < vma->vm_end && pf_addr >= (vma->vm_end & CLEAR_OFFSET)) {// if in last page of a vma
-                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
                 } else {
-                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), 0x1000);// 4KB
                     // tricky way
                     // memcpy ((void *)page_frame_des, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                }
+                
+                if (!(vma_perm_flag & VM_WRITE)) { // VMA doesn't have write access right
+                    pt_perm_flag &= ~PTE_W;
+                    self_ref_write(PT, pf_addr, page_frame_des|pt_perm_flag);
                 }
             }
         } else {
@@ -100,10 +102,10 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 // Junco TODO: reference count when allocated
                 // if not shared due to COW anymore, clear reserve bit, mark as writable again
                 
-//                if (--(get_page_frame_descriptor(page_frame_src))->ref_count) {
-//                    // clear reserve bit, set writable bit here
-//                    self_ref_write(PT, pf_addr, page_frame_src | pt_perm_flag);
-//                }
+                //                if (--(get_page_frame_descriptor(page_frame_src))->ref_count) {
+                //                    // clear reserve bit, set writable bit here
+                //                    self_ref_write(PT, pf_addr, page_frame_src | pt_perm_flag);
+                //                }
             } else {
                 // pf caused by illegal access of user, kill user process
                 // do_exit();
@@ -133,18 +135,18 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
             }
         }
     }
-    __asm__ __volatile__ ("hlt");
+//    __asm__ __volatile__ ("hlt");
 }
 
-int in_vma(uint64_t virt_addr, vma_struct *vma) {
+vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {
     while(vma){
         if (vma->vm_start <= virt_addr && vma->vm_end > virt_addr) {
-            return 1;
+            return vma;
         } else {
             vma = vma->vm_next;
         }
     }
-    return 0;
+    return NULL;
 }
 
 int belong_to_stack(uint64_t virt_addr, vma_struct *vma) {

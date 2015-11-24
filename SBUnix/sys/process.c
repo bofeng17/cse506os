@@ -66,23 +66,12 @@ void set_task_struct(task_struct* task) {
 	vma_stack->vm_mm = mstruct;
 	vma_heap->vm_mm = mstruct;
 
-	vma_code->vm_start = mstruct->start_code;
-	vma_code->vm_end = mstruct->end_code;
-	vma_code->permission_flag = VM_READ | VM_EXEC;
 	vma_code->vm_next = vma_data;
 
-	vma_data->vm_start = mstruct->start_data;
-	vma_data->vm_end = mstruct->end_data;
-	vma_data->permission_flag = VM_READ | VM_WRITE;
 	vma_data->vm_next = vma_heap;
 
-	vma_heap->vm_start = mstruct->brk;
-	vma_heap->permission_flag = VM_READ | VM_WRITE;
 	vma_heap->vm_next = vma_stack;
 
-	vma_stack->vm_start = mstruct->start_stack;
-	vma_stack->vm_end = STACK_TOP;
-	vma_stack->permission_flag = VM_READ | VM_WRITE;
 	vma_stack->vm_next = NULL;
 
 	mstruct->mmap = vma_code;
@@ -100,6 +89,27 @@ vma_struct* get_vma(mm_struct* mm, int flag) {
 	return ret_vma;
 }
 
+void setup_vma(mm_struct* mstruct) {
+
+	vma_struct* vma_code = get_vma(mstruct, CODE);
+	vma_code->vm_start = mstruct->start_code;
+	vma_code->vm_end = mstruct->end_code;
+	vma_code->permission_flag = VM_READ | VM_EXEC;
+
+	vma_struct* vma_data = get_vma(mstruct, DATA);
+	vma_data->vm_start = mstruct->start_data;
+	vma_data->vm_end = mstruct->end_data;
+	vma_data->permission_flag = VM_READ | VM_WRITE;
+
+	vma_struct* vma_heap = get_vma(mstruct, HEAP);
+	vma_heap->vm_start = mstruct->brk;
+	vma_heap->permission_flag = VM_READ | VM_WRITE;
+
+	vma_struct* vma_stack = get_vma(mstruct, STACK);
+	vma_stack->vm_start = mstruct->start_stack;
+	vma_stack->vm_end = STACK_TOP;
+	vma_stack->permission_flag = VM_READ | VM_WRITE;
+}
 //void
 //function_idle ()
 //{
@@ -338,23 +348,24 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 
 	load_elf(execv_task, file); // -1 if error
 
+	setup_vma(execv_task->mm);
+
 	//allocate heap
 	uint64_t initial_heap_size = 10 * PAGE_SIZE;
 	execv_task->mm->start_brk = (uint64_t) umalloc(
 			(void*) execv_task->mm->end_data, initial_heap_size);
-
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
-	execv_task->mm->start_stack = (uint64_t) umalloc((void*) STACK_TOP,
-			PAGE_SIZE);
+	execv_task->mm->start_stack = (uint64_t) umap((void*) STACK_TOP, PAGE_SIZE);
+	umap((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 
-	umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 	// setup new task user stack, rsp, argv, envp
 	void* rsp = (void*) (STACK_TOP);
 
 	void* tmp = rsp - 1;
 
 	uint64_t tmp2 = (uint64_t) tmp;
+
 	// save envp string to the top area of user stack
 	envc = set_params_to_stack(&tmp2, &envp, ENVP_PARAMS);
 

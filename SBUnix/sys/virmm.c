@@ -404,30 +404,29 @@ void kfree(void* addr, int flag) {
 void*
 umalloc(void* addr, size_t size) {
 
-
 	return addr;
 }
 
 //// original  umalloc that sets up page tables and maps vir to phy
-//void*
-//umalloc(void* addr, size_t size) {
-////  user_global_PML4 = (pml4_t) get_CR3 ();
-//
-//	//void* ret_addr = (void*) addr;
-//
-//	int page_num = size / PAGE_SIZE;
-//	if (size % PAGE_SIZE) {
-//		page_num += 1;
-//	}
-//
-//	uint64_t vmalloc_base = (uint64_t) addr;
-//	while (page_num-- > 0) {
-//		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
-//		vmalloc_base += PAGE_SIZE;
-//	}
-//
-//	return addr;
-//}
+void*
+umap(void* addr, size_t size) {
+//  user_global_PML4 = (pml4_t) get_CR3 ();
+
+	//void* ret_addr = (void*) addr;
+
+	int page_num = size / PAGE_SIZE;
+	if (size % PAGE_SIZE) {
+		page_num += 1;
+	}
+
+	uint64_t vmalloc_base = (uint64_t) addr;
+	while (page_num-- > 0) {
+		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
+		vmalloc_base += PAGE_SIZE;
+	}
+
+	return addr;
+}
 
 //================================PML4 Self Reference Bits
 //                              |                 36 bits (or)             |

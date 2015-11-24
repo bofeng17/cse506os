@@ -48,6 +48,8 @@ init_phy_page (uint32_t num, uint32_t page_num, uint32_t page_index)
 
       page_tmp->index = index_;
 
+      page_tmp->ref_count = -1;
+
       page_tmp->next = page_index + 1;
 
       i++;
@@ -202,6 +204,7 @@ allocate_page_user ()
 	  //return i;
 	  page_sp* tmp = page_struct_start + i;
 	  tmp->info = PAGE_OCP;
+    tmp->ref_count = 0;
 	  return (uint64_t) ((tmp->index) << 12);
 
 	}

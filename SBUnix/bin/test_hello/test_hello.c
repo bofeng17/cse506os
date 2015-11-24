@@ -23,7 +23,7 @@ main (int argc, char* argv[], char* envp[])
     int n = 1, fd = 1, count = 5;
     char* s = "hello\n";
     
-    __asm__ __volatile__("INT $0x21;");
+//    __asm__ __volatile__("INT $0x21;");
 //        char *ptr_test = (char *)0x200000;
 //        *ptr_test = 0;
     __asm__ __volatile__("syscall"

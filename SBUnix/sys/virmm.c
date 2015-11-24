@@ -413,16 +413,17 @@ void*
 umalloc(void* addr, size_t size) {
 //  user_global_PML4 = (pml4_t) get_CR3 ();
 
-	// void* ret_addr = (void*) vmalloc_base;
+	//void* ret_addr = (void*) addr;
 
 	int page_num = size / PAGE_SIZE;
 	if (size % PAGE_SIZE) {
 		page_num += 1;
 	}
 
+	uint64_t vmalloc_base = (uint64_t) addr;
 	while (page_num-- > 0) {
-		map_virmem_to_phymem((uint64_t) addr, allocate_page_user(), USERPT);
-		//     vmalloc_base += PAGE_SIZE;
+		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
+		vmalloc_base += PAGE_SIZE;
 	}
 
 	return addr;
@@ -503,12 +504,14 @@ uint64_t self_ref_read_entry_vir(int level, uint64_t vir) {
 }
 
 //set level to one of the PML4, PDPT, PDT, PT
-// return value is physical address i.e. entry content
+// return value is physical address i.e. entry content (original unmodified physical address)
 uint64_t self_ref_read(int level, uint64_t vir) {
 	uint64_t addr = self_ref_read_entry_vir(level, vir);
 	return *((uint64_t*) addr);
 }
+
 //set level to one of the PML4, PDPT, PDT, PT
+// phy (entry content) flags should be set before use
 void self_ref_write(int level, uint64_t vir, uint64_t phy) {
 	uint64_t addr = self_ref_read_entry_vir(level, vir);
 	*((uint64_t*) addr) = phy;

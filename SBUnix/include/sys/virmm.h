@@ -50,13 +50,8 @@
 #define VMA 5
 #define FILE 6
 
-#define VM_READ         0x00000001      /* currently active flags */
-#define VM_WRITE        0x00000002
-#define VM_EXEC         0x00000004
-#define VM_SHARED       0x00000008
-
-#define STACK_TOP 0x00000000ffffffff
-
+#define STACK_TOP 0x00000000ffffffff // user stack top
+#define STACK_PAGES 0x100 // 512 pages
 #define PML4 4
 #define PDPT 3
 #define PDT 2

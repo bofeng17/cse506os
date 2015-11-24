@@ -40,7 +40,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code);
  * check whether the given virt addr is in an addr range described by VMA
  * ret 1 if found, otherwise 0
  */
-int in_vma(uint64_t virt_addr, vma_struct *vma);
+vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma);
 
 /*
  * check whether the given virt addr belongs to stack

@@ -30,7 +30,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
      * check whether the given virt addr is in an addr range described VMA
      * or belong to the autho-growing stack
      */
-    if (in_vma(pf_addr, vma) || belong_to_stack(pf_addr, vma)) {
+    if ((vma=in_vma(pf_addr, vma)) || belong_to_stack(pf_addr, vma)) {
         /*
          * Level 2 check:
          * if bit 0 of pf_err_code is 0 (page not present)
@@ -136,15 +136,15 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
     __asm__ __volatile__ ("hlt");
 }
 
-int in_vma(uint64_t virt_addr, vma_struct *vma) {
+vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {
     while(vma){
         if (vma->vm_start <= virt_addr && vma->vm_end > virt_addr) {
-            return 1;
+            return vma;
         } else {
             vma = vma->vm_next;
         }
     }
-    return 0;
+    return NULL;
 }
 
 int belong_to_stack(uint64_t virt_addr, vma_struct *vma) {

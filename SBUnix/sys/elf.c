@@ -59,7 +59,7 @@ void load_elf(task_struct* task, struct file* load_file)
 				uint64_t code_size = task->mm->end_code - task->mm->start_code;
                 umalloc ((void*) task->mm->start_code, code_size);
 
-                 memmove((void*)task->mm->start_code, (void*)file_start + pgh->p_offset, pgh->p_filesz);
+                 //memmove((void*)task->mm->start_code, (void*)file_start + pgh->p_offset, pgh->p_filesz);
 
                  struct vma_struct* vma_tmp = get_vma(task->mm, CODE);
                  vma_tmp-> vm_file = load_file;
@@ -80,7 +80,7 @@ void load_elf(task_struct* task, struct file* load_file)
                 umalloc ((void*) task->mm->start_data, data_size);
 
 
-                memmove((void*)task->mm->start_data, (void*)file_start + pgh->p_offset, pgh->p_filesz);
+                //memmove((void*)task->mm->start_data, (void*)file_start + pgh->p_offset, pgh->p_filesz);
                 // WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
 
                 struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);

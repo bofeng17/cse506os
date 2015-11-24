@@ -88,6 +88,7 @@ CPU_Exceptions 13
     mov 0x88(%rsp), %rsi # error-prone: 16*8 for general-purpose registers, 8 for rflags
     call page_fault_handler
     pop_al
+    add $0x8, %rsp
     sti
     iretq
 

@@ -66,9 +66,9 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 // TODO: check the end of file before copying
                 // Does our memory region page aligned, currently not
                 if (pf_addr < vma->vm_end && pf_addr >= (vma->vm_end & CLEAR_OFFSET)) {// if in last page of a vma
-                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
                 } else {
-                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), 0x1000);// 4KB
                     // tricky way
                     // memcpy ((void *)page_frame_des, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
                 }
@@ -135,7 +135,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
             }
         }
     }
-    __asm__ __volatile__ ("hlt");
+//    __asm__ __volatile__ ("hlt");
 }
 
 vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {

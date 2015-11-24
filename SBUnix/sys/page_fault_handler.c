@@ -42,23 +42,20 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
             
             // TODO: translate VMA permission into pt perm
             // doesn't take into account NX bit
-            pt_perm_flag = PTE_P | PTE_U ;
-            if (vma_perm_flag & VM_WRITE) { // VMA has write access right
-                pt_perm_flag |= PTE_W;
-            }
+            pt_perm_flag = PTE_P | PTE_U | PTE_W;
             
             // TODO: need to check conditions in if statement
             // especially for the flag bits and un-zerod page frames
             if (!self_ref_read(PML4, pf_addr)){
                 // if PDPT isn't in memory, allocate page and map it
                 // TODO: or flag bits
-                self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
+                self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag);
             }
             if (!self_ref_read(PDPT, pf_addr)) {
-                self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
+                self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag);
             }
             if (!self_ref_read(PDT, pf_addr)) {
-                self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag|PTE_W);
+                self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag);
             }
             if (!self_ref_read(PT, pf_addr)) {
                 // if Page Frame isn't in memory, allocate page and map it
@@ -74,6 +71,11 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                     memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)(vma->vm_file->start + vma->file_offset) + (pf_addr - vma->vm_start), 0x1000);// 4KB
                     // tricky way
                     // memcpy ((void *)page_frame_des, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                }
+                
+                if (!(vma_perm_flag & VM_WRITE)) { // VMA doesn't have write access right
+                    pt_perm_flag &= ~PTE_W;
+                    self_ref_write(PT, pf_addr, page_frame_des|pt_perm_flag);
                 }
             }
         } else {
@@ -100,10 +102,10 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                 // Junco TODO: reference count when allocated
                 // if not shared due to COW anymore, clear reserve bit, mark as writable again
                 
-//                if (--(get_page_frame_descriptor(page_frame_src))->ref_count) {
-//                    // clear reserve bit, set writable bit here
-//                    self_ref_write(PT, pf_addr, page_frame_src | pt_perm_flag);
-//                }
+                //                if (--(get_page_frame_descriptor(page_frame_src))->ref_count) {
+                //                    // clear reserve bit, set writable bit here
+                //                    self_ref_write(PT, pf_addr, page_frame_src | pt_perm_flag);
+                //                }
             } else {
                 // pf caused by illegal access of user, kill user process
                 // do_exit();

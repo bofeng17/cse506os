@@ -102,7 +102,8 @@ void setup_vma(mm_struct* mstruct) {
 	vma_data->permission_flag = VM_READ | VM_WRITE;
 
 	vma_struct* vma_heap = get_vma(mstruct, HEAP);
-	vma_heap->vm_start = mstruct->brk;
+	vma_heap->vm_start = mstruct->start_brk;
+	vma_heap->vm_end = mstruct->brk;
 	vma_heap->permission_flag = VM_READ | VM_WRITE;
 
 	vma_struct* vma_stack = get_vma(mstruct, STACK);
@@ -151,6 +152,8 @@ void func_init() {
 	char* envp[4] = { "e1", "e2", "e3", NULL };
 
 	do_execv("bin/test_hello", argv, envp);
+
+	do_fork();
 
 	sysret_to_ring3();
 
@@ -351,9 +354,11 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	setup_vma(execv_task->mm);
 
 	//allocate heap
-	uint64_t initial_heap_size = 10 * PAGE_SIZE;
+	uint64_t initial_heap_size = 2 * PAGE_SIZE;
+
 	execv_task->mm->start_brk = (uint64_t) umalloc(
-			(void*) execv_task->mm->end_data, initial_heap_size);
+			(void*) ((execv_task->mm->end_data & CLEAR_OFFSET) + PAGE_SIZE),
+			initial_heap_size);
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
 	execv_task->mm->start_stack = (uint64_t) umap((void*) STACK_TOP, PAGE_SIZE);
@@ -424,7 +429,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	rsp = tmp;
 
 	execv_task->rsp = (uint64_t) rsp;
-	// switch current stack to user stack of created task(execv_task)
+
+	execv_task->mm->start_stack = (uint64_t) rsp;
+	setup_vma(execv_task->mm);
 
 	// add execv_task to the run queue
 	add_task(execv_task);
@@ -456,35 +463,44 @@ create_user_process(char* bin_name) {
 }
 
 void set_child_pt(task_struct* child) {
-	child->cr3 = allocate_page();
-
-	initial_mapping();
+	global_PML4 = (pml4_t) kmalloc(KERNPT);
+	child->cr3 = (uint64_t) global_PML4 - VIR_START;
+	map_kernel();
 
 	vma_struct* vma = current->mm->mmap;
-	uint64_t parent_cr3 = current->cr3;
 
 	while (vma != NULL) {
 		uint64_t start_addr = vma->vm_start & CLEAR_OFFSET;
 		uint64_t end_addr = vma->vm_end;
 
-		if (!end_addr % PAGE_SIZE) {
+		if (end_addr % PAGE_SIZE) {
 			end_addr &= CLEAR_OFFSET;
 			end_addr += PAGE_SIZE;
+		} else {
+			end_addr &= CLEAR_OFFSET;
 		}
 
 		while (start_addr < end_addr) {
+
 			uint64_t content = self_ref_read(PT, start_addr);
+			page_sp * page = get_page_frame_descriptor(content);
+			page->ref_count += 1;
+
 			content &= PTE_R_MASK;
 			content |= PTE_COW;
+			self_ref_write(PT, start_addr, content);
 
-			set_CR3(child->cr3);
-			map_virmem_to_phymem(start_addr, content, USERPT);
+			map_user_pt(start_addr, content, USERPT);
+
+//			set_CR3(child->cr3);
+
 			start_addr += PAGE_SIZE;
-
-			set_CR3(parent_cr3);
+//			set_CR3(current->cr3);
 		}
 		vma = vma->vm_next;
 	}
+
+	set_CR3(child->cr3);
 }
 
 void set_cow_routine(int flags, uint64_t vaddr) {
@@ -592,7 +608,8 @@ int do_fork() {
 
 	new_task->task_state = TASK_READY;
 
-	set_cow();	//set cow bit
+	//set_cow();	//set cow bit
+	set_child_pt(new_task);
 
 	return new_task->pid;
 	//just return child's pid

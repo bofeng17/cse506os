@@ -1,0 +1,5 @@
+p/x current->mm->mmap
+p/x start_addr
+p/x end_addr
+p/x vma->vm_start
+p/x vma->vm_end

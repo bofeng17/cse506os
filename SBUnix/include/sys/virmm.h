@@ -84,13 +84,18 @@ struct ptt {
 };
 typedef struct ptt* pt_t;
 
+extern pml4_t global_PML4;
+
 void
 init_mm();
+
+void map_kernel();
 
 void
 initial_mapping();
 
 void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag);
+void map_user_pt(uint64_t vir_addr, uint64_t phy_addr, int flag);
 
 uint64_t
 get_CR3();

@@ -101,6 +101,8 @@ typedef struct task_struct {
 int
 do_execv(char*, char**, char**);
 
+int do_fork();
+
 void
 func_init();
 

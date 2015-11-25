@@ -80,9 +80,8 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
              * if bit 1 is 1 (write operation) && vma allows write && bit 3 is 1 (reserved bit is set to 1)
              * TODO: 3rd condition is too coarse-grained
              */
-            
-            //TODO: vma_perm_flag check
             if ((pf_err_code & PF_BIT_1) && (vma -> permission_flag & VM_WRITE) && (pf_err_code & PF_BIT_3)) {
+                // TODO: branch never reached by testing
                 // pf caused by COW
                 pt_perm_flag = PTE_P | PTE_U | PTE_W;
                 page_frame_des = allocate_page_user();
@@ -107,6 +106,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
                     get_page_frame_descriptor(page_frame_src)->ref_count--;
                 }
             } else {
+                // TODO: branch never reached by testing
                 // pf caused by illegal access of user, kill user process
                 do_exit(-ILLEGAL_MEM_ACC);
             }
@@ -117,6 +117,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
          * if bit 2 is 1 (pf occured in user mode)
          */
         if (pf_err_code & PF_BIT_2) {
+            // TODO: branch never reached by testing
             // pf caused by illegal access of user, kill user process
             do_exit(-ILLEGAL_MEM_ACC);
         } else {
@@ -125,6 +126,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
              * if wrong syscall parm
              */
             if (search_exception_table(regs->rip)) {
+                // TODO: branch never reached by testing
                 // pf caused by wrong syscall parm provided by user, kill user process
                 do_exit(-ILLEGAL_MEM_ACC);
             } else {

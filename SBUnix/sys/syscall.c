@@ -137,11 +137,8 @@ void do_syscall () {
             //ret_val = do_read();
             break;
         case SYS_write:
-            //ret_val = do_write();
             __asm__ __volatile__ ("mov %r14, %rdx;");
-            __asm__ __volatile__ ("mov %%rsi, %%rdi;"
-                                  "mov $0, %%rax;"
-                                  "callq printf;"
+            __asm__ __volatile__ ("callq do_write;"
                                   :"=a"(ret_val));
             break;
         case SYS_fork:

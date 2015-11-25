@@ -55,6 +55,7 @@
 
 #define STACK_TOP 0x00000000ffffffff // user stack top
 #define STACK_PAGES 0x100 // 512 pages
+#define MAX_HEAP_SIZE (0x1000 * 0x1000)// 4M size
 #define PML4 4
 #define PDPT 3
 #define PDT 2

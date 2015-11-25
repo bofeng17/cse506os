@@ -18,7 +18,6 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
     uint64_t pf_addr;
     task_struct *tsk = current; // Save current is critical in preemptive scheduling
     vma_struct *vma = tsk->mm->mmap;
-    uint64_t vma_perm_flag = vma -> permission_flag;
     uint64_t pt_perm_flag;
     uint64_t page_frame_des; // physical addr of page frame newly allocated. Destination
     uint64_t page_frame_src; // physical addr of existed page frame read by self_ref_read(). Source
@@ -40,40 +39,37 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
         if (!(pf_err_code & PF_BIT_0)) {
             // pf caused by demand paging
             
-            // TODO: translate VMA permission into pt perm
+            // Part 1 of translating VMA permission into Page Table permission
             // doesn't take into account NX bit
             pt_perm_flag = PTE_P | PTE_U | PTE_W;
             
-            // TODO: need to check conditions in if statement
-            // especially for the flag bits and un-zerod page frames
-            if (!self_ref_read(PML4, pf_addr)){
-                // if PDPT isn't in memory, allocate page and map it
+            // if PDPT isn't in memory (present bit is 0), allocate page and map it
+            if (!(self_ref_read(PML4, pf_addr) & PTE_P)){
                 // TODO: or flag bits
                 self_ref_write(PML4, pf_addr, allocate_page_user()|pt_perm_flag);
             }
-            if (!self_ref_read(PDPT, pf_addr)) {
+            if (!(self_ref_read(PDPT, pf_addr) & PTE_P)) {
                 self_ref_write(PDPT, pf_addr, allocate_page_user()|pt_perm_flag);
             }
-            if (!self_ref_read(PDT, pf_addr)) {
+            if (!(self_ref_read(PDT, pf_addr) & PTE_P)) {
                 self_ref_write(PDT, pf_addr, allocate_page_user()|pt_perm_flag);
             }
-            if (!self_ref_read(PT, pf_addr)) {
+            if (!(self_ref_read(PT, pf_addr) & PTE_P)) {
                 // if Page Frame isn't in memory, allocate page and map it
                 // This should always be true
                 page_frame_des = allocate_page_user();
                 self_ref_write(PT, pf_addr, page_frame_des|pt_perm_flag);
                 
-                // TODO: check the end of file before copying
-                // Does our memory region page aligned, currently not
-                if (pf_addr < vma->vm_end && pf_addr >= (vma->vm_end & CLEAR_OFFSET)) {// if in last page of a vma
-                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), vma->vm_end - (vma->vm_end & CLEAR_OFFSET));// less than 4KB
+                // check if it is the last page of this vma before copying
+                if (pf_addr < vma->vm_end && pf_addr >= ((vma->vm_end - 1) & CLEAR_OFFSET)) {
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), vma->vm_end - ((vma->vm_end - 1) & CLEAR_OFFSET));// less than 4KB
                 } else {
-                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), 0x1000);// 4KB
-                    // tricky way
-                    // memcpy ((void *)page_frame_des, (void *)vma->file_offset + (pf_addr - vma->vm_start), 0x1000);// 4KB
+                    memcpy ((void *)(pf_addr & CLEAR_OFFSET), (void *)((vma->vm_file->start + vma->file_offset) + ((pf_addr & CLEAR_OFFSET) - vma->vm_start)), PAGE_SIZE);// 4KB
                 }
                 
-                if (!(vma_perm_flag & VM_WRITE)) { // VMA doesn't have write access right
+                // Part 2 of translating VMA permission into Page Table permission
+                if (!(vma -> permission_flag & VM_WRITE)) {
+                    // if VMA doesn't have write access right, remove write right from pt
                     pt_perm_flag &= ~PTE_W;
                     self_ref_write(PT, pf_addr, page_frame_des|pt_perm_flag);
                 }
@@ -86,29 +82,33 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
              */
             
             //TODO: vma_perm_flag check
-            if ((pf_err_code & PF_BIT_1) && (vma_perm_flag & VM_WRITE) && (pf_err_code & PF_BIT_3)) {
+            if ((pf_err_code & PF_BIT_1) && (vma -> permission_flag & VM_WRITE) && (pf_err_code & PF_BIT_3)) {
                 // pf caused by COW
                 pt_perm_flag = PTE_P | PTE_U | PTE_W;
                 page_frame_des = allocate_page_user();
                 page_frame_src = self_ref_read(PT, pf_addr) & CLEAR_FLAG;
                 
-                // Copy content
-                memcpy((void *)page_frame_des, (void *)page_frame_src, 0x1000);
-                
-                // Modify PT
-                self_ref_write(PT, pf_addr, page_frame_des | pt_perm_flag);
-                
-                // TODO: reference count of page frame
-                // Junco TODO: reference count when allocated
-                // if not shared due to COW anymore, clear reserve bit, mark as writable again
-                
-                //                if (--(get_page_frame_descriptor(page_frame_src))->ref_count) {
-                //                    // clear reserve bit, set writable bit here
-                //                    self_ref_write(PT, pf_addr, page_frame_src | pt_perm_flag);
-                //                }
+                /*
+                 * if page frame is not shared (ref_count == 0) due to COW anymore,
+                 * clear reserved bit, mark as writable again
+                 */
+                // TODO: verify correntness here (when COW page fault)
+                // TODO: verify reference count when allocated/fork
+                if (!(get_page_frame_descriptor(page_frame_src)->ref_count)) {
+                    self_ref_write(PT, pf_addr, (page_frame_src | pt_perm_flag) & (~PTE_COW));
+                } else {
+                    // Copy content
+                    memcpy((void *)page_frame_des, (void *)page_frame_src, PAGE_SIZE);
+                    
+                    // Modify PT
+                    self_ref_write(PT, pf_addr, page_frame_des | pt_perm_flag);
+                    
+                    // decrease ref_count of page frame
+                    get_page_frame_descriptor(page_frame_src)->ref_count--;
+                }
             } else {
                 // pf caused by illegal access of user, kill user process
-                // do_exit();
+                do_exit(-ILLEGAL_MEM_ACC);
             }
         }
     } else {
@@ -117,9 +117,8 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
          * if bit 2 is 1 (pf occured in user mode)
          */
         if (pf_err_code & PF_BIT_2) {
-            /*
-             * pf caused by illegal access of user, kill user process
-             */
+            // pf caused by illegal access of user, kill user process
+            do_exit(-ILLEGAL_MEM_ACC);
         } else {
             /*
              * Level 3 check:
@@ -127,15 +126,15 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
              */
             if (search_exception_table(regs->rip)) {
                 // pf caused by wrong syscall parm provided by user, kill user process
-                // do_exit();
+                do_exit(-ILLEGAL_MEM_ACC);
             } else {
                 // pf caused by kernel bugs or (extreme memory shortage)
-                printf("Kernel Pannic!\n");
+                printf("Kernel Pannic @ %p!\n", pf_addr);
                 __asm__ __volatile__("hlt");
             }
         }
     }
-//    __asm__ __volatile__ ("hlt");
+    //    __asm__ __volatile__ ("hlt");
 }
 
 vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {

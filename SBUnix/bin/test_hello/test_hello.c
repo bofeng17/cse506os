@@ -26,6 +26,9 @@ main (int argc, char* argv[], char* envp[])
 //    __asm__ __volatile__("INT $0x21;");
 //        char *ptr_test = (char *)0x200000;
 //        *ptr_test = 0;
+//    while (1) {
+//        ;
+//    }
     __asm__ __volatile__("syscall"
                          :
                          :"a"(n), "D"(fd), "S"((uint64_t)s), "d"(count));

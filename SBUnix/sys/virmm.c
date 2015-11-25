@@ -439,32 +439,33 @@ void kfree(void* addr, int flag) {
 }
 
 // new umalloc implementation using demand paging
-void*
-umalloc(void* addr, size_t size) {
-
-	return addr;
-}
-
-//// original  umalloc that sets up page tables and maps vir to phy
 //void*
 //umalloc(void* addr, size_t size) {
-//	uint64_t ret_addr = (uint64_t) addr;
-//	ret_addr &= CLEAR_OFFSET;
-//
-//	int page_num = size / PAGE_SIZE;
-//	if (size % PAGE_SIZE) {
-//		page_num += 1;
-//	}
-//
-//	uint64_t vmalloc_base = ret_addr;
-//
-//	while (page_num-- > 0) {
-//		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
-//		vmalloc_base += PAGE_SIZE;
-//	}
 //
 //	return addr;
 //}
+
+// original  umalloc that sets up page tables and maps vir to phy
+// 0x600a02
+void*
+umalloc(void* addr, size_t size) {
+	uint64_t ret_addr = (uint64_t) addr;
+	ret_addr &= CLEAR_OFFSET;
+
+	int page_num = size / PAGE_SIZE;
+	if (size % PAGE_SIZE) {
+		page_num += 1;
+	}
+
+	uint64_t vmalloc_base = ret_addr;
+
+	while (page_num-- > 0) {
+		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
+		vmalloc_base += PAGE_SIZE;
+	}
+
+	return addr;
+}
 
 //// original  umalloc that sets up page tables and maps vir to phy
 void*

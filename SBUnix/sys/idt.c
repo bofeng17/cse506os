@@ -33,10 +33,8 @@ _x86_64_asm_lidt (struct idtr_t* idtr);
 
 
 void
-cpu_exception_handler ()
+cpu_exception_handler (uint64_t exception_no)
 {
-    uint8_t exception_no;
-    __asm__ __volatile__("":"=a"(exception_no));
     printf("CPU exception %x happens!\n",exception_no);
     __asm__ __volatile__("hlt");
 }

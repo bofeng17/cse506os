@@ -60,7 +60,7 @@ isr33:
   .globl exception\m
   exception\m:
     cli
-    mov $\m, %rax
+    mov $\m, %rdi
     jmp cpu_exception_handler
 .endm
 

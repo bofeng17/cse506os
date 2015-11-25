@@ -23,7 +23,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code) {
     uint64_t page_frame_src; // physical addr of existed page frame read by self_ref_read(). Source
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
-    
+    printf("page fault happens @%p\n",pf_addr);
     /*
      * Level 1 check:
      * check whether the given virt addr is in an addr range described VMA

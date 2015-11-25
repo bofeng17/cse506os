@@ -38,7 +38,7 @@ void page_fault_handler (pt_regs *regs, uint64_t pf_err_code);
 
 /*
  * check whether the given virt addr is in an addr range described by VMA
- * ret 1 if found, otherwise 0
+ * ret the vma_struct found, otherwise NULL
  */
 vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma);
 

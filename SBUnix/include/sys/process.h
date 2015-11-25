@@ -134,4 +134,8 @@ extern task_struct *current;
 // get specific vma of mm
 vma_struct* get_vma(mm_struct* mm, int flag);
 
+// exit error code
+#define ILLEGAL_MEM_ACC 1 // illegal memmory access, killed by page fault handler
+void do_exit(int status);
+
 #endif

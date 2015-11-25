@@ -455,6 +455,38 @@ create_user_process(char* bin_name) {
 	return new_task;
 }
 
+void set_child_pt(task_struct* child) {
+	child->cr3 = allocate_page();
+
+	initial_mapping();
+
+	vma_struct* vma = current->mm->mmap;
+	uint64_t parent_cr3 = current->cr3;
+
+	while (vma != NULL) {
+		uint64_t start_addr = vma->vm_start & CLEAR_OFFSET;
+		uint64_t end_addr = vma->vm_end;
+
+		if (!end_addr % PAGE_SIZE) {
+			end_addr &= CLEAR_OFFSET;
+			end_addr += PAGE_SIZE;
+		}
+
+		while (start_addr < end_addr) {
+			uint64_t content = self_ref_read(PT, start_addr);
+			content &= PTE_R_MASK;
+			content |= PTE_COW;
+
+			set_CR3(child->cr3);
+			map_virmem_to_phymem(start_addr, content, USERPT);
+			start_addr += PAGE_SIZE;
+
+			set_CR3(parent_cr3);
+		}
+		vma = vma->vm_next;
+	}
+}
+
 void set_cow_routine(int flags, uint64_t vaddr) {
 	//read the entry back
 	uint64_t tmp = self_ref_read(flags, vaddr);

@@ -33,6 +33,7 @@
 #define PTE_EX      0x7FFFFFFFFFFFFFFF //set execute bit 63
 #define CLEAR_OFFSET       0xFFFFFFFFFFFFF000
 #define CLEAR_FLAG         0xFFFFFFFFFFFFF000
+#define PTE_R_MASK 0xFFFFFFFFFFFFFFFD// set PTE read only
 
 #define PTE_PWT		0x008	// Write-Through
 #define PTE_PCD		0x010	// Cache-Disable
@@ -87,6 +88,8 @@ init_mm();
 
 void
 initial_mapping();
+
+void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag);
 
 uint64_t
 get_CR3();

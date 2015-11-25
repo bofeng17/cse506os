@@ -138,30 +138,13 @@ void init_mm() {
 //  vmalloc_base = USER_VIR_START;
 }
 
-//pml4_t
-//get_pml4 (int flag)
-//{
-//  if (flag == KERN)
-//    return kern_global_PML4;
-//
-//  if (flag == USER)
-//    return user_global_PML4;
-//
-//  return NULL;
-//}
-//
-//pml4_t
-//set_user_pml4 ()
-//{
-//  return (pml4_t) alloc_pt (USER);
-//}
-
 void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
 
 	pdpt_t pdpt;
 	pdt_t pdt;
 	pt_t pt;
 
+	//global_PML4 = (pml4_t)(get_CR3() + VIR_START);
 	uint64_t pml4e_index = get_pml4e_index(vir_addr);
 	uint64_t pml4e = global_PML4->PML4E[pml4e_index];
 
@@ -246,7 +229,7 @@ void initial_mapping() {
 
 	set_CR3((uint64_t) global_PML4 - VIR_START);
 
-	test_selfref(0xFFFFFFFF80600100);
+//	test_selfref(0xFFFFFFFF80600100);
 //  global_PML4 = (pml4_t) get_entry_viraddr ((uint64_t) global_PML4);
 }
 

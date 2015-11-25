@@ -240,7 +240,7 @@ phy_free (uint64_t addr)
 
 page_sp *get_page_frame_descriptor (uint64_t phys_addr)
 {
-  uint32_t index = phys_addr<<12;
+  uint32_t index = phys_addr>>12;
   page_sp* tmp = page_struct_start + index;
   return tmp;
 }

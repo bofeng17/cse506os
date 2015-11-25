@@ -153,7 +153,7 @@ void func_init() {
 
 	do_execv("bin/test_hello", argv, envp);
 
-	//do_fork();
+	do_fork();
 
 	sysret_to_ring3();
 

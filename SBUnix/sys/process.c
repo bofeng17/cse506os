@@ -459,7 +459,7 @@ void set_cow_routine(int flags, uint64_t vaddr) {
 	//read the entry back
 	uint64_t tmp = self_ref_read(flags, vaddr);
 	//set the entry with cow bit
-	tmp = (uint64_t)(tmp | PTE_COW);
+	tmp = (uint64_t)(tmp | PTE_COW | PTE_R);
 	//write the entry back
 	self_ref_write(flags, vaddr, tmp);
 }

@@ -61,6 +61,7 @@ static inline struct posix_header_ustar *tarfs_header_walk(struct posix_header_u
 }
 
 
+// prototype of do_open, which has two parameters
 tarfs_file* tarfs_open(char *name)
 {
 	struct posix_header_ustar *header_start=(struct posix_header_ustar*)&_binary_tarfs_start;
@@ -201,20 +202,22 @@ void tarfs_test()
 		printf("================================TARFS size: %d\n", size_);
 
 
-
-
-		
-	
-
 	fp = tarfs_open("bin/hello");
 	memset(temp, 0, sizeof(temp));
 	len = tarfs_read(fp,temp,50);
 	printf("test tarfs: %d\n", len);
 	printf("test tarfs: %s\n", temp);
 
-
-
-
-
 	return;
+}
+
+// write syscall service routine
+ssize_t do_write(int fd, const void *buf, size_t count) {
+    if (fd == 1 || fd == 2) {
+        // TODO: support count, and return value
+        return printf((char *)buf);
+    } else {
+        // TODO: find corresponding file
+        return count;
+    }
 }

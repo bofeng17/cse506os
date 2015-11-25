@@ -42,6 +42,7 @@
 #define PTE_PS		0x080	// Page Size
 #define PTE_MBZ		0x180	// Bits must be zero
 #define PTE_COW		0x400	// Copy-on-write
+#define PTE_R       0x001   //only readable
 
 //flags for kmalloc
 #define KERNPT 0 // kernel page table

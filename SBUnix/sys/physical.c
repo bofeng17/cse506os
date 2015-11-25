@@ -13,6 +13,7 @@ extern uint32_t page_num;
 //page_sp* page_struct_start=(page_sp*)(0xffffffff80350000);
 //int page_num=((page_length)>>12);
 extern page_sp* page_struct_start;
+extern uint32_t page_index;
 
 //each page is 4kb
 
@@ -240,7 +241,7 @@ phy_free (uint64_t addr)
 
 page_sp *get_page_frame_descriptor (uint64_t phys_addr)
 {
-  uint32_t index = phys_addr<<12;
+  uint32_t index = phys_addr>>12 - page_index;
   page_sp* tmp = page_struct_start + index;
   return tmp;
 }

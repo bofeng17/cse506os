@@ -143,10 +143,10 @@ size_t tarfs_read(tarfs_file* fd, void* buf, size_t size)
 
 }
 
-/*void tarfs_close(tarfs_file* fd)
+void tarfs_close(tarfs_file* fd)
 {
-	kfree();
-}*/
+	kfree(fd, 1);
+}
 
 void* find_file(char* filename)
 {

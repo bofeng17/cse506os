@@ -156,9 +156,9 @@ void func_init() {
 
 	char* envp[4] = { "e1", "e2", "e3", NULL };
 
-	do_execv("bin/test_hello", argv, envp);
+	do_execv("bin/test_malloc", argv, envp);
 
-	do_fork();
+	//do_fork();
 
 	sysret_to_ring3();
 

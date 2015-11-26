@@ -107,7 +107,7 @@ void yield(void) {
 // memory
 //typedef uint64_t size_t;
 void* malloc(size_t size) {
-	void *a = (void*) sbrk(size);
+	void *a = sbrk(size);
 	if (a == ((void*) (-1))) {
 		return NULL;
 	} else {
@@ -121,13 +121,17 @@ void* malloc(size_t size) {
 //    syscall_2(SYS_munmap,(uint64_t)ptr,length);
 //}
 //
-uint64_t brk(uint64_t end_data_segment) {
-	return syscall_1(SYS_brk, end_data_segment);
+//int brk(void* addr) {
+//	void* base = sbrk(0);
+//
+//	return sbrk(((uint64_t) addr - (uint64_t) base));
+//}
+
+//if success return previous heap break, otherwise return (void*) -1
+void* sbrk(size_t size) {
+	return (void*) syscall_1(SYS_sbrk, size);
 }
 
-uint64_t sbrk(uint64_t size) {
-	return syscall_1(SYS_sbrk, size);
-}
 //
 //
 //// signals

@@ -15,8 +15,9 @@ malloc(size_t size);
 void
 free(void *ptr);
 
-uint64_t
-brk(uint64_t end_data_segment);
+int brk(void* addr);
+
+void* sbrk(size_t size);
 
 // processes
 pid_t

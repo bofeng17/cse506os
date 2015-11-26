@@ -583,40 +583,32 @@ void self_ref_write(int level, uint64_t vir, uint64_t phy) {
 	*((uint64_t*) addr) = phy;
 }
 
-int do_munmap(mm_struct *mm, uint64_t start, size_t len) {
-
-	return 0;
-}
-
-uint64_t do_brk(uint64_t addr) {
+void* do_sbrk(size_t brk_size) {
 	mm_struct * mm = current->mm;
 	vma_struct * vma_heap = get_vma(mm, HEAP);
 
-	uint64_t newbrk = (addr + 0xfff) & 0xfffff000;
+	//4K aligned
 	uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
+	uint64_t newbrk = (mm->brk + brk_size + 0xfff) & 0xfffff000;
 
 	// heap size not change
 	if (oldbrk == newbrk) {
-		mm->brk = addr;
-		return mm->brk;
-	}
-
-	// shrink heap
-	if (addr <= mm->brk) {
-		if (!do_munmap(mm, newbrk, oldbrk - newbrk)) {
-			mm->brk = addr;
-			vma_heap->vm_end = mm->brk;
-		}
-		return mm->brk;
+		return (void*) oldbrk;
 	}
 
 	//enlarge heap
-	uint64_t brk_size = newbrk - oldbrk;
 	if (brk_size < BRK_LIMIT) {
 		//umap((void*) addr, brk_size);
-		mm->brk = addr;
+
+		// page fault handler will do mapping and allocate physical pages
+		mm->brk = newbrk;
 		vma_heap->vm_end = mm->brk;
+
+		return (void*) newbrk;
+	} else {
+		printf("Size[%d] Exceed BRK_LIMIT[%x]!\n", brk_size, BRK_LIMIT);
+		return (void*) -1;
 	}
 
-	return mm->brk;
 }
+

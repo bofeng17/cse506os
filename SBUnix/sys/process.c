@@ -361,8 +361,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 			initial_heap_size);
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
-	execv_task->mm->start_stack = (uint64_t) umap((void*) STACK_TOP, PAGE_SIZE);
-	umap((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
+	umap((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
+	execv_task->mm->start_stack = (uint64_t) umap(
+			(void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 
 	// setup new task user stack, rsp, argv, envp
 	void* rsp = (void*) (STACK_TOP);
@@ -430,7 +431,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 
 	execv_task->rsp = (uint64_t) rsp;
 
-	execv_task->mm->start_stack = (uint64_t) rsp;
+	//execv_task->mm->start_stack = (uint64_t) rsp;
 	setup_vma(execv_task->mm);
 
 	// add execv_task to the run queue
@@ -520,8 +521,8 @@ int do_fork() {
 	//child has it own kernel stack
 
 	new_task->rip = current->rip;
-	new_task->mm->start_stack = (uint64_t) umalloc((void*) STACK_TOP,
-			PAGE_SIZE);
+	new_task->mm->start_stack = (uint64_t) umalloc(
+			(void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 	//child has it own stack
 
 	new_task->task_state = TASK_READY;

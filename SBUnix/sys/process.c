@@ -501,7 +501,7 @@ void set_child_pt(task_struct* child) {
 		vma = vma->vm_next;
 	}
 
-	set_CR3(child->cr3);
+//	set_CR3(child->cr3);
 }
 
 int do_fork() {
@@ -521,6 +521,8 @@ int do_fork() {
 	//child has it own kernel stack
 
 	new_task->rip = current->rip;
+	new_task->rsp = current->rsp;
+
 	new_task->mm->start_stack = (uint64_t) umalloc(
 			(void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 	//child has it own stack

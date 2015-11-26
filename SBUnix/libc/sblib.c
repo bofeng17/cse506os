@@ -13,7 +13,7 @@ ssize_t read(struct file* fd, void *buf, size_t count) {
     return syscall_3(SYS_read, (uint64_t)fd, (uint64_t)buf, count);
 }
 
- ssize_t write(int fd, const void *buf, size_t count) {
+ssize_t write(int fd, const void *buf, size_t count) {
     return syscall_3(SYS_write, fd, (uint64_t)buf, count);
 }
 
@@ -47,27 +47,33 @@ void close(struct file* fd) {
  * The value status is returned to the parent process as the process's exit status,
  * and can be collected using one of the wait(2) family of calls
  */
-inline void exit(int status){
+void exit(int status){
     syscall_1(SYS_exit, status);
 }
 
-inline pid_t fork(void) {
+pid_t fork(void) {
     return syscall_0(SYS_fork);
 }
 
-inline int execve(const char *filename, char *const argv[], char *const envp[]) {
+int execve(const char *filename, char *const argv[], char *const envp[]) {
     return syscall_3(SYS_execve, (uint64_t)filename, (uint64_t)argv, (uint64_t)envp);
 }
 
 
-inline pid_t getpid(void) {
+pid_t getpid(void) {
     return syscall_0(SYS_getpid);
 }
 
 // get parent pid
-inline pid_t getppid(void) {
+pid_t getppid(void) {
     return syscall_0(SYS_getppid);
 }
+
+// in POSIX, return value type is int
+void yield(void){
+    syscall_0(SYS_yield);
+}
+
 
 //pid_t waitpid(pid_t pid, int *status, int options) {
 //    return syscall_3(SYS_wait4, pid, (uint64_t)status, options);

@@ -26,6 +26,9 @@
 
 #define SYS_mmap		9
 
+// defined by mysefl
+#define SYS_yield       100
+
 // init msr registers
 void syscall_init();
 void sysret_to_ring3();

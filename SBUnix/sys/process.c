@@ -586,3 +586,8 @@ void do_exit(int status) {
 	current->task_state = TASK_ZOMBIE;
 	schedule();
 }
+
+void do_yield() {
+    schedule();
+}
+

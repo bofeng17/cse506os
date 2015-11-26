@@ -88,6 +88,7 @@ struct dirent *
 readdir (void *dir);
 int
 closedir (void *dir);*/
+
 void* opendir(const char* name);
 
 struct dirent* readdir(void* fd);

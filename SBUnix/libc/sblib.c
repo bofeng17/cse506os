@@ -17,6 +17,18 @@ ssize_t write(int fd, const void *buf, size_t count) {
     return syscall_3(SYS_write, fd, (uint64_t)buf, count);
 }
 
+void* opendir(const char* name){
+    return (void* )syscall_1(SYS_open, (uint64_t)name);
+}
+
+struct dirent* readdir(void* fd){
+    return (struct dirent* )syscall_1(SYS_open, (uint64_t)fd);
+}
+
+int closedir(struct dirent* close){
+    return syscall_1(SYS_open, (uint64_t)close);
+}
+
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
 ////typedef uint64_t off_t;
 //

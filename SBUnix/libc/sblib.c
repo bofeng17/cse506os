@@ -5,16 +5,28 @@
 // files
 
 // mode(unused): enum { O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000 };
-int open(const char *pathname, int flags) {
-    return syscall_2(SYS_open, (uint64_t)pathname, flags);
+struct file* open(char *name, int flags) {
+    return (struct file* )syscall_2(SYS_open, (uint64_t)name, flags);
 }
 
-inline ssize_t read(int fd, void *buf, size_t count) {
-    return syscall_3(SYS_read, fd, (uint64_t)buf, count);
+ssize_t read(struct file* fd, void *buf, size_t count) {
+    return syscall_3(SYS_read, (uint64_t)fd, (uint64_t)buf, count);
 }
 
-inline ssize_t write(int fd, const void *buf, size_t count) {
+ssize_t write(int fd, const void *buf, size_t count) {
     return syscall_3(SYS_write, fd, (uint64_t)buf, count);
+}
+
+void* opendir(const char* name){
+    return (void* )syscall_1(SYS_open, (uint64_t)name);
+}
+
+struct dirent* readdir(void* fd){
+    return (struct dirent* )syscall_1(SYS_open, (uint64_t)fd);
+}
+
+int closedir(struct dirent* close){
+    return syscall_1(SYS_open, (uint64_t)close);
 }
 
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
@@ -24,8 +36,8 @@ inline ssize_t write(int fd, const void *buf, size_t count) {
 //    return syscall_3(SYS_lseek, fildes, offset, whence);
 //}
 //
-inline int close(int fd) {
-    return syscall_1(SYS_close, fd);
+void close(struct file* fd) {
+     syscall_1(SYS_close, (uint64_t)fd);
 }
 
 //duplicate a file descriptor
@@ -47,27 +59,33 @@ inline int close(int fd) {
  * The value status is returned to the parent process as the process's exit status,
  * and can be collected using one of the wait(2) family of calls
  */
-inline void exit(int status){
+void exit(int status){
     syscall_1(SYS_exit, status);
 }
 
-inline pid_t fork(void) {
+pid_t fork(void) {
     return syscall_0(SYS_fork);
 }
 
-inline int execve(const char *filename, char *const argv[], char *const envp[]) {
+int execve(const char *filename, char *const argv[], char *const envp[]) {
     return syscall_3(SYS_execve, (uint64_t)filename, (uint64_t)argv, (uint64_t)envp);
 }
 
 
-inline pid_t getpid(void) {
+pid_t getpid(void) {
     return syscall_0(SYS_getpid);
 }
 
 // get parent pid
-inline pid_t getppid(void) {
+pid_t getppid(void) {
     return syscall_0(SYS_getppid);
 }
+
+// in POSIX, return value type is int
+void yield(void){
+    syscall_0(SYS_yield);
+}
+
 
 //pid_t waitpid(pid_t pid, int *status, int options) {
 //    return syscall_3(SYS_wait4, pid, (uint64_t)status, options);

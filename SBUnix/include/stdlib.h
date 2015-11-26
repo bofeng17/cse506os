@@ -62,10 +62,10 @@ enum
 {
   O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000
 };
-int
-open (const char *pathname, int flags);
+struct file*
+open (char *name, int flags);
 ssize_t
-read (int fd, void *buf, size_t count);
+read (struct file* fd, void *buf, size_t count);
 ssize_t
 write (int fd, const void *buf, size_t count);
 enum
@@ -74,20 +74,26 @@ enum
 };
 off_t
 lseek (int fildes, off_t offset, int whence);
-int
-close (int fd);
+void
+close (struct file* fd);
 int
 dup (int oldfd);
 int
 dup2 (int oldfd, int newfd);
 
 // directories
-void *
+/*void *
 opendir (const char *name);
 struct dirent *
 readdir (void *dir);
 int
-closedir (void *dir);
+closedir (void *dir);*/
+void* opendir(const char* name);
+
+struct dirent* readdir(void* fd);
+
+int closedir(struct dirent* close);
+
 void *
 memset (void *s, int ch, size_t n);
 #endif

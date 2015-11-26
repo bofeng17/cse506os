@@ -211,88 +211,6 @@ create_thread(uint64_t thread, char * thread_name) {
 
 }
 
-//prev stored in %rdi (because it is the first arg in function call)
-//next sotred in %rsi
-void context_switch(task_struct *prev, task_struct *next) {
-
-	__asm__ __volatile__ (
-			"pushq	%rax;"
-			"pushq	%rbx;"
-			"pushq	%rcx;"
-			"pushq	%rdx;"
-			"pushq	%rsi;"
-			"pushq	%rdi;"
-			"pushq	%rbp;"
-			"pushq	%rsp;"
-			"pushq	%r8;"
-			"pushq	%r9;"
-			"pushq	%r10;"
-			"pushq	%r11;"
-			"pushq	%r12;"
-			"pushq	%r13;"
-			"pushq	%r14;"
-			"pushq	%r15;"
-			"pushfq;");
-	//Is it OK to switch cr3 first?
-	/* move the current process page table base address to cr3 register */
-
-	__asm__ __volatile__ (
-			"movq %0, %%cr3;"
-			::"r"(next->cr3)
-	);
-
-	/* save the rsp pointer of the swapped process */
-	__asm__ __volatile__ (
-			"movq %%rsp, %0"
-			:"=r"(prev->kernel_stack)
-	);
-
-	/* move the stack pointer of current process to rsp register */
-	__asm__ __volatile__ (
-			"movq %0, %%rsp;"
-			::"r"(next->kernel_stack)
-	);
-
-	//TODO: tss.rsp0 = next->init_kern;
-	/* set the kernel stack */
-	//Ref. <Understanding the Linux kernel>: page 108 step 3
-	/*
-	 * save the instruction pointer for swapped process
-	 * and jump to next process
-	 */
-	__asm__ __volatile__ (
-			"movq $1f, %0;"
-			"sti;" //enable CPU interrupt, which is disabled by timer. Is it proper to do here?
-			"jmp %1;"
-			"1:\t"
-			:"=g"(prev->rip)
-			:"r"(next->rip)
-	);
-
-	__asm__ __volatile__ (
-			"popfq;"
-			"popq	%r15;"
-			"popq	%r14;"
-			"popq	%r13;"
-			"popq	%r12;"
-			"popq	%r11;"
-			"popq	%r10;"
-			"popq	%r9;"
-			"popq	%r8;"
-			"popq	%rsp;"
-			"popq	%rbp;"
-			"popq	%rdi;"
-			"popq	%rsi;"
-			"popq	%rdx;"
-			"popq	%rcx;"
-			"popq	%rbx;"
-			"popq	%rax;");
-	//TODO: movl %eax, last
-	//Here we should
-	//Ref. <Understanding the Linux kernel>: page 108 step 9
-
-}
-
 #define ARGV_PARAMS 1
 #define ENVP_PARAMS 0
 // set params (argv, envp) to the top area of user stack, return params number
@@ -352,7 +270,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	set_task_struct(execv_task);
 
 	// load bin_name elf
-	struct file* file = tarfs_open(bin_name);
+	struct file* file = tarfs_open(bin_name, O_RDONLY);
 
 	if (file == NULL) {
 		return -1;
@@ -550,3 +468,8 @@ void do_exit(int status) {
 	current->task_state = TASK_ZOMBIE;
 	schedule();
 }
+
+void do_yield() {
+    schedule();
+}
+

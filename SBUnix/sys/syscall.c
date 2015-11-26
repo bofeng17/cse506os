@@ -127,14 +127,35 @@ void do_syscall () {
      */
     /* 
      * Template:
-     * __asm__ __volatile__ ("mov %r14, %rdx;"); // maybe to removed
+     * __asm__ __volatile__ ("mov %r14, %rdx;"); // Necessary for syscall with >= 3 parameters
      * __asm__ __volatile__ ("callq do_xxx;"
      *                       :"=a"(ret_val));
      */
     switch (syscall_no) {
+        case SYS_open:
+            __asm__ __volatile__ ("callq tarfs_open;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_close:
+            __asm__ __volatile__ ("callq tarfs_close;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_opendir:
+            __asm__ __volatile__ ("callq do_opendir;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_readdir:
+            __asm__ __volatile__ ("callq do_readdir;"
+                                  :"=a"(ret_val));
+        case SYS_closedir:
+            __asm__ __volatile__ ("callq do_closedir;"
+                                  :"=a"(ret_val));
+            break;
         case SYS_read:
+            // TODO: This is not the final version of read.
             __asm__ __volatile__ ("mov %r14, %rdx;");
-            //ret_val = do_read();
+            __asm__ __volatile__ ("callq tarfs_read;"
+                                  :"=a"(ret_val));
             break;
         case SYS_write:
             __asm__ __volatile__ ("mov %r14, %rdx;");
@@ -142,13 +163,20 @@ void do_syscall () {
                                   :"=a"(ret_val));
             break;
         case SYS_fork:
-            printf("fork No. 57\n");
+            __asm__ __volatile__ ("callq do_fork;"
+                                  :"=a"(ret_val));
             break;
         case SYS_execve:
-            printf("execve No. 59\n");
+            __asm__ __volatile__ ("mov %r14, %rdx;");
+            __asm__ __volatile__ ("callq do_execv;"
+                                  :"=a"(ret_val));
             break;
         case SYS_exit:
             __asm__ __volatile__ ("callq do_exit;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_yield:
+            __asm__ __volatile__ ("callq do_yield;"
                                   :"=a"(ret_val));
             break;
         default:

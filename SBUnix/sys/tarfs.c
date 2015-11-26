@@ -62,8 +62,10 @@ static inline struct posix_header_ustar *tarfs_header_walk(struct posix_header_u
 
 
 // prototype of do_open, which has two parameters
-tarfs_file* tarfs_open(char *name)
+tarfs_file* tarfs_open(char *name, int flags)
 {
+    if(flags == O_RDONLY)
+    {
     struct posix_header_ustar *header_start=(struct posix_header_ustar*)&_binary_tarfs_start;
     uint64_t size;
     //printf("im in tarfs open 1\n");
@@ -104,6 +106,9 @@ tarfs_file* tarfs_open(char *name)
     //printf("im in tarfs open 6\n");
     
     printf("ERROR: tarfs open file failed\n");
+    return NULL;
+    }
+    printf("we only support O_RDONLY flags\n");
     return NULL;
     
 }
@@ -177,6 +182,73 @@ void* find_file(char* filename)
     
 }
 
+void* do_opendir(const char* name)
+{
+    struct posix_header_ustar *header_start=(struct posix_header_ustar*)&_binary_tarfs_start;
+    uint64_t size;
+ 
+    if(name==NULL)
+    {
+        printf("ERROR: provided file name is null\n");
+        return NULL;
+    }
+
+    while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
+    {
+        
+        size=get_size_oct(header_start->size);
+        if((!strcmp(header_start->name, name)) & (!strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
+        {
+            header_start=(struct posix_header_ustar*)header_start+1;
+            return (void*)header_start;
+        }
+        
+        header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);
+    }
+
+    return NULL;
+
+}
+
+struct dirent* do_readdir(void* fd)
+{
+    uint64_t i=0;
+    uint64_t size;
+    struct dirent* output = kmalloc(1);
+    struct posix_header_ustar *header_start = (struct posix_header_ustar*)&_binary_tarfs_start;
+    struct posix_header_ustar *file = (struct posix_header_ustar*)(fd);
+
+    char* name = file->name;
+
+    while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
+    {
+        
+        size=get_size_oct(header_start->size);
+        if((!strncmp(header_start->name, name, 3)) & (strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
+        {
+            strcpy(output[i].name ,header_start->name);
+            //header_start=(struct posix_header_ustar*)header_start+1;
+            //return (void*)header_start;
+            i++;
+        }
+        
+        header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);
+    }
+
+    output->num = i;
+
+return output;
+
+
+}
+
+
+int do_closedir(struct dirent* close)
+{
+    kfree(close, 1);
+    return 0;
+}
+
 void tarfs_test()
 {
     
@@ -202,7 +274,7 @@ void tarfs_test()
     printf("================================TARFS size: %d\n", size_);
     
     
-    fp = tarfs_open("bin/hello");
+    fp = tarfs_open("bin/hello", O_RDONLY);
     memset(temp, 0, sizeof(temp));
     len = tarfs_read(fp,temp,50);
     printf("test tarfs: %d\n", len);

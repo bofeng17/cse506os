@@ -30,10 +30,17 @@ struct file{
 	uint32_t *start;
 };
 
+struct dirent{
+	uint64_t num;
+	uint64_t length;
+	char name[100];
+};
+
+
 
 void tarfs_test();
 void* find_file(char*);
-struct file* tarfs_open(char *name);
+struct file* tarfs_open(char *name, int flags);
 
 #define STD_IN  0
 #define STD_OUT 1

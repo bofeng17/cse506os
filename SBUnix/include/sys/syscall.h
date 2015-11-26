@@ -31,11 +31,12 @@
 #define SYS_opendir     101
 #define SYS_readdir     102
 #define SYS_closedir    103
+#define SYS_sbrk       13
 
 // init msr registers
 void syscall_init();
 void sysret_to_ring3();
-void do_syscall ();
-void do_exit (int status);
+void do_syscall();
+void do_exit(int status);
 
 #endif

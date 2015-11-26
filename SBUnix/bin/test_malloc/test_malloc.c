@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <sys/defs.h>
 
 void test(int x, int y, char *s, char a, int d) {

@@ -7,10 +7,16 @@
 #include <sys/defs.h>
 
 // for printf
-void write_putchar(char c);
-ssize_t write(int fd, const void *buf, size_t count);
+// buffer used by write syscall
+extern char printf_buf[MAX_BUFF];
+extern int printf_buf_count;
 
-//for kernel_printf
+/*
+ * the main difference from kernel printf lies here
+ * other functions are almost the same
+ */
+void write_char(char c);
+
 void print_char(char); 	 //%c
 void print_string(char*);//%s
 void print_int(int, int); 	 //%d
@@ -20,7 +26,13 @@ void print_hex_or_ptr(uint64_t,int);// %x, %p
 
 int printf(const char *format, ...);
 
+
 // for scanf
+// buffer used by read syscall
+extern char scanf_buf[MAX_BUFF];
+extern int scanf_buf_count;
+
+
 int scanf(const char *format, ...);
 
 #endif

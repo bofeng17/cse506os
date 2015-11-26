@@ -1,13 +1,14 @@
 #include <sys/sbunix.h>
 #include <sys/stdarg.h>
 #include <sys/printf.h>
+#include <sys/string.h>
 
 //for console
 
 void console_initialize() {
     console_row = 0;
     console_column = 0;
-    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+    console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
 }
 
 //void console_initialize() {
@@ -64,6 +65,9 @@ int printf(const char *format, ...) {
     char 		val_char = 0;
     char* 		val_string = NULL;
     
+    // Set foreground color as RED
+    console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
+    
     va_start(val, format);
     
     while(*format) {
@@ -85,7 +89,7 @@ int printf(const char *format, ...) {
                     break;
                 case 's':
                     val_string = va_arg(val, char*);
-                    print_string(val_string);
+                    print_string(val_string, strlen(val_string));
                     break;
                 case 'x':
                     val_long = va_arg(val, uint64_t);
@@ -110,10 +114,15 @@ inline void print_char(char arg) {
     console_putchar(arg);
 }
 
-void print_string(char* arg) {
-    while(*arg) {//be careful here
+/* 
+ * be called by:
+ * printf %s, and terminal write
+ */
+void print_string(char* arg, int count) {
+    while(count) {//be careful here
         print_char(*arg);
         arg++;
+        count--;
     }
 }
 
@@ -141,7 +150,7 @@ void print_int(int arg, int desire_length) {
 void print_hex_or_ptr(uint64_t arg,int mode) {
     int stack[16],top=-1;
     for (int i = 0; i < 16; i ++) stack[i] = 0;
-    print_string("0x");
+    print_string("0x", 2);
     while (arg/16){
         top++;
         stack[top] = arg%16;
@@ -161,4 +170,13 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
             print_char(' ');
         }
     }
+}
+
+// for terminal write
+int terminal_write(int fd, char *buf, int count) {
+    // TODO: stdout vs stderr
+    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+    print_string(buf, count);
+    // TODO: return value
+    return count;
 }

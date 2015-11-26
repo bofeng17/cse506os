@@ -24,6 +24,8 @@
 #define SYS_dup2       33
 #define SYS_getdents   78
 
+#define SYS_mmap		9
+
 // init msr registers
 void syscall_init();
 void sysret_to_ring3();

@@ -40,7 +40,7 @@ void console_putchar(char c);
 
 //for kernel_printf
 void print_char(char); 	 //%c
-void print_string(char*);//%s
+void print_string(char*, int);//%s
 void print_int(int, int); 	 //%d
 #define hex_x 0
 #define ptr_p 1
@@ -48,4 +48,6 @@ void print_hex_or_ptr(uint64_t,int);// %x, %p
 
 int printf(const char *format, ...);
 
+//for terminal write
+int terminal_write(int fd, char *buf, int count);
 #endif

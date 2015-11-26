@@ -1,9 +1,18 @@
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 
+// for printf
+
+// buffer used by write syscall
 char printf_buf[MAX_BUFF];
-int printf_buf_count;
+int printf_buf_count; // number of char in the buffer
 
+/*
+ * the main difference from kernel printf lies here
+ * other functions are almost the same
+ */
+// TODO: not inline for the ease of debugging
 void write_char(char c) {
     printf_buf[printf_buf_count] = c;
     printf_buf_count ++;
@@ -19,7 +28,7 @@ int printf(const char *format, ...) {
     char* 		val_string = NULL;
     
     // global variable, added to support user printf
-    printf_buf_count = 0;
+    printf_buf_count = 0; // number of char in the buffer
     
     va_start(val, format);
     
@@ -124,3 +133,60 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
     }
 }
 
+// for scanf
+
+// buffer used by read syscall
+char scanf_buf[MAX_BUFF];
+int scanf_buf_count; // TODO: usage differs from printf, how to use it?
+
+// TODO: need to verify correntness
+int scanf(const char *format, ...) {
+   	va_list 	val;
+    int         scaned = 0;
+    // TODO: must support %s, %d, and maybe %x
+    //    int 		val_int = 0;
+    //    uint64_t    val_long = 0;
+    //    char 		val_char = 0;
+    
+    // TODO: where to store
+    //char* 		val_string = malloc(MAX_BUFF*sizeof(char));
+    char* 		val_string = NULL;
+
+    scanf_buf_count = 0;
+    
+    va_start(val, format);
+    
+    // TODO: number of bytes read?
+    read(0, scanf_buf, MAX_BUFF);
+    
+    while(*format) {
+        if(*format == '%') {
+            format++;
+            scaned++;
+            switch (*format) {
+                case 's':
+                    val_string = va_arg(val, char*);
+                    // TODO: error prone!
+                    while(scanf_buf[scanf_buf_count] != '\n') {
+                        *val_string = scanf_buf[scanf_buf_count];
+                        val_string++;
+                        scanf_buf_count++;
+                    }
+                    break;
+                case 'd':
+                    // TODO
+                    break;
+                default:
+                    break;
+            }
+            format++;
+        }
+    }
+    va_end(val);
+    /* 
+     * return the number of input items successfully matched and assigned,
+     * which can be fewer than provided for, or even zero in the
+     * event of an early matching failure.
+     */
+    return scaned;
+}

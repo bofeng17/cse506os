@@ -21,7 +21,9 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
 	uint64_t pt_perm_flag;
 	uint64_t page_frame_des; // physical addr of page frame newly allocated. Destination
 	uint64_t page_frame_src; // physical addr of existed page frame read by self_ref_read(). Source
-
+    uint64_t tmp_vir_addr = 0xffffffff80000000UL; // used in COW to map newly allocated page frame
+    uint64_t tmp_phys_addr; // used in COW to store the original mapping of stolen tmp_vir_addr
+    
 	__asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
 	printf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
 	/*
@@ -88,10 +90,9 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
 			/*
 			 * Level 3 check:
 			 * if bit 1 is 1 (write operation) && vma allows write && bit 3 is 1 (reserved bit is set to 1)
-			 * TODO: 3rd condition is too coarse-grained
 			 */
 			if ((pf_err_code & PF_BIT_1) && (vma->permission_flag & VM_WRITE)
-					&& (pf_err_code & PF_BIT_3)) {
+					&& (self_ref_read(PT, pf_addr) & PTE_COW)) {
 				// TODO: branch never reached by testing
 				// pf caused by COW
 				pt_perm_flag = PTE_P | PTE_U | PTE_W;
@@ -108,15 +109,28 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
 					self_ref_write(PT, pf_addr,
 							(page_frame_src | pt_perm_flag) & (~PTE_COW));
 				} else {
+                    
+                    /* 
+                     * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
+                     * so that we can copy content into that page frame
+                     * before stealing, save the original mapping
+                     */
+                    tmp_phys_addr = self_ref_read(PT, tmp_vir_addr);
+                    self_ref_write(PT, tmp_vir_addr, page_frame_des | pt_perm_flag);
+                    
 					// Copy content
-					memcpy((void *) page_frame_des, (void *) page_frame_src,
+					memcpy((void *) tmp_vir_addr, (void *) (pf_addr & CLEAR_OFFSET),
 							PAGE_SIZE);
-
+                    
 					// Modify PT
 					self_ref_write(PT, pf_addr, page_frame_des | pt_perm_flag);
-
-					// decrease ref_count of page frame
-					get_page_frame_descriptor(page_frame_src)->ref_count--;
+                    
+                    // decrease ref_count of page frame
+                    get_page_frame_descriptor(page_frame_src)->ref_count--;
+                    
+                    // restore the original mapping of tmp_vir_addr
+                    self_ref_write(PT, tmp_vir_addr, tmp_phys_addr);
+                    
 				}
 			} else {
 				// TODO: branch never reached by testing

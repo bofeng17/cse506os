@@ -396,6 +396,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	// set null pointer between string area and envp
 	tmp -= 8;	      // uint64_t is 8 bytes
 	memset(tmp, 0, 8);
+	tmp -= 8;	      // uint64_t is 8 bytes
 
 	// store envp pointers in the proper place of user stack
 	if (envc > 0) {
@@ -407,8 +408,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 		}
 		execv_task->mm->env_start = (uint64_t) envp[0];
 		// set 0 between envp and argv
+		//tmp -= 8;	      // uint64_t is 8 bytes
 		memset(tmp, 0, 8);
-		tmp -= 8; // uint64_t is 8 bytes
+		tmp -= 8;	      // uint64_t is 8 bytes
 
 	}
 

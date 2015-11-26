@@ -359,8 +359,10 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	//execv_task->mm->start_stack = (uint64_t) rsp;
 	setup_vma(execv_task->mm);
 
-	// add execv_task to the run queue
-	add_task(execv_task);
+//	// add execv_task to the run queue
+//	add_task(execv_task);
+    
+    
 
 	return retval;
 }

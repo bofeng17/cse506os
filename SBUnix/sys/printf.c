@@ -5,30 +5,18 @@
 
 //for console
 
+const size_t VGA_WIDTH = 80;
+const size_t VGA_HEIGHT = 25;
+uint16_t* console_buffer = (uint16_t*) 0xFFFFFFFF800B8000;
+size_t console_row;
+size_t console_column;
+uint8_t console_color;
+
 void console_initialize() {
     console_row = 0;
     console_column = 0;
     console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
 }
-
-//void console_initialize() {
-//    console_row = 0;
-//    console_column = 0;
-//    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
-//    for (size_t y = console_row; y < VGA_HEIGHT; y++) {
-//        if (y == console_row) {
-//            for (size_t x = console_column; x < VGA_WIDTH; x++) {
-//                const size_t index = y * VGA_WIDTH + x;
-//                console_buffer[index] = make_vgaentry(' ', console_color);
-//            }
-//        } else {
-//            for (size_t x = 0; x < VGA_WIDTH; x++) {
-//                const size_t index = y * VGA_WIDTH + x;
-//                console_buffer[index] = make_vgaentry(' ', console_color);
-//            }
-//        }
-//    }
-//}
 
 inline void console_putchar(char c) {
     if (c == '\n'){
@@ -170,13 +158,4 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
             print_char(' ');
         }
     }
-}
-
-// for terminal write
-int terminal_write(int fd, char *buf, int count) {
-    // TODO: stdout vs stderr
-    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
-    print_string(buf, count);
-    // TODO: return value
-    return count;
 }

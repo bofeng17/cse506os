@@ -1,5 +1,6 @@
 #include <sys/sbunix.h>
 #include <sys/pic.h>
+#include <sys/printf.h>
 #include <sys/keyboard.h>
 
 volatile int SHIFT;

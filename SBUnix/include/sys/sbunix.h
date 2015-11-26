@@ -3,10 +3,7 @@
 
 #include <sys/defs.h>
 
-size_t console_row;
-size_t console_column;
-uint8_t console_color;
-uint16_t* console_buffer;
+
 
 extern void console_initialize();
 

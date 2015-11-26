@@ -1,7 +1,7 @@
 #include <sys/sbunix.h>
 #include <sys/pic.h>
 #include <sys/timer.h>
-
+#include <sys/printf.h>
 #include <sys/process.h>
 
 volatile uint32_t system_boot_mS = 0; //Number of whole mS since timer initialized

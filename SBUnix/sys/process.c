@@ -1,5 +1,5 @@
 #include <sys/sbunix.h>
-#include <sys/stdio.h> //kernel should not include user header files
+//#include <sys/stdio.h> //kernel should not include user header files
 #include <sys/stdlib.h>//kernel should not include user header files
 #include <sys/tarfs.h>
 #include <sys/elf.h>
@@ -156,9 +156,9 @@ void func_init() {
 
 	char* envp[4] = { "e1", "e2", "e3", NULL };
 
-	do_execv("bin/test_hello", argv, envp);
+	do_execv("bin/test_malloc", argv, envp);
 
-	do_fork();
+	//do_fork();
 
 	sysret_to_ring3();
 
@@ -211,88 +211,6 @@ create_thread(uint64_t thread, char * thread_name) {
 
 }
 
-//prev stored in %rdi (because it is the first arg in function call)
-//next sotred in %rsi
-void context_switch(task_struct *prev, task_struct *next) {
-
-	__asm__ __volatile__ (
-			"pushq	%rax;"
-			"pushq	%rbx;"
-			"pushq	%rcx;"
-			"pushq	%rdx;"
-			"pushq	%rsi;"
-			"pushq	%rdi;"
-			"pushq	%rbp;"
-			"pushq	%rsp;"
-			"pushq	%r8;"
-			"pushq	%r9;"
-			"pushq	%r10;"
-			"pushq	%r11;"
-			"pushq	%r12;"
-			"pushq	%r13;"
-			"pushq	%r14;"
-			"pushq	%r15;"
-			"pushfq;");
-	//Is it OK to switch cr3 first?
-	/* move the current process page table base address to cr3 register */
-
-	__asm__ __volatile__ (
-			"movq %0, %%cr3;"
-			::"r"(next->cr3)
-	);
-
-	/* save the rsp pointer of the swapped process */
-	__asm__ __volatile__ (
-			"movq %%rsp, %0"
-			:"=r"(prev->kernel_stack)
-	);
-
-	/* move the stack pointer of current process to rsp register */
-	__asm__ __volatile__ (
-			"movq %0, %%rsp;"
-			::"r"(next->kernel_stack)
-	);
-
-	//TODO: tss.rsp0 = next->init_kern;
-	/* set the kernel stack */
-	//Ref. <Understanding the Linux kernel>: page 108 step 3
-	/*
-	 * save the instruction pointer for swapped process
-	 * and jump to next process
-	 */
-	__asm__ __volatile__ (
-			"movq $1f, %0;"
-			"sti;" //enable CPU interrupt, which is disabled by timer. Is it proper to do here?
-			"jmp %1;"
-			"1:\t"
-			:"=g"(prev->rip)
-			:"r"(next->rip)
-	);
-
-	__asm__ __volatile__ (
-			"popfq;"
-			"popq	%r15;"
-			"popq	%r14;"
-			"popq	%r13;"
-			"popq	%r12;"
-			"popq	%r11;"
-			"popq	%r10;"
-			"popq	%r9;"
-			"popq	%r8;"
-			"popq	%rsp;"
-			"popq	%rbp;"
-			"popq	%rdi;"
-			"popq	%rsi;"
-			"popq	%rdx;"
-			"popq	%rcx;"
-			"popq	%rbx;"
-			"popq	%rax;");
-	//TODO: movl %eax, last
-	//Here we should
-	//Ref. <Understanding the Linux kernel>: page 108 step 9
-
-}
-
 #define ARGV_PARAMS 1
 #define ENVP_PARAMS 0
 // set params (argv, envp) to the top area of user stack, return params number
@@ -336,12 +254,12 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 		}
 
 	}
+
 	*rsp_p = (uint64_t) rsp;
 	return params_no;
 }
 
 int do_execv(char* bin_name, char ** argv, char** envp) {
-	int retval = 0;
 	// create new task
 	task_struct* execv_task = current;
 
@@ -354,7 +272,12 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	// load bin_name elf
 	struct file* file = tarfs_open(bin_name, O_RDONLY);
 
-	load_elf(execv_task, file); // -1 if error
+	if (file == NULL) {
+		return -1;
+	}
+
+	if (load_elf(execv_task, file) < 0)
+		return -1; // -1 if error
 
 	setup_vma(execv_task->mm);
 
@@ -441,10 +364,8 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	//execv_task->mm->start_stack = (uint64_t) rsp;
 	setup_vma(execv_task->mm);
 
-	// add execv_task to the run queue
-	add_task(execv_task);
+	return 0;
 
-	return retval;
 }
 
 task_struct*
@@ -543,44 +464,6 @@ int do_fork() {
 
 }
 
-int do_munmap(mm_struct *mm, uint64_t start, size_t len) {
-
-	return 0;
-}
-
-uint64_t do_brk(uint64_t addr) {
-	mm_struct * mm = current->mm;
-	vma_struct * vma_heap = get_vma(mm, HEAP);
-
-	uint64_t newbrk = (addr + 0xfff) & 0xfffff000;
-	uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
-
-	// heap size not change
-	if (oldbrk == newbrk) {
-		mm->brk = addr;
-		return mm->brk;
-	}
-
-	// shrink heap
-	if (addr <= mm->brk) {
-		if (!do_munmap(mm, newbrk, oldbrk - newbrk)) {
-			mm->brk = addr;
-			vma_heap->vm_end = mm->brk;
-		}
-		return mm->brk;
-	}
-
-	//enlarge heap
-	uint64_t brk_size = newbrk - oldbrk;
-	if (brk_size < MAX_HEAP_SIZE) {
-		umap((void*) addr, brk_size);
-		mm->brk = addr;
-		vma_heap->vm_end = mm->brk;
-	}
-
-	return mm->brk;
-}
-
 void do_exit(int status) {
 	// current = current->next;
 	current->task_state = TASK_ZOMBIE;
@@ -588,6 +471,6 @@ void do_exit(int status) {
 }
 
 void do_yield() {
-    schedule();
+	schedule();
 }
 

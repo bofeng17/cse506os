@@ -23,10 +23,12 @@ enum vga_color {
 	COLOR_WHITE = 15,
 };
 
-const size_t VGA_WIDTH = 80;
-const size_t VGA_HEIGHT = 25;
-
-uint16_t* console_buffer = (uint16_t*) 0xFFFFFFFF800B8000;
+extern const size_t VGA_WIDTH;
+extern const size_t VGA_HEIGHT;
+extern uint16_t* console_buffer;
+extern size_t console_row;
+extern size_t console_column;
+extern uint8_t console_color;
 
 static inline uint8_t make_color(enum vga_color fg, enum vga_color bg) {
     return fg | bg << 4;
@@ -47,7 +49,4 @@ void print_int(int, int); 	 //%d
 void print_hex_or_ptr(uint64_t,int);// %x, %p
 
 int printf(const char *format, ...);
-
-//for terminal write
-int terminal_write(int fd, char *buf, int count);
 #endif

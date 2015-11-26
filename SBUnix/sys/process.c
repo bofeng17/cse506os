@@ -365,6 +365,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	setup_vma(execv_task->mm);
 
 	return 0;
+
 }
 
 task_struct*
@@ -470,6 +471,6 @@ void do_exit(int status) {
 }
 
 void do_yield() {
-    schedule();
+	schedule();
 }
 

@@ -132,6 +132,7 @@ void do_syscall () {
      *                       :"=a"(ret_val));
      */
     switch (syscall_no) {
+        // file
         case SYS_open:
             __asm__ __volatile__ ("callq tarfs_open;"
                                   :"=a"(ret_val));
@@ -151,6 +152,7 @@ void do_syscall () {
             __asm__ __volatile__ ("callq do_closedir;"
                                   :"=a"(ret_val));
             break;
+        // file & terminal
         case SYS_read:
             // TODO: This is not the final version of read.
             __asm__ __volatile__ ("mov %r14, %rdx;");
@@ -162,6 +164,7 @@ void do_syscall () {
             __asm__ __volatile__ ("callq do_write;"
                                   :"=a"(ret_val));
             break;
+        // process
         case SYS_fork:
             __asm__ __volatile__ ("callq do_fork;"
                                   :"=a"(ret_val));
@@ -170,6 +173,9 @@ void do_syscall () {
             __asm__ __volatile__ ("mov %r14, %rdx;");
             __asm__ __volatile__ ("callq do_execv;"
                                   :"=a"(ret_val));
+            // TODO: need to verify
+            __asm__ __volatile__ ("mov %0, (%%rsp);"
+                                  ::"r"(current->rip));
             break;
         case SYS_exit:
             __asm__ __volatile__ ("callq do_exit;"
@@ -177,6 +183,10 @@ void do_syscall () {
             break;
         case SYS_yield:
             __asm__ __volatile__ ("callq do_yield;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_brk:
+            __asm__ __volatile__ ("callq do_brk;"
                                   :"=a"(ret_val));
             break;
         default:
@@ -211,14 +221,11 @@ void do_syscall () {
                          ::"a"(current->rsp));
     
     // return to ring3
-    __asm__ __volatile__("pop %%r14;"// pop callee saved registers, which are saved by compiler
-                         "pop %%r13;"
-                         "pop %%r12;"
+    __asm__ __volatile__("add $0x18,%%rsp;"// pop callee saved registers, i.e. r14, r13, r12, which are saved by compiler
                          "add $0x8,%%rsp;" // TODO: be cautious @ manipulating rsp
                          "rex.w sysret"// move ret_val into rax
                          ::"a"(ret_val));
 }
-
 
 //void iret_to_ring3(){
 //    __asm__ __volatile__("cli;"

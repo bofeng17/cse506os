@@ -5,15 +5,15 @@
 // files
 
 // mode(unused): enum { O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000 };
-int open(const char *pathname, int flags) {
-    return syscall_2(SYS_open, (uint64_t)pathname, flags);
+struct file* open(char *name, int flags) {
+    return (struct file* )syscall_2(SYS_open, (uint64_t)name, flags);
 }
 
-inline ssize_t read(int fd, void *buf, size_t count) {
-    return syscall_3(SYS_read, fd, (uint64_t)buf, count);
+ssize_t read(struct file* fd, void *buf, size_t count) {
+    return syscall_3(SYS_read, (uint64_t)fd, (uint64_t)buf, count);
 }
 
-inline ssize_t write(int fd, const void *buf, size_t count) {
+ ssize_t write(int fd, const void *buf, size_t count) {
     return syscall_3(SYS_write, fd, (uint64_t)buf, count);
 }
 
@@ -24,8 +24,8 @@ inline ssize_t write(int fd, const void *buf, size_t count) {
 //    return syscall_3(SYS_lseek, fildes, offset, whence);
 //}
 //
-inline int close(int fd) {
-    return syscall_1(SYS_close, fd);
+void close(struct file* fd) {
+     syscall_1(SYS_close, (uint64_t)fd);
 }
 
 //duplicate a file descriptor

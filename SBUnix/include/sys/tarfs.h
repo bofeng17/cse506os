@@ -33,7 +33,7 @@ struct file{
 
 void tarfs_test();
 void* find_file(char*);
-struct file* tarfs_open(char *name);
+struct file* tarfs_open(char *name, O_RDONLY);
 
 #define STD_IN  0
 #define STD_OUT 1

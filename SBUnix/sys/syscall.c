@@ -140,6 +140,17 @@ void do_syscall () {
             __asm__ __volatile__ ("callq tarfs_close;"
                                   :"=a"(ret_val));
             break;
+        case SYS_opendir:
+            __asm__ __volatile__ ("callq do_opendir;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_readdir:
+            __asm__ __volatile__ ("callq do_readdir;"
+                                  :"=a"(ret_val));
+        case SYS_closedir:
+            __asm__ __volatile__ ("callq do_closedir;"
+                                  :"=a"(ret_val));
+            break;
         case SYS_read:
             // TODO: This is not the final version of read.
             __asm__ __volatile__ ("mov %r14, %rdx;");

@@ -28,6 +28,15 @@ int main(int argc, char* argv[], char* envp[]) {
 	//        ;
 	//    }
 	//   printf("Hello World!\n");
+	int size = 100;
+	int * t = malloc(size * sizeof(int));
+
+	if (t) {
+		int i = 0;
+		for (i = 0; i < size; i++) {
+			t[i] = i + 1;
+		}
+	}
 
 	int x = 1;
 	char y = 'h';

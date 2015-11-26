@@ -27,7 +27,7 @@ void *memmove(void *dest, const void *src, size_t n) {
 	return dest;
 }
 
-void load_elf(task_struct* task, struct file* load_file) {
+int load_elf(task_struct* task, struct file* load_file) {
 
 	int i;
 
@@ -86,7 +86,7 @@ void load_elf(task_struct* task, struct file* load_file) {
 		}
 		pgh++;
 	}
-
+	return 0;
 }
 
 void test_elf() {

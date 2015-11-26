@@ -336,12 +336,12 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 		}
 
 	}
+
 	*rsp_p = (uint64_t) rsp;
 	return params_no;
 }
 
 int do_execv(char* bin_name, char ** argv, char** envp) {
-	int retval = 0;
 	// create new task
 	task_struct* execv_task = current;
 
@@ -354,7 +354,12 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	// load bin_name elf
 	struct file* file = tarfs_open(bin_name);
 
-	load_elf(execv_task, file); // -1 if error
+	if (file == NULL) {
+		return -1;
+	}
+
+	if (load_elf(execv_task, file) < 0)
+		return -1; // -1 if error
 
 	setup_vma(execv_task->mm);
 
@@ -441,10 +446,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	//execv_task->mm->start_stack = (uint64_t) rsp;
 	setup_vma(execv_task->mm);
 
-	// add execv_task to the run queue
-	add_task(execv_task);
-
-	return retval;
+	return 0;
 }
 
 task_struct*
@@ -541,44 +543,6 @@ int do_fork() {
 	return new_task->pid;
 	//just return child's pid
 
-}
-
-int do_munmap(mm_struct *mm, uint64_t start, size_t len) {
-
-	return 0;
-}
-
-uint64_t do_brk(uint64_t addr) {
-	mm_struct * mm = current->mm;
-	vma_struct * vma_heap = get_vma(mm, HEAP);
-
-	uint64_t newbrk = (addr + 0xfff) & 0xfffff000;
-	uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
-
-	// heap size not change
-	if (oldbrk == newbrk) {
-		mm->brk = addr;
-		return mm->brk;
-	}
-
-	// shrink heap
-	if (addr <= mm->brk) {
-		if (!do_munmap(mm, newbrk, oldbrk - newbrk)) {
-			mm->brk = addr;
-			vma_heap->vm_end = mm->brk;
-		}
-		return mm->brk;
-	}
-
-	//enlarge heap
-	uint64_t brk_size = newbrk - oldbrk;
-	if (brk_size < MAX_HEAP_SIZE) {
-		umap((void*) addr, brk_size);
-		mm->brk = addr;
-		vma_heap->vm_end = mm->brk;
-	}
-
-	return mm->brk;
 }
 
 void do_exit(int status) {

@@ -33,6 +33,7 @@
 #define PTE_EX      0x7FFFFFFFFFFFFFFF //set execute bit 63
 #define CLEAR_OFFSET       0xFFFFFFFFFFFFF000
 #define CLEAR_FLAG         0xFFFFFFFFFFFFF000
+#define PTE_R_MASK 0xFFFFFFFFFFFFFFFD// set PTE read only
 
 #define PTE_PWT		0x008	// Write-Through
 #define PTE_PCD		0x010	// Cache-Disable
@@ -52,8 +53,9 @@
 #define VMA 5
 #define FILE 6
 
-#define STACK_TOP 0x00000000ffffffff // user stack top
+#define STACK_TOP 0x0000000100000000 // user stack top
 #define STACK_PAGES 0x100 // 512 pages
+#define MAX_HEAP_SIZE (0x1000 * 0x1000)// 4M size
 #define PML4 4
 #define PDPT 3
 #define PDT 2
@@ -83,11 +85,18 @@ struct ptt {
 };
 typedef struct ptt* pt_t;
 
+extern pml4_t global_PML4;
+
 void
 init_mm();
 
+void map_kernel();
+
 void
 initial_mapping();
+
+void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag);
+void map_user_pt(uint64_t vir_addr, uint64_t phy_addr, int flag);
 
 uint64_t
 get_CR3();

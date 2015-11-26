@@ -35,6 +35,8 @@ void tarfs_test();
 void* find_file(char*);
 struct file* tarfs_open(char *name);
 
-
+#define STD_IN  0
+#define STD_OUT 1
+#define STD_ERR 2
 
 #endif

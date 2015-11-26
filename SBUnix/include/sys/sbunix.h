@@ -15,6 +15,8 @@ extern void timer_init();
 
 extern int printf(const char *fmt, ...);
 
+int terminal_write(int fd, char *buf, int count);
+
 #define DEBUG 1
 #if DEBUG
 #define dprintf printf

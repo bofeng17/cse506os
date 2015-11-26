@@ -138,30 +138,13 @@ void init_mm() {
 //  vmalloc_base = USER_VIR_START;
 }
 
-//pml4_t
-//get_pml4 (int flag)
-//{
-//  if (flag == KERN)
-//    return kern_global_PML4;
-//
-//  if (flag == USER)
-//    return user_global_PML4;
-//
-//  return NULL;
-//}
-//
-//pml4_t
-//set_user_pml4 ()
-//{
-//  return (pml4_t) alloc_pt (USER);
-//}
-
 void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
 
 	pdpt_t pdpt;
 	pdt_t pdt;
 	pt_t pt;
 
+	//global_PML4 = (pml4_t)(get_CR3() + VIR_START);
 	uint64_t pml4e_index = get_pml4e_index(vir_addr);
 	uint64_t pml4e = global_PML4->PML4E[pml4e_index];
 
@@ -206,6 +189,65 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
 	uint64_t pte_index = get_pte_index(vir_addr);
 	pt->PTE[pte_index] = pte;
 
+	//enable self reference mechanism
+	global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
+			| PTE_P;
+}
+
+void map_kernel_pt(uint64_t vir_addr, uint64_t phy_addr, int flag) {
+
+}
+
+void map_user_pt(uint64_t vir_addr, uint64_t phy_addr, int flag) {
+
+	pdpt_t pdpt;
+	pdt_t pdt;
+	pt_t pt;
+
+	//global_PML4 = (pml4_t)(get_CR3() + VIR_START);
+	uint64_t pml4e_index = get_pml4e_index(vir_addr);
+	uint64_t pml4e = global_PML4->PML4E[pml4e_index];
+
+	if (pml4e & PTE_P) {
+		uint64_t pdpt64 = get_vir_from_phy(pml4e);
+		pdpt64 &= CLEAR_OFFSET;
+		pdpt = (pdpt_t) pdpt64;
+
+	} else {
+		pdpt = (pdpt_t) set_pdpt(global_PML4, pml4e_index, flag);
+	}
+
+	uint64_t pdpte_index = get_pdpte_index(vir_addr);
+
+	uint64_t pdpte = pdpt->PDPTE[pdpte_index];
+
+	if (pdpte & PTE_P) {
+		uint64_t pdt64 = get_vir_from_phy(pdpte);
+		pdt64 &= CLEAR_OFFSET;
+		pdt = (pdt_t) pdt64;
+
+	} else {
+		pdt = (pdt_t) set_pdt(pdpt, pdpte_index, flag);
+	}
+
+	uint64_t pdte_index = get_pdte_index(vir_addr);
+	uint64_t pdte = pdt->PDTE[pdte_index];
+	if (pdte & PTE_P) {
+		uint64_t pt64 = get_vir_from_phy(pdte);
+		pt64 &= CLEAR_OFFSET;
+		pt = (pt_t) pt64;
+
+	} else {
+		pt = (pt_t) set_pt(pdt, pdte_index, flag);
+	}
+
+	uint64_t pte = phy_addr;
+	uint64_t pte_index = get_pte_index(vir_addr);
+	pt->PTE[pte_index] = pte;
+
+	//enable self reference mechanism
+	global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
+			| PTE_P;
 }
 
 void test_selfref(uint64_t testaddr) {
@@ -227,7 +269,7 @@ void test_selfref(uint64_t testaddr) {
 }
 
 //begin mapping physical memory from 0 to 32MB
-void initial_mapping() {
+void map_kernel() {
 	uint64_t map_size = 0x2000000; //physical size 32MB
 
 	uint64_t vir_addr = VIR_START;
@@ -240,13 +282,14 @@ void initial_mapping() {
 		page_count++;
 	}
 
+}
+void initial_mapping() {
+	map_kernel();
 //use self-reference trick
-	global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
-			| PTE_P;
 
 	set_CR3((uint64_t) global_PML4 - VIR_START);
 
-	test_selfref(0xFFFFFFFF80600100);
+//	test_selfref(0xFFFFFFFF80600100);
 //  global_PML4 = (pml4_t) get_entry_viraddr ((uint64_t) global_PML4);
 }
 
@@ -401,8 +444,30 @@ void kfree(void* addr, int flag) {
 }
 
 // new umalloc implementation using demand paging
+//void*
+//umalloc(void* addr, size_t size) {
+//
+//	return addr;
+//}
+
+// original  umalloc that sets up page tables and maps vir to phy
+// 0x600a02
 void*
 umalloc(void* addr, size_t size) {
+	uint64_t ret_addr = (uint64_t) addr;
+	ret_addr &= CLEAR_OFFSET;
+
+	int page_num = size / PAGE_SIZE;
+	if (size % PAGE_SIZE) {
+		page_num += 1;
+	}
+
+	uint64_t vmalloc_base = ret_addr;
+
+	while (page_num-- > 0) {
+		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
+		vmalloc_base += PAGE_SIZE;
+	}
 
 	return addr;
 }
@@ -412,14 +477,16 @@ void*
 umap(void* addr, size_t size) {
 //  user_global_PML4 = (pml4_t) get_CR3 ();
 
-	//void* ret_addr = (void*) addr;
+	uint64_t ret_addr = (uint64_t) addr;
+	ret_addr &= CLEAR_OFFSET;
 
 	int page_num = size / PAGE_SIZE;
 	if (size % PAGE_SIZE) {
 		page_num += 1;
 	}
 
-	uint64_t vmalloc_base = (uint64_t) addr;
+	uint64_t vmalloc_base = ret_addr;
+
 	while (page_num-- > 0) {
 		map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
 		vmalloc_base += PAGE_SIZE;

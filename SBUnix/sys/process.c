@@ -102,7 +102,8 @@ void setup_vma(mm_struct* mstruct) {
 	vma_data->permission_flag = VM_READ | VM_WRITE;
 
 	vma_struct* vma_heap = get_vma(mstruct, HEAP);
-	vma_heap->vm_start = mstruct->brk;
+	vma_heap->vm_start = mstruct->start_brk;
+	vma_heap->vm_end = mstruct->brk;
 	vma_heap->permission_flag = VM_READ | VM_WRITE;
 
 	vma_struct* vma_stack = get_vma(mstruct, STACK);
@@ -151,6 +152,8 @@ void func_init() {
 	char* envp[4] = { "e1", "e2", "e3", NULL };
 
 	do_execv("bin/test_hello", argv, envp);
+
+	do_fork();
 
 	sysret_to_ring3();
 
@@ -351,13 +354,16 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	setup_vma(execv_task->mm);
 
 	//allocate heap
-	uint64_t initial_heap_size = 10 * PAGE_SIZE;
+	uint64_t initial_heap_size = 2 * PAGE_SIZE;
+
 	execv_task->mm->start_brk = (uint64_t) umalloc(
-			(void*) execv_task->mm->end_data, initial_heap_size);
+			(void*) ((execv_task->mm->end_data & CLEAR_OFFSET) + PAGE_SIZE),
+			initial_heap_size);
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
-	execv_task->mm->start_stack = (uint64_t) umap((void*) STACK_TOP, PAGE_SIZE);
-	umap((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
+	umap((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
+	execv_task->mm->start_stack = (uint64_t) umap(
+			(void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 
 	// setup new task user stack, rsp, argv, envp
 	void* rsp = (void*) (STACK_TOP);
@@ -390,6 +396,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	// set null pointer between string area and envp
 	tmp -= 8;	      // uint64_t is 8 bytes
 	memset(tmp, 0, 8);
+	tmp -= 8;	      // uint64_t is 8 bytes
 
 	// store envp pointers in the proper place of user stack
 	if (envc > 0) {
@@ -401,8 +408,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 		}
 		execv_task->mm->env_start = (uint64_t) envp[0];
 		// set 0 between envp and argv
+		//tmp -= 8;	      // uint64_t is 8 bytes
 		memset(tmp, 0, 8);
-		tmp -= 8; // uint64_t is 8 bytes
+		tmp -= 8;	      // uint64_t is 8 bytes
 
 	}
 
@@ -411,7 +419,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 
 		execv_task->mm->arg_end = (uint64_t) argv[argc - 1];
 
-		int argc2 = argc - 1;
+		int argc2 = argc;
 		while (argc2-- > 0) {
 			//argv[argc2] = (char*) tmp--;
 			*((uint64_t*) tmp) = (uint64_t) argv[argc2];
@@ -424,7 +432,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	rsp = tmp;
 
 	execv_task->rsp = (uint64_t) rsp;
-	// switch current stack to user stack of created task(execv_task)
+
+	//execv_task->mm->start_stack = (uint64_t) rsp;
+	setup_vma(execv_task->mm);
 
 	// add execv_task to the run queue
 	add_task(execv_task);
@@ -455,86 +465,43 @@ create_user_process(char* bin_name) {
 	return new_task;
 }
 
-void set_cow_routine(int flags, uint64_t vaddr) {
-	//read the entry back
-	uint64_t tmp = self_ref_read(flags, vaddr);
-	//set the entry with cow bit
-	tmp = (uint64_t)(tmp | PTE_COW | PTE_R);
-	//write the entry back
-	self_ref_write(flags, vaddr, tmp);
-}
+void set_child_pt(task_struct* child) {
+	global_PML4 = (pml4_t) kmalloc(KERNPT);
+	child->cr3 = (uint64_t) global_PML4 - VIR_START;
 
-void set_cow() {
-	//calculate the code , data, stack, bss size
-	uint64_t i;
-	uint64_t code_size = current->mm->end_code - current->mm->start_code;
-	uint64_t code_start = current->mm->start_code;
-	uint64_t data_size = current->mm->end_data - current->mm->start_data;
-	uint64_t data_start = current->mm->start_data;
-	uint64_t stack_size = STACK_TOP - current->mm->start_stack;
-	uint64_t stack_start = current->mm->start_stack;
-	uint64_t bss_size = current->mm->bss;
-	uint64_t bss_start = current->mm->end_data;
+	map_kernel();
 
-	//set cow bit for PML4, PDPT of code, 
-	//PML4 and PDPT should able able to cover the length of code
-	set_cow_routine(PML4, code_start);
-	set_cow_routine(PDPT, code_start);
+	vma_struct* vma = current->mm->mmap;
 
-	//set cow bit for PDT, PT of code, 
-	//these two may not able to cover length of code, so we set cow bit for every address
-	for (i = 0; i < code_size; i++) {
+	while (vma != NULL) {
+		uint64_t start_addr = vma->vm_start & CLEAR_OFFSET;
+		uint64_t end_addr = vma->vm_end;
 
-		set_cow_routine(PDT, code_start);
-		set_cow_routine(PT, code_start);
+		if (end_addr % PAGE_SIZE) {
+			end_addr &= CLEAR_OFFSET;
+			end_addr += PAGE_SIZE;
+		} else {
+			end_addr &= CLEAR_OFFSET;
+		}
 
-		code_start += 1;
+		while (start_addr < end_addr) {
+
+			uint64_t content = self_ref_read(PT, start_addr);
+			page_sp * page = get_page_frame_descriptor(content);
+			page->ref_count += 1;
+
+			content &= PTE_R_MASK;
+			content |= PTE_COW;
+			self_ref_write(PT, start_addr, content);
+
+			map_user_pt(start_addr, content, USERPT);
+
+			start_addr += PAGE_SIZE;
+		}
+		vma = vma->vm_next;
 	}
 
-	//set cow bit for PML4, PDPT of data, 
-	//PML4 and PDPT should able able to cover the length of data
-	set_cow_routine(PML4, data_start);
-	set_cow_routine(PDPT, data_start);
-
-	//set cow bit for PDT, PT of data, 
-	//these two may not able to cover length of data, so we set cow bit for every address
-	for (i = 0; i < data_size; i++) {
-
-		set_cow_routine(PDT, data_start);
-		set_cow_routine(PT, data_start);
-
-		data_start += 1;
-	}
-
-	//set cow bit for PML4, PDPT of stack, 
-	//PML4 and PDPT should able able to cover the length of stack
-	set_cow_routine(PML4, stack_start);
-	set_cow_routine(PDPT, stack_start);
-
-	//set cow bit for PDT, PT of stack, 
-	//these two may not able to cover length of stack, so we set cow bit for every address
-	for (i = 0; i < stack_size; i++) {
-
-		set_cow_routine(PDT, stack_start);
-		set_cow_routine(PT, stack_start);
-
-		stack_start += 1;
-	}
-
-	//set cow bit for PML4, PDPT of heap, 
-	//PML4 and PDPT should able able to cover the length of heap
-	set_cow_routine(PML4, bss_start);
-	set_cow_routine(PDPT, bss_start);
-
-	//set cow bit for PDT, PT of heap, 
-	//these two may not able to cover length of heap, so we set cow bit for every address
-	for (i = 0; i < bss_size; i++) {
-		set_cow_routine(PDT, bss_start);
-		set_cow_routine(PT, bss_start);
-
-		bss_start += 1;
-	}
-
+//	set_CR3(child->cr3);
 }
 
 int do_fork() {
@@ -554,17 +521,59 @@ int do_fork() {
 	//child has it own kernel stack
 
 	new_task->rip = current->rip;
-	new_task->mm->start_stack = (uint64_t) umalloc((void*) STACK_TOP,
-			PAGE_SIZE);
+	new_task->rsp = current->rsp;
+
+	new_task->mm->start_stack = STACK_TOP;
+	//umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 	//child has it own stack
 
 	new_task->task_state = TASK_READY;
 
-	set_cow();	//set cow bit
+	//set_cow();	//set cow bit
+	set_child_pt(new_task);
 
+	add_task(new_task);
 	return new_task->pid;
 	//just return child's pid
 
+}
+
+int do_munmap(mm_struct *mm, uint64_t start, size_t len) {
+
+	return 0;
+}
+
+uint64_t do_brk(uint64_t addr) {
+	mm_struct * mm = current->mm;
+	vma_struct * vma_heap = get_vma(mm, HEAP);
+
+	uint64_t newbrk = (addr + 0xfff) & 0xfffff000;
+	uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
+
+	// heap size not change
+	if (oldbrk == newbrk) {
+		mm->brk = addr;
+		return mm->brk;
+	}
+
+	// shrink heap
+	if (addr <= mm->brk) {
+		if (!do_munmap(mm, newbrk, oldbrk - newbrk)) {
+			mm->brk = addr;
+			vma_heap->vm_end = mm->brk;
+		}
+		return mm->brk;
+	}
+
+	//enlarge heap
+	uint64_t brk_size = newbrk - oldbrk;
+	if (brk_size < MAX_HEAP_SIZE) {
+		umap((void*) addr, brk_size);
+		mm->brk = addr;
+		vma_heap->vm_end = mm->brk;
+	}
+
+	return mm->brk;
 }
 
 void do_exit(int status) {

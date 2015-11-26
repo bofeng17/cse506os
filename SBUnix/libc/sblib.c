@@ -5,7 +5,7 @@
 // files
 
 // mode(unused): enum { O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000 };
-inline int open(const char *pathname, int flags) {
+int open(const char *pathname, int flags) {
     return syscall_2(SYS_open, (uint64_t)pathname, flags);
 }
 

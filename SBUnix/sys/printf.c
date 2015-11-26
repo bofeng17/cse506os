@@ -1,40 +1,55 @@
 #include <sys/sbunix.h>
 #include <sys/stdarg.h>
 #include <sys/printf.h>
+#include <sys/string.h>
 
 //for console
 
 void console_initialize() {
     console_row = 0;
     console_column = 0;
-    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+    console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
 }
 
-// void console_initialize() {
-//	console_row = 0;
-//	console_column = 0;
-//	console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
-//	for (size_t y = console_row; y < VGA_HEIGHT; y++) {
-// if (y == console_row) {
-// for (size_t x = console_column; x < VGA_WIDTH; x++) {
-// const size_t index = y * VGA_WIDTH + x;
-// console_buffer[index] = make_vgaentry(' ', console_color);
-// }} else {
-// for (size_t x = 0; x < VGA_WIDTH; x++) {
-// const size_t index = y * VGA_WIDTH + x;
-// console_buffer[index] = make_vgaentry(' ', console_color);
-// }
-// }
-//	}
-// }
+//void console_initialize() {
+//    console_row = 0;
+//    console_column = 0;
+//    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+//    for (size_t y = console_row; y < VGA_HEIGHT; y++) {
+//        if (y == console_row) {
+//            for (size_t x = console_column; x < VGA_WIDTH; x++) {
+//                const size_t index = y * VGA_WIDTH + x;
+//                console_buffer[index] = make_vgaentry(' ', console_color);
+//            }
+//        } else {
+//            for (size_t x = 0; x < VGA_WIDTH; x++) {
+//                const size_t index = y * VGA_WIDTH + x;
+//                console_buffer[index] = make_vgaentry(' ', console_color);
+//            }
+//        }
+//    }
+//}
 
-void console_putchar(char c) {
-    const size_t index = console_row * VGA_WIDTH + console_column;
-    console_buffer[index] = make_vgaentry(c, console_color);
-    if (++console_column == VGA_WIDTH) {
-        console_column = 0;
-        if (++console_row == VGA_HEIGHT) {
-            console_row = 0;
+inline void console_putchar(char c) {
+    if (c == '\n'){
+        console_column=0;
+        console_row = (console_row+1)%VGA_HEIGHT;
+    } else {
+        const size_t index = console_row * VGA_WIDTH + console_column;
+        console_buffer[index] = make_vgaentry(c, console_color);
+        if (++console_column == VGA_WIDTH) {
+            console_column = 0;
+            if (++console_row == VGA_HEIGHT) {
+                console_row = 0;
+            }
+        }
+    }
+    if (console_row == 0 && console_column == 0) {
+        for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
+            for (size_t x = 0; x < VGA_WIDTH; x++) {
+                const size_t index = y * VGA_WIDTH + x;
+                console_buffer[index] = make_vgaentry(' ', console_color);
+            }
         }
     }
 }
@@ -49,6 +64,9 @@ int printf(const char *format, ...) {
     uint64_t    val_long = 0;
     char 		val_char = 0;
     char* 		val_string = NULL;
+    
+    // Set foreground color as RED
+    console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
     
     va_start(val, format);
     
@@ -71,7 +89,7 @@ int printf(const char *format, ...) {
                     break;
                 case 's':
                     val_string = va_arg(val, char*);
-                    print_string(val_string);
+                    print_string(val_string, strlen(val_string));
                     break;
                 case 'x':
                     val_long = va_arg(val, uint64_t);
@@ -82,38 +100,35 @@ int printf(const char *format, ...) {
                     print_hex_or_ptr(val_long, ptr_p);
                     break;
             }
-        } else if (*format == '\n'){
-                    console_column=0;
-                    console_row = (console_row+1)%VGA_HEIGHT;
         } else {
-            console_putchar(*format);
+            print_char(*format);
         }
-    printed++;
-    format++;
+        printed++;
+        format++;
     }
     va_end(val);
     return printed;
 }
 
 inline void print_char(char arg) {
-    if (arg == '\n'){
-        console_column=0;
-        console_row = (console_row+1)%VGA_HEIGHT;
-    } else {
-        console_putchar(arg);
-    }
+    console_putchar(arg);
 }
 
-void print_string(char* arg) {
-    while(*arg) {//be careful here
+/* 
+ * be called by:
+ * printf %s, and terminal write
+ */
+void print_string(char* arg, int count) {
+    while(count) {//be careful here
         print_char(*arg);
         arg++;
+        count--;
     }
 }
 
 void print_int(int arg, int desire_length) {
     int stack[10],top=-1;
-    for (int i = 0; i < 10; i ++) stack[i] = 0; 
+    for (int i = 0; i < 10; i ++) stack[i] = 0;
     if (arg < 0) {
         print_char('-');
         arg = -arg;
@@ -134,8 +149,8 @@ void print_int(int arg, int desire_length) {
 //mode = hex or ptr
 void print_hex_or_ptr(uint64_t arg,int mode) {
     int stack[16],top=-1;
-    for (int i = 0; i < 16; i ++) stack[i] = 0; 
-    print_string("0x");
+    for (int i = 0; i < 16; i ++) stack[i] = 0;
+    print_string("0x", 2);
     while (arg/16){
         top++;
         stack[top] = arg%16;
@@ -157,3 +172,11 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
     }
 }
 
+// for terminal write
+int terminal_write(int fd, char *buf, int count) {
+    // TODO: stdout vs stderr
+    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+    print_string(buf, count);
+    // TODO: return value
+    return count;
+}

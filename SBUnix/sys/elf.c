@@ -8,8 +8,7 @@
 #include <sys/elf.h>
 #include <sys/string.h>
 
-void *memmove(void *dest, const void *src, size_t n)
-{
+void *memmove(void *dest, const void *src, size_t n) {
 	const char *s;
 	char *d;
 
@@ -28,88 +27,73 @@ void *memmove(void *dest, const void *src, size_t n)
 	return dest;
 }
 
+void load_elf(task_struct* task, struct file* load_file) {
 
-
-void load_elf(task_struct* task, struct file* load_file)
-{
-
-	
 	int i;
 
-	void* file_start = (void*)load_file->start;
-	
+	void* file_start = (void*) load_file->start;
 
-	elf_h *elfh=(elf_h*)file_start;//find elf header
+	elf_h *elfh = (elf_h*) file_start; //find elf header
 	//dprintf("LOAD_ELF: elf header \n");
 	//dprintf("LOAD_ELF: \n");
-	pgm_h *pgh=(pgm_h*)((uint64_t)elfh+elfh->e_phoff);// find program header
+	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);// find program header
 
-	task->rip=elfh->e_entry;//assign entry for the task
+	task->rip = elfh->e_entry;	//assign entry for the task
 
-	for(i=0;i<elfh->e_phnum;i++)//go through all the program headers
-	{
-		if(pgh->p_type==PT_LOAD)//if the program header is loadable
-		{
-			//warning: didn't do the alignment, maybe a bug in future
-			if(pgh->p_flag&PH_TYPE_X)//then its the .text section
+	for (i = 0; i < elfh->e_phnum; i++)	//go through all the program headers
 			{
-				task->mm->start_code=pgh->p_vaddr;
-				task->mm->end_code=pgh->p_vaddr+pgh->p_memsz;
+		if (pgh->p_type == PT_LOAD)	//if the program header is loadable
+				{
+			//warning: didn't do the alignment, maybe a bug in future
+			if (pgh->p_flag & PH_TYPE_X)	//then its the .text section
+					{
+				task->mm->start_code = pgh->p_vaddr;
+				task->mm->end_code = pgh->p_vaddr + pgh->p_memsz;
 				//map code/text segment
 				uint64_t code_size = task->mm->end_code - task->mm->start_code;
-                umalloc ((void*) task->mm->start_code, code_size);
+				umalloc((void*) task->mm->start_code, code_size);
 
-                 //memmove((void*)task->mm->start_code, (void*)file_start + pgh->p_offset, pgh->p_filesz);
+				memmove((void*) task->mm->start_code,
+						(void*) file_start + pgh->p_offset, pgh->p_filesz);
 
-                 struct vma_struct* vma_tmp = get_vma(task->mm, CODE);
-                 vma_tmp-> vm_file = load_file;
-                 vma_tmp-> file_offset = pgh-> p_offset;
+				struct vma_struct* vma_tmp = get_vma(task->mm, CODE);
+				vma_tmp->vm_file = load_file;
+				vma_tmp->file_offset = pgh->p_offset;
 
-
-			}
-			else//its the .data section
+			} else	//its the .data section
 			{
-				task->mm->bss=pgh->p_memsz-pgh->p_filesz;
-				//map bss
-				umalloc ((void*) task->mm->end_data, task->mm->bss);
 
-				task->mm->start_data=pgh->p_vaddr;
-				task->mm->end_data=pgh->p_vaddr+pgh->p_filesz;
+				task->mm->start_data = pgh->p_vaddr;
+				task->mm->end_data = pgh->p_vaddr + pgh->p_filesz;
 				// map data segment
 				uint64_t data_size = task->mm->end_data - task->mm->start_data;
-                umalloc ((void*) task->mm->start_data, data_size);
+				umalloc((void*) task->mm->start_data, data_size);
 
+				task->mm->bss = pgh->p_memsz - pgh->p_filesz;
+				//map bss
+				umalloc((void*) task->mm->end_data, task->mm->bss);
 
-                //memmove((void*)task->mm->start_data, (void*)file_start + pgh->p_offset, pgh->p_filesz);
-                // WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
+				memmove((void*) task->mm->start_data,
+						(void*) file_start + pgh->p_offset, pgh->p_filesz);
+				// WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
 
-                struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
-                 vma_tmp1-> vm_file = load_file;
-                 vma_tmp1-> file_offset = pgh-> p_offset;
-                
+				struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
+				vma_tmp1->vm_file = load_file;
+				vma_tmp1->file_offset = pgh->p_offset;
+
 			}
-
-
 
 		}
 		pgh++;
 	}
 
-	
-
-	
 }
 
-
-
-
-
-void test_elf()
-{
+void test_elf() {
 	//printf("lalala");
 	int i;
-	void* file_start=find_file("bin/hello");
-	elf_h *elfh=(elf_h*)(file_start);
+	void* file_start = find_file("bin/hello");
+	elf_h *elfh = (elf_h*) (file_start);
 	printf("ELF TESTING: file_start: %x\n", file_start);
 	printf("ELF TESTING: type: %x\n", elfh->e_type);
 	printf("ELF TESTING: machine: %x\n", elfh->e_machine);
@@ -123,7 +107,7 @@ void test_elf()
 	printf("ELF TESTING: shnum: %x\n", elfh->e_shnum);
 	printf("ELF TESTING: shstrndx: %x\n", elfh->e_shstrndx);
 
-	pgm_h *pgh=(pgm_h*)((uint64_t)elfh+elfh->e_phoff);
+	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);
 
 	for (i = 0; i < elfh->e_phnum; i++) {
 		printf("PHDR[%d]: ", i);
@@ -139,11 +123,10 @@ void test_elf()
 		printf("\n");
 	}
 
-
-    //void* file_start=find_file("bin/hello");
-	task_struct* new_task=kmalloc(TASK);
-	mm_struct* new_mm=kmalloc(MM);
-	new_task->mm=new_mm;
+	//void* file_start=find_file("bin/hello");
+	task_struct* new_task = kmalloc(TASK);
+	mm_struct* new_mm = kmalloc(MM);
+	new_task->mm = new_mm;
 	printf("ELF TESTING\n");
 	load_elf(new_task, file_start);
 
@@ -152,6 +135,5 @@ void test_elf()
 	printf("ELF TESTING: data_start: %x\n", new_task->mm->start_data);
 	printf("ELF TESTING: data_end: %x\n", new_task->mm->end_data);
 	printf("ELF TESTING: bss: %x\n", new_task->mm->bss);
-	
 
 }

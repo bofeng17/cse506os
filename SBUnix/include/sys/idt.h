@@ -30,7 +30,7 @@ extern void idt_set_gate(uint8_t, uint64_t, uint16_t, uint8_t);
 
 // These extern directives let us access the addresses of our ASM ISR handlers.
 
-void cpu_exception_handler ();
+void cpu_exception_handler (uint64_t);
 void page_fault_handler ();
 
 extern void exception0();

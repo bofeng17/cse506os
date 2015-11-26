@@ -1,5 +1,4 @@
 #include <sys/sbunix.h>
-#include <sys/stdio.h>
 #include <sys/stdlib.h>
 #include <sys/physical.h>
 

@@ -1,5 +1,5 @@
 #include <sys/sbunix.h>
-#include <sys/stdio.h> //kernel should not include user header files
+//#include <sys/stdio.h> //kernel should not include user header files
 #include <sys/stdlib.h>//kernel should not include user header files
 #include <sys/tarfs.h>
 #include <sys/elf.h>

@@ -107,7 +107,7 @@ void yield(void) {
 // memory
 //typedef uint64_t size_t;
 void* malloc(size_t size) {
-	void *a = (void*) syscall_1(SYS_sbrk, size);
+	void *a = (void*) sbrk(size);
 	if (a == ((void*) (-1))) {
 		return NULL;
 	} else {

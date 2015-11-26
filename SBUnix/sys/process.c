@@ -58,20 +58,20 @@ void set_task_struct(task_struct* task) {
 
 	vma_struct* vma_code = kmalloc(VMA);
 	vma_struct* vma_data = kmalloc(VMA);
+	vma_struct* vma_bss = kmalloc(VMA);
 	vma_struct* vma_stack = kmalloc(VMA);
 	vma_struct* vma_heap = kmalloc(VMA);
 
 	vma_code->vm_mm = mstruct;
 	vma_data->vm_mm = mstruct;
-	vma_stack->vm_mm = mstruct;
+	vma_bss->vm_mm = mstruct;
 	vma_heap->vm_mm = mstruct;
+	vma_stack->vm_mm = mstruct;
 
 	vma_code->vm_next = vma_data;
-
-	vma_data->vm_next = vma_heap;
-
+	vma_data->vm_next = vma_bss;
+	vma_bss->vm_next = vma_heap;
 	vma_heap->vm_next = vma_stack;
-
 	vma_stack->vm_next = NULL;
 
 	mstruct->mmap = vma_code;
@@ -100,6 +100,11 @@ void setup_vma(mm_struct* mstruct) {
 	vma_data->vm_start = mstruct->start_data;
 	vma_data->vm_end = mstruct->end_data;
 	vma_data->permission_flag = VM_READ | VM_WRITE;
+
+	vma_struct* vma_bss = get_vma(mstruct, BSS);
+	vma_bss->vm_start = mstruct->end_data;
+	vma_bss->vm_end = mstruct->end_data + mstruct->bss;
+	vma_bss->permission_flag = VM_READ | VM_WRITE;
 
 	vma_struct* vma_heap = get_vma(mstruct, HEAP);
 	vma_heap->vm_start = mstruct->start_brk;

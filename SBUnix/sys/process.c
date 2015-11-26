@@ -417,7 +417,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 
 		execv_task->mm->arg_end = (uint64_t) argv[argc - 1];
 
-		int argc2 = argc - 1;
+		int argc2 = argc;
 		while (argc2-- > 0) {
 			//argv[argc2] = (char*) tmp--;
 			*((uint64_t*) tmp) = (uint64_t) argv[argc2];
@@ -466,6 +466,7 @@ create_user_process(char* bin_name) {
 void set_child_pt(task_struct* child) {
 	global_PML4 = (pml4_t) kmalloc(KERNPT);
 	child->cr3 = (uint64_t) global_PML4 - VIR_START;
+
 	map_kernel();
 
 	vma_struct* vma = current->mm->mmap;
@@ -493,10 +494,7 @@ void set_child_pt(task_struct* child) {
 
 			map_user_pt(start_addr, content, USERPT);
 
-//			set_CR3(child->cr3);
-
 			start_addr += PAGE_SIZE;
-//			set_CR3(current->cr3);
 		}
 		vma = vma->vm_next;
 	}
@@ -523,8 +521,8 @@ int do_fork() {
 	new_task->rip = current->rip;
 	new_task->rsp = current->rsp;
 
-	new_task->mm->start_stack = (uint64_t) umalloc(
-			(void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
+	new_task->mm->start_stack = STACK_TOP;
+	//umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
 	//child has it own stack
 
 	new_task->task_state = TASK_READY;

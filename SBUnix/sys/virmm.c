@@ -189,6 +189,9 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
 	uint64_t pte_index = get_pte_index(vir_addr);
 	pt->PTE[pte_index] = pte;
 
+	//enable self reference mechanism
+	global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
+			| PTE_P;
 }
 
 void map_kernel_pt(uint64_t vir_addr, uint64_t phy_addr, int flag) {
@@ -241,6 +244,10 @@ void map_user_pt(uint64_t vir_addr, uint64_t phy_addr, int flag) {
 	uint64_t pte = phy_addr;
 	uint64_t pte_index = get_pte_index(vir_addr);
 	pt->PTE[pte_index] = pte;
+
+	//enable self reference mechanism
+	global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
+			| PTE_P;
 }
 
 void test_selfref(uint64_t testaddr) {
@@ -279,8 +286,6 @@ void map_kernel() {
 void initial_mapping() {
 	map_kernel();
 //use self-reference trick
-	global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
-			| PTE_P;
 
 	set_CR3((uint64_t) global_PML4 - VIR_START);
 

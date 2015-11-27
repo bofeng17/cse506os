@@ -413,12 +413,20 @@ void set_child_pt(task_struct* child) {
 
 			uint64_t content = self_ref_read(PT, start_addr);
 			page_sp * page = get_page_frame_descriptor(content);
+            /* 
+             * risk!!
+             * if two memory region overlaps at virtual page X,
+             * the ref_count of page frame correpsonding to X will be increnased twice
+             * caused by not aligned vma
+             */
 			page->ref_count += 1;
 
+            // modify parent's page table
 			content &= PTE_R_MASK;
 			content |= PTE_COW;
 			self_ref_write(PT, start_addr, content);
 
+            // map child's page table
 			map_user_pt(start_addr, content, USERPT);
 
 			start_addr += PAGE_SIZE;
@@ -430,37 +438,50 @@ void set_child_pt(task_struct* child) {
 }
 
 int do_fork() {
-	task_struct * new_task = (task_struct*) (kmalloc(TASK));
-	//create a new task struct
+    //create a new task struct
+	task_struct *new_task = (task_struct *)(kmalloc(TASK));
+  
+    //assign new pid for child
+    new_task->pid = assign_pid();
+    new_task->ppid = current->pid;
+    
+    //copy task name
+    strcpy(new_task->task_name, current->task_name);
 
-	set_task_struct(new_task);
-	new_task->pid = assign_pid();
-	new_task->ppid = current->pid;
-	//assign new pid for child
+    
+    //memory portion begins here
+    //child has it own kernel stack
+    new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
+    
+    // TODO: init_kern usused
+    // new_task->init_kern = new_task->kernel_stack;
+    
+    // only set vma_struct and mm_struct portion of task_struct
+    set_task_struct(new_task);
+    
+    // mm-> mmap is overwritten by memcpy, so store it in temp and then restore it
+    vma_struct *temp_mm = new_task->mm->mmap;
+    memcpy((void*) new_task->mm, (void*) current->mm, 0x1000);
+    new_task->mm->mmap = temp_mm;
+    
+    // TODO: VERY IMPORTANT!!!!
+    // copy vma content into child from parent
 
-	//copy contents from parent to child
-	strcpy(new_task->task_name, current->task_name);
-	memcpy((void*) new_task->mm, (void*) current->mm, 0x1000);
-	new_task->cr3 = current->cr3;
-	new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
-	//child has it own kernel stack
-
-	new_task->rip = current->rip;
-	new_task->rsp = current->rsp;
-
-	new_task->mm->start_stack = STACK_TOP;
-	//umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
-	//child has it own stack
-
-	new_task->task_state = TASK_READY;
-
-	//set_cow();	//set cow bit
+    // set page table of child process, also modified new_task->cr3
 	set_child_pt(new_task);
 
-	add_task(new_task);
+    // add child task to run queue
+	new_task->task_state = TASK_READY;
+    add_task(new_task);
+    
+    
+    // TODO: tricky part begins here!!
+    new_task->rip = current->rip;
+    new_task->rsp = current->rsp;
+    
+    
+    //just return child's pid
 	return new_task->pid;
-	//just return child's pid
-
 }
 
 int do_munmap(mm_struct *mm, uint64_t start, size_t len) {
@@ -504,7 +525,23 @@ uint64_t do_brk(uint64_t addr) {
 void do_exit(int status) {
 	// current = current->next;
 	current->task_state = TASK_ZOMBIE;
+    
+    /*
+     * TODO: unfinished
+     * Check if parent process is suspended (by calling waitpid())
+     * if yes, wake parent process
+     */
+    // find_task_struct takes as input pid, returns corresponding task_struct
+    if ((find_task_struct(current->wait_pid))->task_state == TASK_SLEEPING) {
+        (find_task_struct(current->wait_pid))->task_state = TASK_RUNNING;
+    }
+    
 	schedule();
+}
+
+// TODO
+task_struct *find_task_struct(int pid) {
+    return NULL;
 }
 
 void do_yield() {

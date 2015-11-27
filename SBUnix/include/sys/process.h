@@ -139,6 +139,11 @@ vma_struct* get_vma(mm_struct* mm, int flag);
 
 // exit error code
 #define ILLEGAL_MEM_ACC 1 // illegal memmory access, killed by page fault handler
+task_struct *find_task_struct(int pid);
+
 void do_exit(int status);
+
+void do_yield();
+
 
 #endif

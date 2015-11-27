@@ -22,7 +22,8 @@ typedef struct pt_regs_t pt_regs;
  *        1: by w
  * bit 2: 0: occurred while the processor was in Kernel Mode
  *        1: occurred in user mode
- * bit 3: 0: not caused by reserved bit violation
+ * bit 3: not currently used
+          0: not caused by reserved bit violation
           1: caused by a reserved bit set to 1 in some
  paging-structure entry.
  */

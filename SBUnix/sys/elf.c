@@ -92,7 +92,7 @@ int load_elf(task_struct* task, char* bin_name) {
 						(void*) file_start + pgh->p_offset, pgh->p_filesz);
 
                 //set bss segment value to all 0
-                memset(task->mm->end_data,0,task->mm->bss);
+                memset((void*)task->mm->end_data,0,task->mm->bss);
 
 				struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
 				vma_tmp1->vm_file = file;

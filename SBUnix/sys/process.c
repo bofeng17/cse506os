@@ -213,7 +213,10 @@ void func_init() {
     do_execv("bin/test_malloc", argv, envp);
     
     //do_fork();
-    
+//    
+//    while (1){
+//        ;
+//    }
     sysret_to_ring3();
     
     //do_exit (0);
@@ -549,9 +552,9 @@ void do_exit(int status) {
      * if yes, wake parent process
      */
     // find_task_struct takes as input pid, returns corresponding task_struct
-    if ((find_task_struct(current->wait_pid))->task_state == TASK_SLEEPING) {
-        (find_task_struct(current->wait_pid))->task_state = TASK_RUNNING;
-    }
+//    if ((find_task_struct(current->wait_pid))->task_state == TASK_SLEEPING) {
+//        (find_task_struct(current->wait_pid))->task_state = TASK_RUNNING;
+//    }
     
     schedule();
 }

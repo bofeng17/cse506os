@@ -462,12 +462,22 @@ int do_fork() {
 	return new_task->pid;
 	//just return child's pid
 
-}
-
 void do_exit(int status) {
-	// current = current->next;
-	current->task_state = TASK_ZOMBIE;
-	schedule();
+    // current = current->next;
+    current->task_state = TASK_ZOMBIE;
+    
+    /*
+     * TODO: unfinished
+     * Check if parent process is suspended (by calling waitpid())
+     * if yes, wake parent process
+     */
+    // find_task_struct takes as input pid, returns corresponding task_struct
+//    if ((find_task_struct(current->wait_pid))->task_state == TASK_SLEEPING) {
+//        (find_task_struct(current->wait_pid))->task_state = TASK_RUNNING;
+//    }
+    
+    schedule();
+
 }
 
 void do_yield() {

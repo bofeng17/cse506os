@@ -2,6 +2,11 @@
 #include <sys/printf.h>
 #include <sys/string.h>
 
+// variable and function declarations used by terminal are in sbunix.h
+
+char terminal_buffer[MAX_BUFF];
+int printf_buf_count; // number of char in the buffer
+
 // for terminal write
 int terminal_write(int fd, char *buf, int count) {
     // TODO: stdout vs stderr
@@ -11,6 +16,12 @@ int terminal_write(int fd, char *buf, int count) {
     return count;
 }
 
-int terminal_read() {
+int terminal_read(char *buf, int count){
+    // isr_keyboard puts char into terminal buffer
+    
+    
+    // copy terminal buffer to libc scanf buffer
+    
+    // TODO: how to deal with empty buffer and count?
     return 0;
 }

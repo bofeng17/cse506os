@@ -6,7 +6,12 @@
 
 // buffer used by write syscall
 char printf_buf[MAX_BUFF];
-int printf_buf_count; // number of char in the buffer
+/*
+ * number of char in the buffer
+ * printf_buf[printf_buf_count] = c;
+ * printf_buf_count ++;
+ */
+int printf_buf_count;
 
 /*
  * the main difference from kernel printf lies here
@@ -157,6 +162,7 @@ int scanf(const char *format, ...) {
     va_start(val, format);
     
     // TODO: number of bytes read?
+    // ssize_t read(struct file *fd, void *buf, size_t count);
     read(0, scanf_buf, MAX_BUFF);
     
     while(*format) {

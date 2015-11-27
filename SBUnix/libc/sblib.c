@@ -33,6 +33,15 @@ int closedir(struct dirent* close) {
 	return syscall_1(SYS_closedir, (uint64_t) close);
 }
 
+char* get_cwd(char* buf){
+	return (char*)syscall_1(SYS_getcwd, (uint64_t) buf);
+}
+
+char* set_cwd(char* buf){
+	return (char*)syscall_1(SYS_setcwd, (uint64_t) buf);
+}
+
+
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
 ////typedef uint64_t off_t;
 //
@@ -134,6 +143,12 @@ void* malloc(size_t size) {
 //if success return previous heap break, otherwise return (void*) -1
 void* sbrk(size_t size) {
 	return (void*) syscall_1(SYS_sbrk, size);
+}
+
+//process related functions
+
+int ps(ps_t ps){
+ return syscall_1(SYS_ps,(uint64_t)ps);
 }
 
 //

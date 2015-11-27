@@ -54,8 +54,10 @@ alarm(unsigned int seconds);
 #define SIGCHLD   17
 
 // paths
-char *
-getcwd(char *buf, size_t size);
+/*char *
+getcwd(char *buf, size_t size);*/
+char* get_cwd(char* buf);
+char* set_cwd(char* buf);
 int
 chdir(const char *path);
 
@@ -103,4 +105,14 @@ int closedir(struct dirent* close);
 
 void *
 memset(void *s, int ch, size_t n);
+
+#define PS_NO 128
+typedef struct ps_state {
+    int id[PS_NO];
+    char name[PS_NO];
+    uint64_t state[PS_NO];
+} ps_state;
+
+typedef ps_state* ps_t;
+
 #endif

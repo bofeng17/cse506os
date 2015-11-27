@@ -1,6 +1,5 @@
 #include <sys/sbunix.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/stdlib.h>
 #include <sys/process.h>
 #include <sys/virmm.h>
 #include <sys/tarfs.h>
@@ -288,6 +287,24 @@ int do_closedir(struct dirent* close)
 {
     //kfree(close, 1);
     return 0;
+}
+
+char* get_cwd(char* buf)
+{
+   // char* tmp = buf;
+    strcpy(buf, current->cur_dir);
+    //strcpy(buf, tmp);
+    return buf;
+}
+
+char* set_cwd(char* buf)
+{
+   // char* tmp = buf;
+    //memset(current->cur_dir, )
+    strcpy(current->cur_dir, buf);
+    //WARNING: THE CURDIR MAY CONTAIN ITS ORIGINAL CONTENTS AFTER /0
+    //strcpy(buf, tmp);
+    return buf;
 }
 
 void tarfs_test()

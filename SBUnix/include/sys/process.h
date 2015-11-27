@@ -142,9 +142,8 @@ extern task_struct *current;
 
 #define CODE 0
 #define DATA 1
-#define BSS 2
-#define HEAP 3
-#define STACK 4
+#define HEAP 2
+#define STACK 3
 // get specific vma of mm
 vma_struct* get_vma(mm_struct* mm, int flag);
 

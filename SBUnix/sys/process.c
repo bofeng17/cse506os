@@ -58,19 +58,20 @@ void set_task_struct(task_struct* task) {
 
     vma_struct* vma_code = kmalloc(VMA);
     vma_struct* vma_data = kmalloc(VMA);
-    vma_struct* vma_bss = kmalloc(VMA);
+    //vma_struct* vma_bss = kmalloc(VMA);
     vma_struct* vma_stack = kmalloc(VMA);
     vma_struct* vma_heap = kmalloc(VMA);
 
     vma_code->vm_mm = mstruct;
     vma_data->vm_mm = mstruct;
-    vma_bss->vm_mm = mstruct;
+   // vma_bss->vm_mm = mstruct;
     vma_heap->vm_mm = mstruct;
     vma_stack->vm_mm = mstruct;
 
     vma_code->vm_next = vma_data;
-    vma_data->vm_next = vma_bss;
-    vma_bss->vm_next = vma_heap;
+    vma_data->vm_next = vma_heap;
+//    vma_data->vm_next = vma_bss;
+//    vma_bss->vm_next = vma_heap;
     vma_heap->vm_next = vma_stack;
     vma_stack->vm_next = NULL;
 
@@ -148,12 +149,12 @@ void setup_vma(mm_struct* mstruct) {
     vma_data->vm_end = mstruct->end_data;
     vma_data->permission_flag = VM_READ | VM_WRITE;
 
-    vma_struct* vma_bss = get_vma(mstruct, BSS);
-    vma_bss->vm_start = mstruct->end_data;
-    vma_bss->vm_end = mstruct->end_data + mstruct->bss;
-    vma_bss->permission_flag = VM_READ | VM_WRITE;
-    vma_bss->vm_file = NULL;
-    vma_bss->file_offset = 0;
+//    vma_struct* vma_bss = get_vma(mstruct, BSS);
+//    vma_bss->vm_start = mstruct->end_data;
+//    vma_bss->vm_end = mstruct->end_data + mstruct->bss;
+//    vma_bss->permission_flag = VM_READ | VM_WRITE;
+//    vma_bss->vm_file = NULL;
+//    vma_bss->file_offset = 0;
 
     vma_struct* vma_heap = get_vma(mstruct, HEAP);
     vma_heap->vm_start = mstruct->start_brk;
@@ -208,7 +209,7 @@ void func_init() {
     char* argv[3] = { "a1", "a2", NULL };
 
     char* envp[4] = { "e1", "e2", "e3", NULL };
-
+    set_task_struct(current);
     do_execv("bin/test_malloc", argv, envp);
 
     //do_fork();
@@ -320,7 +321,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     int envc = 0;
     char* argv_0 = bin_name;
 
-    set_task_struct(execv_task);
+//    set_task_struct(execv_task);
 
     // load bin_name elf
     struct file* file = tarfs_open(bin_name, O_RDONLY);
@@ -332,7 +333,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     if (load_elf(execv_task, file) < 0)
         return -1; // -1 if error
 
-    setup_vma(execv_task->mm);
+ //   setup_vma(execv_task->mm);
 
     //allocate heap
     uint64_t initial_heap_size = 2 * PAGE_SIZE;
@@ -344,8 +345,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
     umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
-    //umalloc((void*) (STACK_TOP - STACK_PAGES * PAGE_SIZE), STACK_PAGES * PAGE_SIZE);
+//    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);//map one page initially
     execv_task->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
+    setup_vma(execv_task->mm);
 
     // setup new task user stack, rsp, argv, envp
     void* rsp = (void*) (STACK_TOP);
@@ -416,7 +418,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     execv_task->rsp = (uint64_t) rsp;
 
     //execv_task->mm->start_stack = (uint64_t) rsp;
-    setup_vma(execv_task->mm);
+
 
     return 0;
 

@@ -144,7 +144,6 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
 char scanf_buf[MAX_BUFF];
 int scanf_buf_count; // TODO: usage differs from printf, how to use it?
 
-// TODO: need to verify correntness
 int scanf(const char *format, ...) {
    	va_list 	val;
     int         scaned = 0;

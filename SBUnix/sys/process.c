@@ -520,7 +520,6 @@ int do_fork() {
     //memory portion begins here
     //child has it own kernel stack
     new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
-    
     // TODO: init_kern usused
     // new_task->init_kern = new_task->kernel_stack;
     
@@ -546,8 +545,10 @@ int do_fork() {
     new_task->rsp = current->rsp;
     
     
-    //just return child's pid
+    //for parent process, return child's pid
     return new_task->pid;
+    
+    //for child process ,return 0
 }
 
 void do_exit(int status) {

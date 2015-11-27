@@ -32,12 +32,12 @@ void isr_keyboard() {
             CONTROL = 0;
             break;
         case 0x0E:// backspace pressed
-            terminal_put_char (0x08); // ASCII of backspace is 0x08
+            terminal_get_char (0x08); // ASCII of backspace is 0x08
             // TODO: should directly push to shell, instead of buffering it
             break;
         case 0x1C:// enter pressed
             // ASCII of line feed, the same to Linux
-            terminal_put_char (0x0A);
+            terminal_get_char (0x0A);
             // TODO: should directly push to shell, instead of buffering it
             break;
         default:
@@ -64,13 +64,13 @@ void isr_keyboard() {
                                 char_1 = '^';
                             }
                         }
-                        terminal_put_char (terminal_ch);
+                        terminal_get_char (terminal_ch);
                     }
                 } else {//SHITF pressed
                     char_1 = scan_code_shift[key_code];
                     char_2 = 0;
                     // put into terminal_buffer
-                    terminal_put_char (char_1);
+                    terminal_get_char (char_1);
                     if (char_1 >= 'A' && char_1 <= 'Z') {
                         if (CONTROL == 1) {
                             // needn't put into terminal_buffer

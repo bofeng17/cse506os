@@ -20,7 +20,7 @@ extern char terminal_buffer[MAX_BUFF];
 int terminal_write(int fd, char *buf, int count);
 int terminal_read(char *buf, int count);
 
-void terminal_put_char(uint8_t c);
+void terminal_get_char(uint8_t c);
 
 
 #define DEBUG 1

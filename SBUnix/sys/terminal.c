@@ -26,14 +26,20 @@ int terminal_read(char *buf, int count){
     return 0;
 }
 
-void terminal_put_char(uint8_t ch) {
-    if (terminal_buf_count < MAX_BUFF) {
-        terminal_buffer[terminal_buf_count] = ch;
-        terminal_buf_count ++;
-        // for testing
-        dprintf("%c, %d\n",ch, terminal_buf_count);
-    } else {
-        printf("terminal buffer is full!\n");
-        __asm__ __volatile("hlt");
+void terminal_get_char(uint8_t ch) {
+    if (ch == 0x08) { // backspace \b
+        
+    } else if (ch == 0x0A) { // line feed \n
+        
+    } else { // normal char
+        if (terminal_buf_count < MAX_BUFF) {
+            terminal_buffer[terminal_buf_count] = ch;
+            terminal_buf_count ++;
+            // for testing
+            dprintf("%c, %d\n",ch, terminal_buf_count);
+        } else {
+            printf("terminal buffer is full!\n");
+            __asm__ __volatile("hlt");
+        }
     }
 }

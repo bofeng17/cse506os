@@ -16,19 +16,19 @@ void isr_keyboard() {
     
     switch (key_code) {
         case 0x2A:
-        case 0x36:// left/right shift pressed
+        case 0x36:
             if (CONTROL != 1) {
                 SHIFT = 1;
                 break;
             }
         case 0xAA:
-        case 0xB6:// left/right shift released
+        case 0xB6:
             SHIFT = 0;
             break;
-        case 0x1D:// left control pressed
+        case 0x1D:
             CONTROL = 1;
             break;
-        case 0x9D:// left control released
+        case 0x9D:
             CONTROL = 0;
             break;
     }

@@ -113,7 +113,7 @@ tarfs_file* tarfs_open(char *name, int flags)
     
 }
 
-size_t tarfs_read(tarfs_file* fd, void* buf, size_t size)
+size_t tarfs_read(struct file *fd, void* buf, size_t size)
 {
     size_t i;
     char* tmp1,*tmp2;
@@ -334,4 +334,14 @@ ssize_t do_write(int fd, const void *buf, size_t count) {
         printf("Don't Support write to file\n");
         return -1;
     }
+}
+
+// read syscall service routine
+ssize_t do_read(struct file *fd, void *buf, size_t count) {
+    if (fd == STD_IN) {
+        terminal_read((char *)buf, count);
+    } else {
+        tarfs_read(fd, buf, count);
+    }
+    return 0;
 }

@@ -6,19 +6,19 @@
 
 // mode(unused): enum { O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000 };
 struct file* open(char *name, int flags) {
-	return (struct file*) syscall_2(SYS_open, (uint64_t) name, flags);
+    return (struct file*) syscall_2(SYS_open, (uint64_t) name, flags);
 }
 
 ssize_t read(struct file* fd, void *buf, size_t count) {
-	return syscall_3(SYS_read, (uint64_t) fd, (uint64_t) buf, count);
+    return syscall_3(SYS_read, (uint64_t) fd, (uint64_t) buf, count);
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
-	return syscall_3(SYS_write, fd, (uint64_t) buf, count);
+    return syscall_3(SYS_write, fd, (uint64_t) buf, count);
 }
 
 void* opendir(const char* name) {
-	return (void*) syscall_1(SYS_open, (uint64_t) name);
+	return (void*) syscall_1(SYS_opendir, (uint64_t) name);
 }
 
 /*struct dirent* readdir(void* fd) {
@@ -30,7 +30,7 @@ int readdir(void* fd, struct dirent *dirp){
 }
 
 int closedir(struct dirent* close) {
-	return syscall_1(SYS_open, (uint64_t) close);
+	return syscall_1(SYS_closedir, (uint64_t) close);
 }
 
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
@@ -41,7 +41,7 @@ int closedir(struct dirent* close) {
 //}
 //
 void close(struct file* fd) {
-	syscall_1(SYS_close, (uint64_t) fd);
+    syscall_1(SYS_close, (uint64_t) fd);
 }
 
 //duplicate a file descriptor
@@ -64,30 +64,30 @@ void close(struct file* fd) {
  * and can be collected using one of the wait(2) family of calls
  */
 void exit(int status) {
-	syscall_1(SYS_exit, status);
+    syscall_1(SYS_exit, status);
 }
 
 pid_t fork(void) {
-	return syscall_0(SYS_fork);
+    return syscall_0(SYS_fork);
 }
 
 int execve(const char *filename, char * const argv[], char * const envp[]) {
-	return syscall_3(SYS_execve, (uint64_t) filename, (uint64_t) argv,
-			(uint64_t) envp);
+    return syscall_3(SYS_execve, (uint64_t) filename, (uint64_t) argv,
+            (uint64_t) envp);
 }
 
 pid_t getpid(void) {
-	return syscall_0(SYS_getpid);
+    return syscall_0(SYS_getpid);
 }
 
 // get parent pid
 pid_t getppid(void) {
-	return syscall_0(SYS_getppid);
+    return syscall_0(SYS_getppid);
 }
 
 // in POSIX, return value type is int
 void yield(void) {
-	syscall_0 (SYS_yield);
+    syscall_0 (SYS_yield);
 }
 
 //pid_t waitpid(pid_t pid, int *status, int options) {
@@ -111,12 +111,12 @@ void yield(void) {
 // memory
 //typedef uint64_t size_t;
 void* malloc(size_t size) {
-	void *a = sbrk(size);
-	if (a == ((void*) (-1))) {
-		return NULL;
-	} else {
-		return a;
-	}
+    void *addr = sbrk(size);
+    if (addr == ((void*) (-1))) {
+        return NULL;
+    } else {
+        return addr;
+    }
 }
 
 //void free(void *ptr){
@@ -133,7 +133,7 @@ void* malloc(size_t size) {
 
 //if success return previous heap break, otherwise return (void*) -1
 void* sbrk(size_t size) {
-	return (void*) syscall_1(SYS_sbrk, size);
+    return (void*) syscall_1(SYS_sbrk, size);
 }
 
 //

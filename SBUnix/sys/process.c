@@ -213,11 +213,11 @@ void func_init() {
     do_execv("bin/test_malloc", argv, envp);
     
     //do_fork();
-//    
-//    while (1){
-//        ;
-//    }
-    sysret_to_ring3();
+    
+    while (1){
+        ;
+    }
+    //sysret_to_ring3();
     
     //do_exit (0);
 }

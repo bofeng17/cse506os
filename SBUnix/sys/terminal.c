@@ -5,7 +5,7 @@
 // variable and function declarations used by terminal are in sbunix.h
 
 char terminal_buffer[MAX_BUFF];
-int printf_buf_count; // number of char in the buffer
+int terminal_buf_count; // number of char in the buffer
 
 // for terminal write
 int terminal_write(int fd, char *buf, int count) {

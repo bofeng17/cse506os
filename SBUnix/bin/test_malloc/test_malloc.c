@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <sys/tarfs.h>
 #include <sys/defs.h>
 #include <sys/tarfs.h>
 
@@ -22,6 +22,7 @@ int data_arr[8192] = { 1, 2, 3, 4 };
 char* s = "hello\n";
 
 int main(int argc, char* argv[], char* envp[]) {
+
 	//printf("Hello World!\n");
 
 	//    __asm__ __volatile__("INT $0x21;");
@@ -54,10 +55,11 @@ int main(int argc, char* argv[], char* envp[]) {
 	char y = 'h';
 	test(c[3], data_arr[0], s, y, x);
 
+
 //    int n = 1, fd = 1, count = 5;
 //    char* s = "hello\n";
-	//    __asm__ __volatile__("syscall"
-	//                         :
-	//                         :"a"(n), "D"(fd), "S"((uint64_t)s), "d"(count));
-	return 0;
+    //    __asm__ __volatile__("syscall"
+    //                         :
+    //                         :"a"(n), "D"(fd), "S"((uint64_t)s), "d"(count));
+    return 0;
 }

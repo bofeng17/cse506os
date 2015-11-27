@@ -119,6 +119,7 @@ void do_syscall() {
 
     __asm__ __volatile__ ("sti");
 
+
     // call correpsonding syscall service routine according to syscall no
     /* 
      * TODO: must check whether switch body modifies rdi, rsi, rdx, rcx, r8, r9

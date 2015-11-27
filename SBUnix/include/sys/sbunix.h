@@ -8,11 +8,17 @@
 extern void console_initialize();
 
 extern void timer_init();
-//do we need keyboard initializer??
 
 extern int printf(const char *fmt, ...);
 
+// for terminal
+
+#define MAX_BUFF 4096
+
+extern char terminal_buffer[MAX_BUFF];
+
 int terminal_write(int fd, char *buf, int count);
+int terminal_read(char *buf, int count);
 
 #define DEBUG 1
 #if DEBUG

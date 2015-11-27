@@ -1,5 +1,4 @@
 #include <sys/sbunix.h>
-#include <sys/stdio.h> //kernel should not include user header files
 #include <sys/stdlib.h>//kernel should not include user header files
 #include <sys/process.h>
 //#include <sys/physical.h>
@@ -27,7 +26,7 @@ void *memmove(void *dest, const void *src, size_t n) {
 	return dest;
 }
 
-void load_elf(task_struct* task, struct file* load_file) {
+int load_elf(task_struct* task, struct file* load_file) {
 
 	int i;
 
@@ -86,7 +85,7 @@ void load_elf(task_struct* task, struct file* load_file) {
 		}
 		pgh++;
 	}
-
+	return 0;
 }
 
 void test_elf() {

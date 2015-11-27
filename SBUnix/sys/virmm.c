@@ -582,3 +582,34 @@ void self_ref_write(int level, uint64_t vir, uint64_t phy) {
 	uint64_t addr = self_ref_read_entry_vir(level, vir);
 	*((uint64_t*) addr) = phy;
 }
+
+void* do_sbrk(size_t brk_size) {
+	mm_struct * mm = current->mm;
+	vma_struct * vma_heap = get_vma(mm, HEAP);
+
+	//4K aligned
+	uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
+	uint64_t newbrk = (mm->brk + brk_size + 0xfff) & 0xfffff000;
+
+	// heap size not change
+	if (oldbrk == newbrk) {
+		return (void*) oldbrk;
+	}
+
+	//enlarge heap
+	if (brk_size < BRK_LIMIT) {
+		//umap((void*) addr, brk_size);
+
+		// page fault handler will do mapping and allocate physical pages
+		void* retaddr = (void*) mm->brk;
+		mm->brk = newbrk;
+		vma_heap->vm_end = mm->brk;
+
+		return retaddr;
+	} else {
+		printf("Size[%d] Exceed BRK_LIMIT[%x]!\n", brk_size, BRK_LIMIT);
+		return (void*) -1;
+	}
+
+}
+

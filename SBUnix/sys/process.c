@@ -1,5 +1,5 @@
 #include <sys/sbunix.h>
-#include <sys/stdio.h> //kernel should not include user header files
+//#include <sys/stdio.h> //kernel should not include user header files
 #include <sys/stdlib.h>//kernel should not include user header files
 #include <sys/tarfs.h>
 #include <sys/elf.h>
@@ -105,16 +105,22 @@ void setup_vma(mm_struct* mstruct) {
 	vma_bss->vm_start = mstruct->end_data;
 	vma_bss->vm_end = mstruct->end_data + mstruct->bss;
 	vma_bss->permission_flag = VM_READ | VM_WRITE;
+	vma_bss->vm_file = NULL;
+	vma_bss->file_offset = 0;
 
 	vma_struct* vma_heap = get_vma(mstruct, HEAP);
 	vma_heap->vm_start = mstruct->start_brk;
 	vma_heap->vm_end = mstruct->brk;
 	vma_heap->permission_flag = VM_READ | VM_WRITE;
+	vma_heap->vm_file = NULL;
+	vma_heap->file_offset = 0;
 
 	vma_struct* vma_stack = get_vma(mstruct, STACK);
 	vma_stack->vm_start = mstruct->start_stack;
 	vma_stack->vm_end = STACK_TOP;
 	vma_stack->permission_flag = VM_READ | VM_WRITE;
+	vma_stack->vm_file = NULL;
+	vma_stack->file_offset = 0;
 }
 //void
 //function_idle ()
@@ -156,9 +162,9 @@ void func_init() {
 
 	char* envp[4] = { "e1", "e2", "e3", NULL };
 
-	do_execv("bin/test_hello", argv, envp);
+	do_execv("bin/test_malloc", argv, envp);
 
-	do_fork();
+	//do_fork();
 
 	sysret_to_ring3();
 
@@ -254,12 +260,12 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 		}
 
 	}
+
 	*rsp_p = (uint64_t) rsp;
 	return params_no;
 }
 
 int do_execv(char* bin_name, char ** argv, char** envp) {
-	int retval = 0;
 	// create new task
 	task_struct* execv_task = current;
 
@@ -272,7 +278,12 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	// load bin_name elf
 	struct file* file = tarfs_open(bin_name, O_RDONLY);
 
-	load_elf(execv_task, file); // -1 if error
+	if (file == NULL) {
+		return -1;
+	}
+
+	if (load_elf(execv_task, file) < 0)
+		return -1; // -1 if error
 
 	setup_vma(execv_task->mm);
 
@@ -280,8 +291,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	uint64_t initial_heap_size = 2 * PAGE_SIZE;
 
 	execv_task->mm->start_brk = (uint64_t) umalloc(
-			(void*) ((execv_task->mm->end_data & CLEAR_OFFSET) + PAGE_SIZE),
-			initial_heap_size);
+			(void*) (((execv_task->mm->end_data + execv_task->mm->bss)
+					& CLEAR_OFFSET) + PAGE_SIZE), initial_heap_size);
+
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
 	umap((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
@@ -359,12 +371,8 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	//execv_task->mm->start_stack = (uint64_t) rsp;
 	setup_vma(execv_task->mm);
 
-//	// add execv_task to the run queue
-//	add_task(execv_task);
-    
-    
+	return 0;
 
-	return retval;
 }
 
 task_struct*
@@ -484,44 +492,6 @@ int do_fork() {
 	return new_task->pid;
 }
 
-int do_munmap(mm_struct *mm, uint64_t start, size_t len) {
-
-	return 0;
-}
-
-uint64_t do_brk(uint64_t addr) {
-	mm_struct * mm = current->mm;
-	vma_struct * vma_heap = get_vma(mm, HEAP);
-
-	uint64_t newbrk = (addr + 0xfff) & 0xfffff000;
-	uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
-
-	// heap size not change
-	if (oldbrk == newbrk) {
-		mm->brk = addr;
-		return mm->brk;
-	}
-
-	// shrink heap
-	if (addr <= mm->brk) {
-		if (!do_munmap(mm, newbrk, oldbrk - newbrk)) {
-			mm->brk = addr;
-			vma_heap->vm_end = mm->brk;
-		}
-		return mm->brk;
-	}
-
-	//enlarge heap
-	uint64_t brk_size = newbrk - oldbrk;
-	if (brk_size < MAX_HEAP_SIZE) {
-		umap((void*) addr, brk_size);
-		mm->brk = addr;
-		vma_heap->vm_end = mm->brk;
-	}
-
-	return mm->brk;
-}
-
 void do_exit(int status) {
 	// current = current->next;
 	current->task_state = TASK_ZOMBIE;
@@ -545,6 +515,6 @@ task_struct *find_task_struct(int pid) {
 }
 
 void do_yield() {
-    schedule();
+	schedule();
 }
 

@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <stdlib.h>
+
 #include <sys/defs.h>
 
 void test(int x, int y, char *s, char a, int d) {
@@ -28,6 +30,17 @@ int main(int argc, char* argv[], char* envp[]) {
 	//        ;
 	//    }
 	//   printf("Hello World!\n");
+	int size = 4000;
+	int * t = malloc(size * sizeof(int));
+
+	if (t) {
+		int i = 0;
+		for (i = 0; i < size; i++) {
+			t[i] = i;
+			printf("t[%d] is:%d \n", i, t[i]);
+		}
+
+	}
 
 	int x = 1;
 	char y = 'h';

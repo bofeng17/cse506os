@@ -530,8 +530,8 @@ int do_fork() {
     
     
     // TODO: tricky part begins here!!
-    new_task->rip = current->rip;
-    new_task->rsp = current->rsp;
+//    new_task->rip;
+//    new_task->rsp;
     
     
     //just return child's pid

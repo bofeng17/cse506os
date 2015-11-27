@@ -136,6 +136,12 @@ void* sbrk(size_t size) {
 	return (void*) syscall_1(SYS_sbrk, size);
 }
 
+//process related functions
+
+int ps(ps_t ps){
+ return syscall_1(SYS_ps,(uint64_t)ps);
+}
+
 //
 //
 //// signals

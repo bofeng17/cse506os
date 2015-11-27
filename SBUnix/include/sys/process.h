@@ -98,6 +98,16 @@ typedef struct task_struct {
 
 } task_struct;
 
+#define PS_NO 128
+typedef struct ps_state {
+    int id[PS_NO];
+    char name[PS_NO];
+    uint64_t state[PS_NO];
+} ps_state;
+
+typedef ps_state* ps_t;
+
+
 int
 do_execv(char*, char**, char**);
 

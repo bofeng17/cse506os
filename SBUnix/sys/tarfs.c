@@ -1,6 +1,5 @@
 #include <sys/sbunix.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <sys/stdlib.h>
 #include <sys/process.h>
 #include <sys/virmm.h>
 #include <sys/tarfs.h>

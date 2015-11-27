@@ -65,174 +65,175 @@ void sysret_to_ring3() {
 }
 
 // kernel syscall dispatcher
-void do_syscall () {
-    
-    //TODO: 16bytes stack alignment at syscall
-    //TODO: do we need to enable alignment checking?
-    
-    /* 
-     * local variables must bind to callee saved registers
-     * if not, it may be bind by compiler to RCX/R11, which are caller saved
-     */
-    register uint64_t syscall_no __asm__("r12");// bind to r12
-    //TODO: return value type?
-    register int64_t ret_val __asm__("r13") = 0;// bind to r13
-    
-    __asm__ __volatile__ ("cli");
-    
-    // store syscall number(rax) in r12, because rax will be used later
-    // store rdx in r14
-    __asm__ __volatile__("pushq %%r14;"// push callee-saved register before using it
-                         "mov %%rdx, %%r14;"// store rdx in r14
-                         :"=a"(syscall_no));
-  
-    // manually switch ds/es/fs/gs
-    __asm__ __volatile__("mov %ss, %ax;"
-                         "mov %ax, %ds;"
-                         "mov %ax, %es;"
-                         "mov %ax, %fs;"
-                         "mov %ax, %gs;");
-    
-    // switch stack
-    __asm__ __volatile__("pushq %%rbp;"
-                         "mov %%rsp, %%rax;"
-                         :"=a"(current->rsp));// "=a"(current->rsp uses rdx
-    __asm__ __volatile__("mov %0, %%rsp;"
-                         "popq %%rbp;"// TODO: rbp
-                         ::"a"(tss.rsp0));
-    
-    /* push r11 (stored rflags), rcx (stored rip),
-     * in case of syscall service routine mofidy them.
-     * Must do this after switch stack
-     */
-    __asm__ __volatile__ ("pushq %r11;"
-                          "pushq %rcx;");
-    
-    /* 
-     * line 1: To obey x64 calling convention (passing parameters) 
-     *         in calling individual service routine
-     * line 2: To recover rdx
-     */
-    __asm__ __volatile__ ("mov %r10, %rcx;"
-                          "mov %r14, %rdx");
-    
-    __asm__ __volatile__ ("sti");
-    
-    // call correpsonding syscall service routine according to syscall no
-    /* 
-     * TODO: must check whether switch body modifies rdi, rsi, rdx, rcx, r8, r9
-     *       now it changes rdx, so...line swtich+2
-     */
-    /* 
-     * Template:
-     * __asm__ __volatile__ ("mov %r14, %rdx;"); // Necessary for syscall with >= 3 parameters
-     * __asm__ __volatile__ ("callq do_xxx;"
-     *                       :"=a"(ret_val));
-     */
-    switch (syscall_no) {
-        // file
-        case SYS_open:
-            __asm__ __volatile__ ("callq tarfs_open;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_close:
-            __asm__ __volatile__ ("callq tarfs_close;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_opendir:
-            __asm__ __volatile__ ("callq do_opendir;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_readdir:
-            __asm__ __volatile__ ("callq do_readdir;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_closedir:
-            __asm__ __volatile__ ("callq do_closedir;"
-                                  :"=a"(ret_val));
-            break;
-        // file & terminal
-        case SYS_read:
-            // TODO: This is not the final version of read.
-            __asm__ __volatile__ ("mov %r14, %rdx;");
-            __asm__ __volatile__ ("callq tarfs_read;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_write:
-            __asm__ __volatile__ ("mov %r14, %rdx;");
-            __asm__ __volatile__ ("callq do_write;"
-                                  :"=a"(ret_val));
-            break;
-            
-        // process
-        case SYS_fork:
-            __asm__ __volatile__ ("callq do_fork;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_execve:
-            __asm__ __volatile__ ("mov %r14, %rdx;");
-            __asm__ __volatile__ ("callq do_execv;"
-                                  :"=a"(ret_val));
-            // TODO: need to verify
-            
-            // overwrite rcx (stored rip) to new rip
-            __asm__ __volatile__ ("mov %0, (%%rsp);"
-                                  ::"r"(current->rip));
-            // push rbp (0x100000000, top of user stack) to user stack
-            current->rsp -= 0x8;
-            *(uint64_t *)current->rsp = 0x100000000;
-            // adjust for pop at the end of do_syscall
-            current->rsp -= 0x18;
-            current->rsp -= 0x8;
-            break;
-        case SYS_exit:
-            __asm__ __volatile__ ("callq do_exit;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_yield:
-            __asm__ __volatile__ ("callq do_yield;"
-                                  :"=a"(ret_val));
-            break;
-        case SYS_brk:
-            __asm__ __volatile__ ("callq do_brk;"
-                                  :"=a"(ret_val));
-            break;
-        default:
-            printf("Syscall wasn't implemented\n");
-            break;
-    }
-    
-    __asm__ __volatile__("cli");
-    
-    // manually switch ds/es/fs/gs, must do this before sysret
-    __asm__ __volatile__("mov $0xc0000081, %rcx;" // read from STAR MSR
-                         "rdmsr;"
-                         "shr $0x10, %rdx;"
-                         "add $0x8, %rdx;"// now rdx stores ss selector of ring3
-                         "mov %dx, %ds;"
-                         "mov %dx, %es;"
-                         "mov %dx, %fs;"
-                         "mov %dx, %gs;");
-    
-    /* pop rcx (stored rip), r11 (stored rflags).
-     * Must do this before switch stack back to user's
-     */
-    __asm__ __volatile__ ("popq %rcx;"
-                          "popq %r11;");
-    
-    // switch back to user stack
-    __asm__ __volatile__("pushq %%rbp;"// TODO: rbp
-                         "mov %%rsp, %%rax;"
-                         :"=a"(tss.rsp0));
-    __asm__ __volatile__("mov %%rax, %%rsp;"
-                         "popq %%rbp;"
-                         ::"a"(current->rsp));
-    
-    // return to ring3
-    __asm__ __volatile__("add $0x18,%%rsp;"// pop callee saved registers, i.e. r14, r13, r12, which are saved by compiler
-                         "add $0x8,%%rsp;" // TODO: be cautious @ manipulating rsp
-                         "rex.w sysret"// move ret_val into rax
-                         ::"a"(ret_val));
+void do_syscall() {
+
+	//TODO: 16bytes stack alignment at syscall
+	//TODO: do we need to enable alignment checking?
+
+	/* 
+	 * local variables must bind to callee saved registers
+	 * if not, it may be bind by compiler to RCX/R11, which are caller saved
+	 */
+	register uint64_t syscall_no __asm__("r12");    // bind to r12
+	//TODO: return value type?
+	register int64_t ret_val __asm__("r13") = 0;    // bind to r13
+
+	__asm__ __volatile__ ("cli");
+
+	// store syscall number(rax) in r12, because rax will be used later
+	// store rdx in r14
+	__asm__ __volatile__("pushq %%r14;" // push callee-saved register before using it
+			"mov %%rdx, %%r14;"// store rdx in r14
+			:"=a"(syscall_no));
+
+	// manually switch ds/es/fs/gs
+	__asm__ __volatile__("mov %ss, %ax;"
+			"mov %ax, %ds;"
+			"mov %ax, %es;"
+			"mov %ax, %fs;"
+			"mov %ax, %gs;");
+
+	// switch stack
+	__asm__ __volatile__("pushq %%rbp;"
+			"mov %%rsp, %%rax;"
+			:"=a"(current->rsp));
+	// "=a"(current->rsp uses rdx
+	__asm__ __volatile__("mov %0, %%rsp;"
+			"popq %%rbp;"    // TODO: rbp
+			::"a"(tss.rsp0));
+
+	/* push r11 (stored rflags), rcx (stored rip),
+	 * in case of syscall service routine mofidy them.
+	 * Must do this after switch stack
+	 */
+	__asm__ __volatile__ ("pushq %r11;"
+			"pushq %rcx;");
+
+	/* 
+	 * line 1: To obey x64 calling convention (passing parameters) 
+	 *         in calling individual service routine
+	 * line 2: To recover rdx
+	 */
+	__asm__ __volatile__ ("mov %r10, %rcx;"
+			"mov %r14, %rdx");
+
+	__asm__ __volatile__ ("sti");
+
+	// call correpsonding syscall service routine according to syscall no
+	/* 
+	 * TODO: must check whether switch body modifies rdi, rsi, rdx, rcx, r8, r9
+	 *       now it changes rdx, so...line swtich+2
+	 */
+	/* 
+	 * Template:
+	 * __asm__ __volatile__ ("mov %r14, %rdx;"); // Necessary for syscall with >= 3 parameters
+	 * __asm__ __volatile__ ("callq do_xxx;"
+	 *                       :"=a"(ret_val));
+	 */
+	switch (syscall_no) {
+	// file
+	case SYS_open:
+		__asm__ __volatile__ ("callq tarfs_open;"
+				:"=a"(ret_val));
+		break;
+	case SYS_close:
+		__asm__ __volatile__ ("callq tarfs_close;"
+				:"=a"(ret_val));
+		break;
+	case SYS_opendir:
+		__asm__ __volatile__ ("callq do_opendir;"
+				:"=a"(ret_val));
+		break;
+	case SYS_readdir:
+		__asm__ __volatile__ ("callq do_readdir;"
+				:"=a"(ret_val));
+		break;
+	case SYS_closedir:
+		__asm__ __volatile__ ("callq do_closedir;"
+				:"=a"(ret_val));
+		break;
+		// file & terminal
+	case SYS_read:
+		// TODO: This is not the final version of read.
+		__asm__ __volatile__ ("mov %r14, %rdx;");
+		__asm__ __volatile__ ("callq tarfs_read;"
+				:"=a"(ret_val));
+		break;
+	case SYS_write:
+		__asm__ __volatile__ ("mov %r14, %rdx;");
+		__asm__ __volatile__ ("callq do_write;"
+				:"=a"(ret_val));
+		break;
+
+		// process
+	case SYS_fork:
+		__asm__ __volatile__ ("callq do_fork;"
+				:"=a"(ret_val));
+		break;
+	case SYS_execve:
+		__asm__ __volatile__ ("mov %r14, %rdx;");
+		__asm__ __volatile__ ("callq do_execv;"
+				:"=a"(ret_val));
+		// TODO: need to verify
+
+		// overwrite rcx (stored rip) to new rip
+		__asm__ __volatile__ ("mov %0, (%%rsp);"
+				::"r"(current->rip));
+		// push rbp (0x100000000, top of user stack) to user stack
+		current->rsp -= 0x8;
+		*(uint64_t *) current->rsp = 0x100000000;
+		// adjust for pop at the end of do_syscall
+		current->rsp -= 0x18;
+		current->rsp -= 0x8;
+		break;
+	case SYS_exit:
+		__asm__ __volatile__ ("callq do_exit;"
+				:"=a"(ret_val));
+		break;
+	case SYS_yield:
+		__asm__ __volatile__ ("callq do_yield;"
+				:"=a"(ret_val));
+		break;
+	case SYS_sbrk:
+		__asm__ __volatile__ ("callq do_sbrk;"
+				:"=a"(ret_val));
+		break;
+	default:
+		printf("Syscall wasn't implemented\n");
+		break;
+	}
+
+	__asm__ __volatile__("cli");
+
+	// manually switch ds/es/fs/gs, must do this before sysret
+	__asm__ __volatile__("mov $0xc0000081, %rcx;" // read from STAR MSR
+			"rdmsr;"
+			"shr $0x10, %rdx;"
+			"add $0x8, %rdx;"// now rdx stores ss selector of ring3
+			"mov %dx, %ds;"
+			"mov %dx, %es;"
+			"mov %dx, %fs;"
+			"mov %dx, %gs;");
+
+	/* pop rcx (stored rip), r11 (stored rflags).
+	 * Must do this before switch stack back to user's
+	 */
+	__asm__ __volatile__ ("popq %rcx;"
+			"popq %r11;");
+
+	// switch back to user stack
+	__asm__ __volatile__("pushq %%rbp;" // TODO: rbp
+			"mov %%rsp, %%rax;"
+			:"=a"(tss.rsp0));
+	__asm__ __volatile__("mov %%rax, %%rsp;"
+			"popq %%rbp;"
+			::"a"(current->rsp));
+
+	// return to ring3
+	__asm__ __volatile__("add $0x18,%%rsp;" // pop callee saved registers, i.e. r14, r13, r12, which are saved by compiler
+			"add $0x8,%%rsp;"// TODO: be cautious @ manipulating rsp
+			"rex.w sysret"// move ret_val into rax
+			::"a"(ret_val));
 }
 
 //void iret_to_ring3(){

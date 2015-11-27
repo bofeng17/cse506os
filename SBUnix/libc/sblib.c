@@ -33,6 +33,10 @@ int closedir(struct dirent* close) {
 	return syscall_1(SYS_closedir, (uint64_t) close);
 }
 
+char* get_cwd(char* buf){
+	return (char*)syscall_1(SYS_getcwd, (uint64_t) buf);
+}
+
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
 ////typedef uint64_t off_t;
 //

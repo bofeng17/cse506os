@@ -26,11 +26,22 @@ void *memmove(void *dest, const void *src, size_t n) {
 	return dest;
 }
 
-int load_elf(task_struct* task, struct file* load_file) {
+int load_elf(task_struct* task, char* bin_name) {
+
 
 	int i;
+	int m=0;
 
-	void* file_start = (void*) load_file->start;
+	struct file* file = tarfs_open(bin_name, O_RDONLY);
+
+
+	char* dir = strstr(bin_name, "/");
+	size_t length = strlen(dir);
+	size_t length1 = strlen(bin_name);
+	strncpy(task->cur_dir, bin_name, length1-length+1);
+
+
+	void* file_start = (void*) file->start;
 
 	elf_h *elfh = (elf_h*) file_start; //find elf header
 	//dprintf("LOAD_ELF: elf header \n");
@@ -38,6 +49,9 @@ int load_elf(task_struct* task, struct file* load_file) {
 	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);// find program header
 
 	task->rip = elfh->e_entry;	//assign entry for the task
+
+	//get the cur dir for the task
+
 
 	for (i = 0; i < elfh->e_phnum; i++)	//go through all the program headers
 			{
@@ -56,8 +70,9 @@ int load_elf(task_struct* task, struct file* load_file) {
 						(void*) file_start + pgh->p_offset, pgh->p_filesz);
 
 				struct vma_struct* vma_tmp = get_vma(task->mm, CODE);
-				vma_tmp->vm_file = load_file;
+				vma_tmp->vm_file = file;
 				vma_tmp->file_offset = pgh->p_offset;
+				m++;
 
 			} else	//its the .data section
 			{
@@ -77,17 +92,21 @@ int load_elf(task_struct* task, struct file* load_file) {
 				// WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
 
 				struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
-				vma_tmp1->vm_file = load_file;
+				vma_tmp1->vm_file = file;
 				vma_tmp1->file_offset = pgh->p_offset;
+				m++;
 
 			}
 
 		}
 		pgh++;
 	}
+	if(m==0)
+	{
+		return -1;
+	}
 	return 0;
 }
-
 void test_elf() {
 	//printf("lalala");
 	int i;

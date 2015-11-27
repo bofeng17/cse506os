@@ -289,6 +289,14 @@ int do_closedir(struct dirent* close)
     return 0;
 }
 
+char* get_cwd(char* buf)
+{
+   // char* tmp = buf;
+    strcpy(buf, current->cur_dir);
+    //strcpy(buf, tmp);
+    return buf;
+}
+
 void tarfs_test()
 {
     

@@ -54,8 +54,9 @@ alarm(unsigned int seconds);
 #define SIGCHLD   17
 
 // paths
-char *
-getcwd(char *buf, size_t size);
+/*char *
+getcwd(char *buf, size_t size);*/
+char* get_cwd(char* buf);
 int
 chdir(const char *path);
 

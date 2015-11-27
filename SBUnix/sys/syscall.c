@@ -153,6 +153,10 @@ void do_syscall() {
 				:"=a"(ret_val));
 		break;
 		// file & terminal
+	case SYS_getcwd:
+		__asm__ __volatile__ ("callq get_cwd;"
+				:"=a"(ret_val));
+		break;
 	case SYS_read:
 		// TODO: This is not the final version of read.
 		__asm__ __volatile__ ("mov %r14, %rdx;");

@@ -113,8 +113,8 @@ kfree(void* addr, int flag);
 void*
 umalloc(void* addr, size_t size);
 
-void*
-umap(void* addr, size_t size);
+//void*
+//umap(void* addr, size_t size);
 
 //TODO: remember to set physical page to zero
 void

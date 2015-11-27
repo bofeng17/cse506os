@@ -103,4 +103,14 @@ int closedir(struct dirent* close);
 
 void *
 memset(void *s, int ch, size_t n);
+
+#define PS_NO 128
+typedef struct ps_state {
+    int id[PS_NO];
+    char name[PS_NO];
+    uint64_t state[PS_NO];
+} ps_state;
+
+typedef ps_state* ps_t;
+
 #endif

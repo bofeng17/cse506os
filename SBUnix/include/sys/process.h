@@ -65,7 +65,7 @@ typedef struct mm_struct {
 	uint64_t env_start; /* Initial address of environment variables */
 	uint64_t env_end; /* Final address of environment variables */
 
-	uint64_t bss; // bss segment
+	uint64_t bss; // size of bss segment
 	uint64_t rss; /* Number of page frames allocated to the process */
 
 	uint64_t total_vm; /* Size of the process address space (number of pages) */
@@ -97,6 +97,16 @@ typedef struct task_struct {
 	char cur_dir[NAME_LENGTH]; /* current directory */
 
 } task_struct;
+
+#define PS_NO 128
+typedef struct ps_state {
+    int id[PS_NO];
+    char name[PS_NO];
+    uint64_t state[PS_NO];
+} ps_state;
+
+typedef ps_state* ps_t;
+
 
 int
 do_execv(char*, char**, char**);

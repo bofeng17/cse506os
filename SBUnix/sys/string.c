@@ -34,6 +34,50 @@ size_t strlen(const char *s) {
     return len;
 }
 
+char* strcat(char* destin, char* source) {
+    char* tmp=destin;
+    while(*destin) {
+        destin++;
+    }
+    while(*source) {
+        *destin = *source;
+        destin++;
+        source++;
+    }
+    //*tmp = '\0';
+    return tmp;
+}
+
+char* strstr(char* str1, char* str2) {
+    char* string;
+    char* search;
+    char* tmp;
+    int offset = 0;
+    if(!str1 || !str2) {
+        return NULL;
+    }
+    string = str1;
+    while(*string) {
+        search = str2;
+        while(*string != *search && *string) {
+            string++;
+            offset++;
+        }
+        tmp = string;
+        while(*tmp == *search) {
+            tmp++;
+            search++;
+            if(*search == '\0') {
+                return str1+offset;
+            }
+        }
+        string++;
+        offset++;
+    }
+    return NULL;
+}
+
+
 
 
 

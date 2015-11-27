@@ -164,6 +164,7 @@ void do_syscall() {
 		__asm__ __volatile__ ("callq do_write;"
 				:"=a"(ret_val));
 		break;
+
 		// process
 	case SYS_fork:
 		__asm__ __volatile__ ("callq do_fork;"
@@ -174,8 +175,16 @@ void do_syscall() {
 		__asm__ __volatile__ ("callq do_execv;"
 				:"=a"(ret_val));
 		// TODO: need to verify
+
+		// overwrite rcx (stored rip) to new rip
 		__asm__ __volatile__ ("mov %0, (%%rsp);"
 				::"r"(current->rip));
+		// push rbp (0x100000000, top of user stack) to user stack
+		current->rsp -= 0x8;
+		*(uint64_t *) current->rsp = 0x100000000;
+		// adjust for pop at the end of do_syscall
+		current->rsp -= 0x18;
+		current->rsp -= 0x8;
 		break;
 	case SYS_exit:
 		__asm__ __volatile__ ("callq do_exit;"

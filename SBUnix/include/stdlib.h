@@ -94,7 +94,9 @@ dup2(int oldfd, int newfd);
  closedir (void *dir);*/
 void* opendir(const char* name);
 
-struct dirent* readdir(void* fd);
+//struct dirent* readdir(void* fd);
+
+int readdir(void* fd, struct dirent *dirp);
 
 int closedir(struct dirent* close);
 

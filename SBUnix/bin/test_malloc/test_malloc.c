@@ -2,6 +2,7 @@
 #include <stdlib.h>
 
 #include <sys/defs.h>
+#include <sys/tarfs.h>
 
 void test(int x, int y, char *s, char a, int d) {
 //    printf("%d\n",x);
@@ -30,6 +31,13 @@ int main(int argc, char* argv[], char* envp[]) {
 	//        ;
 	//    }
 	//   printf("Hello World!\n");
+    struct dirent* a=malloc(sizeof(struct dirent));
+    void* b = opendir("bin/");
+    readdir(b, a);
+
+    //a->num=100;
+    printf("a.num:%d \n", a->num);
+
 	int size = 4000;
 	int * t = malloc(size * sizeof(int));
 

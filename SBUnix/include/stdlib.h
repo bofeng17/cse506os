@@ -57,6 +57,7 @@ alarm(unsigned int seconds);
 /*char *
 getcwd(char *buf, size_t size);*/
 char* get_cwd(char* buf);
+char* set_cwd(char* buf);
 int
 chdir(const char *path);
 

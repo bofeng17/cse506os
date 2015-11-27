@@ -29,11 +29,16 @@ main (int argc, char* argv[], char* envp[])
 
 	printf("TESTING GET_CWD: %s \n", direct);
 
+	set_cwd("lib/");
+	get_cwd(direct);
+
+	printf("TESTING SET_CWD: %s \n", direct);
+
 	struct dirent* a = malloc(sizeof(struct dirent));
 	printf("dirent size: %d\n", sizeof(struct dirent));
 
 
-	void* b = opendir("bin/");
+	void* b = opendir(direct);
 	
 	readdir(b, a);
 

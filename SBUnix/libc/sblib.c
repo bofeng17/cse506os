@@ -37,6 +37,11 @@ char* get_cwd(char* buf){
 	return (char*)syscall_1(SYS_getcwd, (uint64_t) buf);
 }
 
+char* set_cwd(char* buf){
+	return (char*)syscall_1(SYS_setcwd, (uint64_t) buf);
+}
+
+
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
 ////typedef uint64_t off_t;
 //

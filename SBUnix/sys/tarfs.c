@@ -297,6 +297,16 @@ char* get_cwd(char* buf)
     return buf;
 }
 
+char* set_cwd(char* buf)
+{
+   // char* tmp = buf;
+    //memset(current->cur_dir, )
+    strcpy(current->cur_dir, buf);
+    //WARNING: THE CURDIR MAY CONTAIN ITS ORIGINAL CONTENTS AFTER /0
+    //strcpy(buf, tmp);
+    return buf;
+}
+
 void tarfs_test()
 {
     

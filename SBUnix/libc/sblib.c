@@ -18,15 +18,19 @@ ssize_t write(int fd, const void *buf, size_t count) {
 }
 
 void* opendir(const char* name) {
-	return (void*) syscall_1(SYS_open, (uint64_t) name);
+	return (void*) syscall_1(SYS_opendir, (uint64_t) name);
 }
 
-struct dirent* readdir(void* fd) {
+/*struct dirent* readdir(void* fd) {
 	return (struct dirent*) syscall_1(SYS_open, (uint64_t) fd);
+}*/
+
+int readdir(void* fd, struct dirent *dirp){
+    return syscall_2(SYS_readdir, (uint64_t)fd, (uint64_t)dirp);
 }
 
 int closedir(struct dirent* close) {
-	return syscall_1(SYS_open, (uint64_t) close);
+	return syscall_1(SYS_closedir, (uint64_t) close);
 }
 
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };

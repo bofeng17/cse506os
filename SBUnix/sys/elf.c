@@ -74,7 +74,7 @@ int load_elf(task_struct* task, struct file* load_file) {
 
 				memmove((void*) task->mm->start_data,
 						(void*) file_start + pgh->p_offset, pgh->p_filesz);
-				// WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
+				// WARNING!: not sure whether should memcpy bss into bss's vaddress: shouldn't!
 
 				struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
 				vma_tmp1->vm_file = load_file;

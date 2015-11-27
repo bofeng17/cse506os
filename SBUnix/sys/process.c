@@ -324,6 +324,8 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     int envc = 0;
     char* argv_0 = bin_name;
     
+    // newly allocated mm_struct & vma, reference to former ones lost
+    // thus memory leakage
     set_task_struct(execv_task);
     
     // load bin_name elf
@@ -333,9 +335,11 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
         return -1;
     }
     
+    // TODO: load_elf always return 0
     if (load_elf(execv_task, file) < 0)
         return -1; // -1 if error
     
+    // TODO: error: mstruct->start_stack uninitialized
     setup_vma(execv_task->mm);
     
     //allocate heap
@@ -348,6 +352,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
     
     umap((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
+    // mstruct->start_stack initialized here
     execv_task->mm->start_stack = (uint64_t) umap(
                                                   (void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);
     
@@ -420,6 +425,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     execv_task->rsp = (uint64_t) rsp;
     
     //execv_task->mm->start_stack = (uint64_t) rsp;
+    
+    // duplicated work, except for: vma_stack->vm_start = mstruct->start_stack;
+    // TODO: now the vma for stack only descripts an one-page-long region, ERROR!!
     setup_vma(execv_task->mm);
     
     return 0;

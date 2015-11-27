@@ -31,6 +31,7 @@ void terminal_get_char(uint8_t ch) {
         
     } else if (ch == 0x0A) { // line feed \n
         
+        // TODO: push content to user process waiting for input
     } else { // normal char
         if (terminal_buf_count < MAX_BUFF) {
             terminal_buffer[terminal_buf_count] = ch;
@@ -42,4 +43,9 @@ void terminal_get_char(uint8_t ch) {
             __asm__ __volatile("hlt");
         }
     }
+    terminal_local_echo();
+}
+
+void terminal_local_echo () {
+    
 }

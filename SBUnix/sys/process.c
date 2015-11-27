@@ -505,11 +505,17 @@ void set_child_pt(task_struct* child) {
 }
 
 // rewrite at Nov 26
+/*
+ * allocate new task_struct, mm_struct, vma_chain, page_table.
+ * then logically (some fileds are different) copy info child's from parent's
+ * Doesn't allocate page frame (COW fork)
+ * add child process to run_queue
+ */
 int do_fork() {
-    //create a new task struct
+    // allocate a new task_struct
     task_struct *new_task = (task_struct *)(kmalloc(TASK));
     
-    //assign new pid for child
+    // assign new pid for child
     new_task->pid = assign_pid();
     new_task->ppid = current->pid;
     
@@ -525,8 +531,8 @@ int do_fork() {
     
     
     /*
-     * copy into child from parent:
-     * mm_struct, vma_chain
+     * allocate mm_struct, vma_chain for child
+     * then copy into child from parent:
      */
     copy_mm(new_task);
     

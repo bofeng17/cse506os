@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/tarfs.h>
+
 #include <sys/defs.h>
-#include <sys/tarfs.h>
 
 void test(int x, int y, char *s, char a, int d) {
 //    printf("%d\n",x);
@@ -22,7 +21,6 @@ int data_arr[8192] = { 1, 2, 3, 4 };
 char* s = "hello\n";
 
 int main(int argc, char* argv[], char* envp[]) {
-
 	//printf("Hello World!\n");
 
 	//    __asm__ __volatile__("INT $0x21;");
@@ -32,13 +30,6 @@ int main(int argc, char* argv[], char* envp[]) {
 	//        ;
 	//    }
 	//   printf("Hello World!\n");
-    struct dirent* a=malloc(sizeof(struct dirent));
-    void* b = opendir("bin/");
-    readdir(b, a);
-
-    //a->num=100;
-    printf("a.num:%d \n", a->num);
-
 	int size = 4000;
 	int * t = malloc(size * sizeof(int));
 
@@ -55,11 +46,10 @@ int main(int argc, char* argv[], char* envp[]) {
 	char y = 'h';
 	test(c[3], data_arr[0], s, y, x);
 
-
 //    int n = 1, fd = 1, count = 5;
 //    char* s = "hello\n";
-    //    __asm__ __volatile__("syscall"
-    //                         :
-    //                         :"a"(n), "D"(fd), "S"((uint64_t)s), "d"(count));
-    return 0;
+	//    __asm__ __volatile__("syscall"
+	//                         :
+	//                         :"a"(n), "D"(fd), "S"((uint64_t)s), "d"(count));
+	return 0;
 }

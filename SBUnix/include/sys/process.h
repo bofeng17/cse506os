@@ -65,7 +65,7 @@ typedef struct mm_struct {
 	uint64_t env_start; /* Initial address of environment variables */
 	uint64_t env_end; /* Final address of environment variables */
 
-	uint64_t bss; // bss segment
+	uint64_t bss; // size of bss segment
 	uint64_t rss; /* Number of page frames allocated to the process */
 
 	uint64_t total_vm; /* Size of the process address space (number of pages) */

@@ -199,7 +199,7 @@ void* do_opendir(const char* name)
         size=get_size_oct(header_start->size);
         if((!strcmp(header_start->name, name)) & (!strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
         {
-            header_start=(struct posix_header_ustar*)header_start+1;
+            //header_start=(struct posix_header_ustar*)header_start+1;
             return (void*)header_start;
         }
         
@@ -210,7 +210,7 @@ void* do_opendir(const char* name)
 
 }
 
-struct dirent* do_readdir(void* fd)
+/*struct dirent* do_readdir(void* fd)
 {
     uint64_t i=0;
     uint64_t size;
@@ -240,12 +240,53 @@ struct dirent* do_readdir(void* fd)
 return output;
 
 
+}*/
+
+int do_readdir(void* fd, struct dirent *dirp)
+{
+    uint64_t i=0;
+    uint64_t size;
+    struct posix_header_ustar *header_start = (struct posix_header_ustar*)&_binary_tarfs_start;
+    struct posix_header_ustar *file = (struct posix_header_ustar*)(fd);
+
+    char* name = file->name;
+
+    while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
+    {
+        
+        size=get_size_oct(header_start->size);
+        if((!strncmp(header_start->name, name, 3)) & (strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
+        {
+            strcpy(dirp[i].name ,header_start->name);
+            //header_start=(struct posix_header_ustar*)header_start+1;
+            //return (void*)header_start;
+            i++;
+        }
+        
+        header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);
+    }
+
+    dirp->num = i;
+
+   if(i==0)
+   {
+    printf("the directory is empty!!!\n");
+    return -1;
+   }
+   else
+   {
+    return 0;
+   }
+    
+
+//return output;
+
 }
 
 
 int do_closedir(struct dirent* close)
 {
-    kfree(close, 1);
+    //kfree(close, 1);
     return 0;
 }
 

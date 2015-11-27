@@ -32,9 +32,9 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
         printf("not present | ");
     }
     if (pf_err_code & PF_BIT_1) {
-        printf("read or execute | ");
-    } else {
         printf("write | ");
+    } else {
+        printf("read or execute | ");
     }
     if (pf_err_code & PF_BIT_2) {
         printf("in user mode\n");

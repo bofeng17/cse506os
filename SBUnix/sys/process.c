@@ -323,13 +323,13 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     set_task_struct(execv_task);
 
     // load bin_name elf
-    struct file* file = tarfs_open(bin_name, O_RDONLY);
+    //struct file* file = tarfs_open(bin_name, O_RDONLY);
 
-    if (file == NULL) {
+    /*if (file == NULL) {
         return -1;
-    }
+    }*/
 
-    if (load_elf(execv_task, file) < 0)
+    if (load_elf(execv_task, bin_name) < 0)
         return -1; // -1 if error
 
     setup_vma(execv_task->mm);

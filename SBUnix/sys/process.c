@@ -462,6 +462,8 @@ int do_fork() {
 	return new_task->pid;
 	//just return child's pid
 
+}
+
 void do_exit(int status) {
     // current = current->next;
     current->task_state = TASK_ZOMBIE;

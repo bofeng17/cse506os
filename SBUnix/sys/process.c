@@ -336,16 +336,16 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
  //   setup_vma(execv_task->mm);
 
     //allocate heap
-    uint64_t initial_heap_size = 2 * PAGE_SIZE;
+//    uint64_t initial_heap_size = 2 * PAGE_SIZE;
 
     execv_task->mm->start_brk = (uint64_t) umalloc(
-            (void*) (((execv_task->mm->end_data + execv_task->mm->bss)
-                    & CLEAR_OFFSET) + PAGE_SIZE), initial_heap_size);
+            (void*) (((execv_task->mm->end_data)
+                    & CLEAR_OFFSET) + PAGE_SIZE), PAGE_SIZE);
 
-    execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
+    execv_task->mm->brk = execv_task->mm->start_brk + PAGE_SIZE;
 
     umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
-//    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);//map one page initially
+    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);//map one page initially
     execv_task->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
     setup_vma(execv_task->mm);
 

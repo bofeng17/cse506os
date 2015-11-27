@@ -105,16 +105,22 @@ void setup_vma(mm_struct* mstruct) {
 	vma_bss->vm_start = mstruct->end_data;
 	vma_bss->vm_end = mstruct->end_data + mstruct->bss;
 	vma_bss->permission_flag = VM_READ | VM_WRITE;
+	vma_bss->vm_file = NULL;
+	vma_bss->file_offset = 0;
 
 	vma_struct* vma_heap = get_vma(mstruct, HEAP);
 	vma_heap->vm_start = mstruct->start_brk;
 	vma_heap->vm_end = mstruct->brk;
 	vma_heap->permission_flag = VM_READ | VM_WRITE;
+	vma_heap->vm_file = NULL;
+	vma_heap->file_offset = 0;
 
 	vma_struct* vma_stack = get_vma(mstruct, STACK);
 	vma_stack->vm_start = mstruct->start_stack;
 	vma_stack->vm_end = STACK_TOP;
 	vma_stack->permission_flag = VM_READ | VM_WRITE;
+	vma_stack->vm_file = NULL;
+	vma_stack->file_offset = 0;
 }
 //void
 //function_idle ()
@@ -285,8 +291,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	uint64_t initial_heap_size = 2 * PAGE_SIZE;
 
 	execv_task->mm->start_brk = (uint64_t) umalloc(
-			(void*) ((execv_task->mm->end_data & CLEAR_OFFSET) + PAGE_SIZE),
-			initial_heap_size);
+			(void*) (((execv_task->mm->end_data + execv_task->mm->bss)
+					& CLEAR_OFFSET) + PAGE_SIZE), initial_heap_size);
+
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
 	umap((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP

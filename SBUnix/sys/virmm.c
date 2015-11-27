@@ -601,10 +601,11 @@ void* do_sbrk(size_t brk_size) {
 		//umap((void*) addr, brk_size);
 
 		// page fault handler will do mapping and allocate physical pages
+		void* retaddr = (void*) mm->brk;
 		mm->brk = newbrk;
 		vma_heap->vm_end = mm->brk;
 
-		return (void*) newbrk;
+		return retaddr;
 	} else {
 		printf("Size[%d] Exceed BRK_LIMIT[%x]!\n", brk_size, BRK_LIMIT);
 		return (void*) -1;

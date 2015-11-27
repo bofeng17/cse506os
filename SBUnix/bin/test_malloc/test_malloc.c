@@ -30,7 +30,7 @@ int main(int argc, char* argv[], char* envp[]) {
 	//        ;
 	//    }
 	//   printf("Hello World!\n");
-	int size = 100000;
+	int size = 4000;
 	int * t = malloc(size * sizeof(int));
 
 	if (t) {

@@ -124,9 +124,8 @@ schedule();
 void
 clear_zombie(task_struct*);
 
-task_struct *create_user_process(char* bin_name);
-
-void copy_mm(task_struct *);
+task_struct*
+create_user_process(char* bin_name);
 
 extern task_struct *current;
 

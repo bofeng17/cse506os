@@ -105,16 +105,31 @@ void setup_vma(mm_struct* mstruct) {
 	vma_bss->vm_start = mstruct->end_data;
 	vma_bss->vm_end = mstruct->end_data + mstruct->bss;
 	vma_bss->permission_flag = VM_READ | VM_WRITE;
+<<<<<<< HEAD
+=======
+	vma_bss->vm_file = NULL;
+	vma_bss->file_offset = 0;
+>>>>>>> parent of c653a15... add copy_mm func
 
 	vma_struct* vma_heap = get_vma(mstruct, HEAP);
 	vma_heap->vm_start = mstruct->start_brk;
 	vma_heap->vm_end = mstruct->brk;
 	vma_heap->permission_flag = VM_READ | VM_WRITE;
+<<<<<<< HEAD
+=======
+	vma_heap->vm_file = NULL;
+	vma_heap->file_offset = 0;
+>>>>>>> parent of c653a15... add copy_mm func
 
 	vma_struct* vma_stack = get_vma(mstruct, STACK);
 	vma_stack->vm_start = mstruct->start_stack;
 	vma_stack->vm_end = STACK_TOP;
 	vma_stack->permission_flag = VM_READ | VM_WRITE;
+<<<<<<< HEAD
+=======
+	vma_stack->vm_file = NULL;
+	vma_stack->file_offset = 0;
+>>>>>>> parent of c653a15... add copy_mm func
 }
 //void
 //function_idle ()
@@ -156,9 +171,15 @@ void func_init() {
 
 	char* envp[4] = { "e1", "e2", "e3", NULL };
 
+<<<<<<< HEAD
 	do_execv("bin/test_hello", argv, envp);
 
 	do_fork();
+=======
+	do_execv("bin/test_malloc", argv, envp);
+
+	//do_fork();
+>>>>>>> parent of c653a15... add copy_mm func
 
 	sysret_to_ring3();
 
@@ -285,8 +306,14 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 	uint64_t initial_heap_size = 2 * PAGE_SIZE;
 
 	execv_task->mm->start_brk = (uint64_t) umalloc(
+<<<<<<< HEAD
 			(void*) ((execv_task->mm->end_data & CLEAR_OFFSET) + PAGE_SIZE),
 			initial_heap_size);
+=======
+			(void*) (((execv_task->mm->end_data + execv_task->mm->bss)
+					& CLEAR_OFFSET) + PAGE_SIZE), initial_heap_size);
+
+>>>>>>> parent of c653a15... add copy_mm func
 	execv_task->mm->brk = execv_task->mm->start_brk + initial_heap_size;
 
 	umap((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
@@ -414,12 +441,28 @@ void set_child_pt(task_struct* child) {
 
 			uint64_t content = self_ref_read(PT, start_addr);
 			page_sp * page = get_page_frame_descriptor(content);
+<<<<<<< HEAD
 			page->ref_count += 1;
 
+=======
+            /* 
+             * risk!!
+             * if two memory region overlaps at virtual page X,
+             * the ref_count of page frame correpsonding to X will be increnased twice
+             * caused by not aligned vma
+             */
+			page->ref_count += 1;
+
+            // modify parent's page table
+>>>>>>> parent of c653a15... add copy_mm func
 			content &= PTE_R_MASK;
 			content |= PTE_COW;
 			self_ref_write(PT, start_addr, content);
 
+<<<<<<< HEAD
+=======
+            // map child's page table
+>>>>>>> parent of c653a15... add copy_mm func
 			map_user_pt(start_addr, content, USERPT);
 
 			start_addr += PAGE_SIZE;
@@ -431,6 +474,7 @@ void set_child_pt(task_struct* child) {
 }
 
 int do_fork() {
+<<<<<<< HEAD
 	task_struct * new_task = (task_struct*) (kmalloc(TASK));
 	//create a new task struct
 
@@ -462,11 +506,57 @@ int do_fork() {
 	return new_task->pid;
 	//just return child's pid
 
+=======
+    //create a new task struct
+	task_struct *new_task = (task_struct *)(kmalloc(TASK));
+  
+    //assign new pid for child
+    new_task->pid = assign_pid();
+    new_task->ppid = current->pid;
+    
+    //copy task name
+    strcpy(new_task->task_name, current->task_name);
+
+    
+    //memory portion begins here
+    //child has it own kernel stack
+    new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
+    
+    // TODO: init_kern usused
+    // new_task->init_kern = new_task->kernel_stack;
+    
+    // only set vma_struct and mm_struct portion of task_struct
+    set_task_struct(new_task);
+    
+    // mm-> mmap is overwritten by memcpy, so store it in temp and then restore it
+    vma_struct *temp_mm = new_task->mm->mmap;
+    memcpy((void*) new_task->mm, (void*) current->mm, 0x1000);
+    new_task->mm->mmap = temp_mm;
+    
+    // TODO: VERY IMPORTANT!!!!
+    // copy vma content into child from parent
+
+    // set page table of child process, also modified new_task->cr3
+	set_child_pt(new_task);
+
+    // add child task to run queue
+	new_task->task_state = TASK_READY;
+    add_task(new_task);
+    
+    
+    // TODO: tricky part begins here!!
+    new_task->rip = current->rip;
+    new_task->rsp = current->rsp;
+    
+    
+    //just return child's pid
+	return new_task->pid;
+>>>>>>> parent of c653a15... add copy_mm func
 }
 
 void do_exit(int status) {
-    // current = current->next;
-    current->task_state = TASK_ZOMBIE;
+	// current = current->next;
+	current->task_state = TASK_ZOMBIE;
     
     /*
      * TODO: unfinished
@@ -478,7 +568,12 @@ void do_exit(int status) {
 //        (find_task_struct(current->wait_pid))->task_state = TASK_RUNNING;
 //    }
     
+<<<<<<< HEAD
     schedule();
+=======
+	schedule();
+}
+>>>>>>> parent of c653a15... add copy_mm func
 
 }
 

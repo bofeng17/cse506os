@@ -3,6 +3,7 @@
 
 #include <sys/defs.h>
 #include <sys/dirent.h>
+#include <sys/tarfs.h>
 
 extern __thread int errno;
 

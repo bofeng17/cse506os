@@ -146,7 +146,7 @@ void setup_vma(mm_struct* mstruct) {
 
     vma_struct* vma_data = get_vma(mstruct, DATA);
     vma_data->vm_start = mstruct->start_data;
-    vma_data->vm_end = mstruct->end_data;
+    vma_data->vm_end = mstruct->end_data+ mstruct->bss;
     vma_data->permission_flag = VM_READ | VM_WRITE;
 
 //    vma_struct* vma_bss = get_vma(mstruct, BSS);

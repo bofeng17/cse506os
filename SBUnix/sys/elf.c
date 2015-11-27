@@ -58,7 +58,7 @@ int load_elf(task_struct* task, char* bin_name) {
 		if (pgh->p_type == PT_LOAD)	//if the program header is loadable
 				{
 			//warning: didn't do the alignment, maybe a bug in future
-			if (pgh->p_flag & PH_TYPE_X)	//then its the .text section
+			if (pgh->p_flag & PH_TYPE_X)	//then it's the .text section
 					{
 				task->mm->start_code = pgh->p_vaddr;
 				task->mm->end_code = pgh->p_vaddr + pgh->p_memsz;
@@ -66,7 +66,7 @@ int load_elf(task_struct* task, char* bin_name) {
 				uint64_t code_size = task->mm->end_code - task->mm->start_code;
 				umalloc((void*) task->mm->start_code, code_size);
 
-				memmove((void*) task->mm->start_code,
+				memcpy((void*) task->mm->start_code,
 						(void*) file_start + pgh->p_offset, pgh->p_filesz);
 
 				struct vma_struct* vma_tmp = get_vma(task->mm, CODE);
@@ -74,24 +74,25 @@ int load_elf(task_struct* task, char* bin_name) {
 				vma_tmp->file_offset = pgh->p_offset;
 				m++;
 
-			} else	//its the .data section
+			} else	//it's the .data section
 			{
 
 				task->mm->start_data = pgh->p_vaddr;
 				task->mm->end_data = pgh->p_vaddr + pgh->p_filesz;
-				// map data segment
+
 				uint64_t data_size = task->mm->end_data - task->mm->start_data;
                 task->mm->bss = pgh->p_memsz - pgh->p_filesz;
-                task->mm->end_data +=task->mm->bss;
+//                task->mm->end_data +=task->mm->bss;
 
+                //map data segment (include bss segment)
 				umalloc((void*) task->mm->start_data, data_size+task->mm->bss);
 
-				//map bss
-				//umalloc((void*) task->mm->end_data, task->mm->bss);
+				//copy data size
+				memcpy((void*) task->mm->start_data,
+						(void*) file_start + pgh->p_offset, pgh->p_filesz);
 
-				memmove((void*) task->mm->start_data,
-						(void*) file_start + pgh->p_offset, pgh->p_memsz);
-				// WARNING!: not sure whether should memcpy bss into bss's vaddress, may be a bug in future
+                //set bss segment value to all 0
+                memset(task->mm->end_data,0,task->mm->bss);
 
 				struct vma_struct* vma_tmp1 = get_vma(task->mm, DATA);
 				vma_tmp1->vm_file = file;

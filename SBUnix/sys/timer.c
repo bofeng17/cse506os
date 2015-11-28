@@ -30,7 +30,7 @@ timer_init ()
     // Send the frequency divisor.
     outb (0x40, lobyte);
     outb (0x40, hibyte);
-      pic_set_mask (0);
+//      pic_set_mask (0);
 //      pic_set_mask (1);
 }
 
@@ -50,7 +50,7 @@ isr_timer ()
   size_t _console_row = console_row;
   size_t _console_column = console_column;
   console_row = 24;
-  console_column = 68;
+  console_column = 67;
   if (interrupt_count % 6000 != 0)
     { //To be precise, because the Period is 0.999847746ms instead of 1ms
       system_boot_mS += IRQ0_period;

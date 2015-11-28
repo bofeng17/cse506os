@@ -527,10 +527,10 @@ int do_fork() {
     
     // TODO: newly added, need testing!
     new_task->code_entry = current->code_entry;
-    new_tasl->init_user_stack = current->init_user_stack;
+    new_task->init_user_stack = current->init_user_stack;
     // manipulate stack, so that iretq to ring3
     new_task->rip = new_task->code_entry;
-    new_task->rsp = new_tasl->init_user_stack;
+    new_task->rsp = new_task->init_user_stack;
     
 // Too complicated!
 

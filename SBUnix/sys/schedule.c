@@ -93,11 +93,8 @@ void context_switch(task_struct *prev, task_struct *next) {
                           ::"r"(next->kernel_stack)
                           );
     
-    /* 
-     * register the kernel stack 
-     * cannot use next->init_kern here, bacause our kernel stack is not empty in ring3
-     */
-    tss.rsp0 = next->kernel_stack;
+    // register next's kernel stack
+    tss.rsp0 = next->init_kern;
     
     //Ref. <Understanding the Linux kernel>: page 108 step 3
     /*

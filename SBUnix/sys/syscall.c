@@ -107,11 +107,9 @@ void do_syscall() {
     // TODO: need to manipulate during do_fork/do_execve
     __asm__ __volatile__("pushq %%rbp;"
                          "mov %%rsp, %%rax;"
-                         :"=a"(current->rsp));// "=a"(current->rsp) modifies rdx
-
+                         :"=a"(current->rsp));// "=a"(current->rsp) uses rdx
     __asm__ __volatile__("mov %0, %%rsp;"
-                         "popq %%rbp;"    // TODO: rbp
-                         ::"a"(tss.rsp0));
+                         ::"a"(tss.rsp0));// TODO: should use current->init_kern instead of tss.rsp0
     
     /* push r11 (stored rflags), rcx (stored rip),
      * in case of syscall service routine mofidy them.
@@ -255,8 +253,7 @@ void do_syscall() {
                           "popq %r11;");
     
     // switch back to user stack
-    __asm__ __volatile__("pushq %%rbp;" // TODO: rbp
-                         "mov %%rsp, %%rax;"
+    __asm__ __volatile__("mov %%rsp, %%rax;"
                          :"=a"(tss.rsp0));
     __asm__ __volatile__("mov %%rax, %%rsp;"
                          "popq %%rbp;"

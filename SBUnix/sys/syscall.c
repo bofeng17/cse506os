@@ -108,6 +108,7 @@ void do_syscall() {
     __asm__ __volatile__("pushq %%rbp;"
                          "mov %%rsp, %%rax;"
                          :"=a"(current->rsp));// "=a"(current->rsp) modifies rdx
+
     __asm__ __volatile__("mov %0, %%rsp;"
                          "popq %%rbp;"    // TODO: rbp
                          ::"a"(tss.rsp0));
@@ -167,6 +168,10 @@ void do_syscall() {
             break;
         case SYS_getcwd:
             __asm__ __volatile__ ("callq get_cwd;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_setcwd:
+            __asm__ __volatile__ ("callq set_cwd;"
                                   :"=a"(ret_val));
             break;
             

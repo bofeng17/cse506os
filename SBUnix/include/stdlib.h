@@ -107,12 +107,13 @@ void *
 memset(void *s, int ch, size_t n);
 
 #define PS_NO 128
+#define NAME_LENGTH 32
 typedef struct ps_state {
     int id[PS_NO];
-    char name[PS_NO];
-    uint64_t state[PS_NO];
+    char name[PS_NO][NAME_LENGTH];
+    char state[PS_NO][NAME_LENGTH];
 } ps_state;
 
 typedef ps_state* ps_t;
-
+int ps(ps_t ps);
 #endif

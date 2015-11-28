@@ -22,9 +22,9 @@ enum TASK_STATE {
 	TASK_READY,
 	TASK_RUNNING,
 	TASK_SLEEPING,
-	TASK_INTERRUPTIBLE,
-	TASK_UNINTERRUPTIBLE,
+	TASK_BLOCKED,
 	TASK_ZOMBIE,
+    TASK_DEAD
 };
 
 #define VM_READ         0x00000001      /* currently active flags */
@@ -103,8 +103,8 @@ typedef struct task_struct {
 #define PS_NO 128
 typedef struct ps_state {
     int id[PS_NO];
-    char name[PS_NO];
-    uint64_t state[PS_NO];
+    char name[PS_NO][NAME_LENGTH];
+    char state[PS_NO][NAME_LENGTH];
 } ps_state;
 
 typedef ps_state* ps_t;

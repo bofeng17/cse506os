@@ -64,7 +64,7 @@ void set_task_struct(task_struct* task) {
 
     vma_code->vm_mm = mstruct;
     vma_data->vm_mm = mstruct;
-   // vma_bss->vm_mm = mstruct;
+    // vma_bss->vm_mm = mstruct;
     vma_heap->vm_mm = mstruct;
     vma_stack->vm_mm = mstruct;
 
@@ -146,7 +146,7 @@ void setup_vma(mm_struct* mstruct) {
 
     vma_struct* vma_data = get_vma(mstruct, DATA);
     vma_data->vm_start = mstruct->start_data;
-    vma_data->vm_end = mstruct->end_data+ mstruct->bss;
+    vma_data->vm_end = mstruct->end_data + mstruct->bss;
     vma_data->permission_flag = VM_READ | VM_WRITE;
 
 //    vma_struct* vma_bss = get_vma(mstruct, BSS);
@@ -193,7 +193,7 @@ create_idle_thread() {
     idle->task_state = TASK_READY;
     idle->sleep_time = 0;
     idle->cr3 = get_CR3();
-    strcpy(idle->task_name, "idle thread");
+    strcpy(idle->task_name, "idle*");
     idle->mm = NULL;
     idle->wait_pid = 0;
 
@@ -210,7 +210,7 @@ void func_init() {
 
     char* envp[4] = { "e1", "e2", "e3", NULL };
     set_task_struct(current);
-    do_execv("bin/test_malloc", argv, envp);
+    do_execv("bin/test_scanf", argv, envp);
 
     //do_fork();
 
@@ -327,25 +327,25 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     //struct file* file = tarfs_open(bin_name, O_RDONLY);
 
     /*if (file == NULL) {
-        return -1;
-    }*/
+     return -1;
+     }*/
 
     if (load_elf(execv_task, bin_name) < 0)
         return -1; // -1 if error
 
- //   setup_vma(execv_task->mm);
+    //   setup_vma(execv_task->mm);
 
     //allocate heap
 //    uint64_t initial_heap_size = 2 * PAGE_SIZE;
 
     execv_task->mm->start_brk = (uint64_t) umalloc(
-            (void*) (((execv_task->mm->end_data)
-                    & CLEAR_OFFSET) + PAGE_SIZE), PAGE_SIZE);
+            (void*) (((execv_task->mm->end_data) & CLEAR_OFFSET) + PAGE_SIZE),
+            PAGE_SIZE);
 
     execv_task->mm->brk = execv_task->mm->start_brk + PAGE_SIZE;
 
     umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
-    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE);//map one page initially
+    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); //map one page initially
     execv_task->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
     setup_vma(execv_task->mm);
 
@@ -418,7 +418,6 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     execv_task->init_user_stack = execv_task->rsp = (uint64_t) rsp;
 
     //execv_task->mm->start_stack = (uint64_t) rsp;
-
 
     return 0;
 
@@ -594,12 +593,40 @@ int do_fork() {
 int do_ps(ps_t ps) {
     task_struct* cur = current;
     int c = 0;
-    while (cur->next != current) {
+    do  {
         ps->id[c] = cur->pid;
-        strcpy(ps->name, cur->task_name);
-        ps->state[c] = cur->task_state;
+        strcpy(ps->name[c], cur->task_name);
+ //       strcpy(ps->state[c], cur->task_name);
+
+        //ps->state[c] = cur->task_state;
+        switch (cur->task_state) {
+        case TASK_NEW:
+            strcpy(ps->state[c], "new");
+            break;
+        case TASK_READY:
+            strcpy(ps->state[c], "ready");
+            break;
+        case TASK_RUNNING:
+            strcpy(ps->state[c], "running");
+            break;
+        case TASK_SLEEPING:
+            strcpy(ps->state[c], "sleeping");
+            break;
+        case TASK_BLOCKED:
+            strcpy(ps->state[c], "blocked");
+            break;
+        case TASK_ZOMBIE:
+            strcpy(ps->state[c], "zombie");
+            break;
+        case TASK_DEAD:
+            strcpy(ps->state[c], "dead");
+            break;
+        default: strcpy(ps->state[c], "unknown");
+        }
+
+        cur = cur->next;
         c++;
-    }
+    }while((cur != current));
     return c;
 }
 

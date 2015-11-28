@@ -91,9 +91,9 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 //  int* testVmalloc = vmalloc (PAGE_SIZE);
 //  testVmalloc[100] = 10;
 //  dprintf ("testVmalloc[100] is %d", testVmalloc[100]);
-	int i = 0;
+//	int i = 0;
 	while (1) {
-		dprintf("I'm idle %d \n", i++);
+//		dprintf("I'm idle %d \n", i++);
 		schedule();
 //      __asm__ __volatile__ ("hlt");
 //      if (i == 100000)

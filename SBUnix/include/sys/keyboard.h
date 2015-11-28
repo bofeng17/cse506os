@@ -44,6 +44,7 @@ char scan_code_shift[256]  = {
     ' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',' ',
 };
 
+extern volatile int press_over;
 
 void isr_keyboard();
 void print_key(uint8_t,int);

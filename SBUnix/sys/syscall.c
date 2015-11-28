@@ -262,17 +262,17 @@ void do_syscall() {
      * rbp (already popped), rbx, r15 (saved manually)
      * r12, r13, r14 (saved by compiler)
      */
-    __asm__ __volatile__("popq %rbx;"
-                         "popq %r15;"
-                         "popq %r12;"
-                         "popq %r13;"
-                         "popq %r14;"
+    __asm__ __volatile__("popq %%rbx;"
+                         "popq %%r15;"
+                         "popq %%r12;"
+                         "popq %%r13;"
+                         "popq %%r14;"
                          //"add $0x8,%rsp;"// TODO: be cautious @ manipulating rsp
-                         );
+                         ::"a"(ret_val));
     
     // return to ring3
     __asm__ __volatile__("rex.w sysret"// move ret_val into rax
-                         ::"a"(ret_val));
+                         );
 }
 
 //void iret_to_ring3(){

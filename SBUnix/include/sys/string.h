@@ -17,7 +17,7 @@ strncmp (const char *str1, const char *str2, size_t maxlen);
 size_t
 strlen (const char *s);
 
-char* strcat(char* destin, char* source);
+char* strcat(char* destin,const char* source);
 
 char* strstr(char* str1, char* str2);
 

@@ -43,9 +43,9 @@ void terminal_get_char(uint8_t ch) {
             __asm__ __volatile("hlt");
         }
     }
-    terminal_local_echo();
+    //terminal_local_echo();
 }
-
-void terminal_local_echo () {
-    
-}
+//
+//void terminal_local_echo () {
+//    
+//}

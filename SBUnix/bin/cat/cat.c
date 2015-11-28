@@ -10,9 +10,10 @@ int
 main (int argc, char* argv[], char* envp[])
 {
 	
-
+   char* input_filename = malloc(sizeof(char));
+   scanf("%s", input_filename);
    char* test_wr=malloc(sizeof(char));
-   struct file* file = open("bin/db.sh", O_RDONLY);
+   struct file* file = open(input_filename, O_RDONLY);
     if (file == NULL) {
    	 printf("no such file exists!!!");
      return -1;

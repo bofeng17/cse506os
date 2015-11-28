@@ -17,9 +17,9 @@ int terminal_write(int fd, char *buf, int count) {
     return count;
 }
 
-void local_echo() {
-    dprintf("%c", terminal_buffer[terminal_buf_count]);
-}
+//void local_echo() {
+//    dprintf("%c", terminal_buffer[terminal_buf_count]);
+//}
 
 int terminal_read(char *buf, int count) {
     // isr_keyboard puts char into terminal buffer
@@ -61,7 +61,13 @@ void terminal_get_char(uint8_t ch) {
     if (ch == 0x08) { // backspace \b
         if (terminal_buf_count > 0) {
             terminal_buf_count--;
+            terminal_buffer[terminal_buf_count] = ' ';
+            console_column--;
+            printf("%c", terminal_buffer[terminal_buf_count]);
+            console_column--;
+
         }
+
     }
 //    else if (ch == 0x0A) { // line feed \n
 //
@@ -73,7 +79,7 @@ void terminal_get_char(uint8_t ch) {
             terminal_buf_count++;
             // for testing
            // local_echo();
-            dprintf("%c", ch);
+            printf("%c", ch);
             //dprintf("char is %c, buffer count is %d\n", ch, terminal_buf_count);
         } else {
             printf("Terminal buffer is full!! And will be cleared !\n");

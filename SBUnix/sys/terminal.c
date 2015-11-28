@@ -1,12 +1,13 @@
 #include <sys/sbunix.h>
 #include <sys/printf.h>
+#include <sys/stdlib.h>
 #include <sys/string.h>
 
 // variable and function declarations used by terminal are in sbunix.h
 
 char terminal_buffer[MAX_BUFF];
 int terminal_buf_count; // number of char in the buffer
-
+extern volatile int press_over;
 // for terminal write
 int terminal_write(int fd, char *buf, int count) {
     // TODO: stdout vs stderr
@@ -16,31 +17,62 @@ int terminal_write(int fd, char *buf, int count) {
     return count;
 }
 
-int terminal_read(char *buf, int count){
+int terminal_read(char *buf, int count) {
     // isr_keyboard puts char into terminal buffer
-    
-    
+
     // copy terminal buffer to libc scanf buffer
-    
+
     // TODO: how to deal with empty buffer and count?
-    return 0;
+    press_over = 1;
+    __asm__ __volatile__ ("sti");
+
+    //begin local echo
+    while (press_over == 1) {
+        // local_echo();
+    }
+//    memcpy((void*)buf,(void*)terminal_buffer,count);
+    int n = 0; // number of chars put to buffer
+    do {
+        if (n > count)
+            break;
+        else {
+            dprintf("[in terminal] char is %c, count is %d\n",
+                    terminal_buffer[n], n);
+            *(buf + n) = *(terminal_buffer + n);
+            n++;
+
+        }
+    } while (terminal_buffer[n] != '\n');
+    *(buf + n) ='\n';
+    memset(terminal_buffer, 0, MAX_BUFF);
+    terminal_buf_count = 0;
+
+//    __asm__ __volatile__ ("cli;");
+
+    return n;
 }
 
 void terminal_get_char(uint8_t ch) {
     if (ch == 0x08) { // backspace \b
-        
-    } else if (ch == 0x0A) { // line feed \n
-        
-        // TODO: push content to user process waiting for input
-    } else { // normal char
+        if (terminal_buf_count > 0) {
+            terminal_buf_count--;
+        }
+    }
+//    else if (ch == 0x0A) { // line feed \n
+//
+//        // TODO: push content to user process waiting for input
+//    }
+    else { // normal char
         if (terminal_buf_count < MAX_BUFF) {
             terminal_buffer[terminal_buf_count] = ch;
-            terminal_buf_count ++;
+            terminal_buf_count++;
             // for testing
-            dprintf("%c, %d\n",ch, terminal_buf_count);
+            dprintf("char is %c, buffer count is %d\n", ch, terminal_buf_count);
         } else {
-            printf("terminal buffer is full!\n");
-            __asm__ __volatile("hlt");
+            printf("Terminal buffer is full!! And will be cleared !\n");
+            memset(terminal_buffer, 0, MAX_BUFF);
+            terminal_buf_count = 0;
+            // __asm__ __volatile("hlt");
         }
     }
     //terminal_local_echo();

@@ -139,6 +139,29 @@ void print_hex_or_ptr(uint64_t arg,int mode) {
 }
 
 // for scanf
+//int scanf(const char *format, ...) {
+//
+//    va_list     val;
+//    va_start(val, format);
+//    char*       recvBuffer=malloc(MAX_BUFF*sizeof(char));
+//    int         scannedArgs = 0;
+//
+//    read(0, recvBuffer, MAX_BUFF);
+//    while(*format) {
+//        if(*format == '%') {
+//            format++;
+//            scannedArgs++;
+//            if(*format == 's') {
+//                char* valStr = va_arg(val, char*);
+//                while((*valStr++=*recvBuffer++)!= '\n');
+//            }
+//        }
+//        format++;
+//    }
+//    va_end(val);
+//
+//    return scannedArgs;
+//}
 
 // buffer used by read syscall
 char scanf_buf[MAX_BUFF];
@@ -151,19 +174,19 @@ int scanf(const char *format, ...) {
     //    int 		val_int = 0;
     //    uint64_t    val_long = 0;
     //    char 		val_char = 0;
-    
+
     // TODO: where to store
     //char* 		val_string = malloc(MAX_BUFF*sizeof(char));
     char* 		val_string = NULL;
 
     scanf_buf_count = 0;
-    
+
     va_start(val, format);
-    
+
     // TODO: number of bytes read?
     // ssize_t read(struct file *fd, void *buf, size_t count);
     read(0, scanf_buf, MAX_BUFF);
-    
+
     while(*format) {
         if(*format == '%') {
             format++;
@@ -188,7 +211,7 @@ int scanf(const char *format, ...) {
         }
     }
     va_end(val);
-    /* 
+    /*
      * return the number of input items successfully matched and assigned,
      * which can be fewer than provided for, or even zero in the
      * event of an early matching failure.

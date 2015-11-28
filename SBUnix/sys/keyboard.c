@@ -10,6 +10,7 @@ volatile uint8_t char_2 = ' ';
 volatile uint8_t terminal_ch = ' ';
 volatile uint8_t key_code;
 
+volatile int press_over;
 
 void isr_keyboard() {
     key_code = inb(0x60);
@@ -37,6 +38,9 @@ void isr_keyboard() {
             break;
         case 0x1C:// enter pressed
             // ASCII of line feed, the same to Linux
+            if(press_over==1){
+                press_over=0;
+            }
             terminal_get_char (0x0A);
             // TODO: should directly push to shell, instead of buffering it
             break;
@@ -87,6 +91,9 @@ void isr_keyboard() {
     print_key(char_2,2);
 }
 
+void local_echo(){
+
+}
 void print_key(uint8_t key,int num) {
     size_t _console_row = console_row;
     size_t _console_column = console_column;

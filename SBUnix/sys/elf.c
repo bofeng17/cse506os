@@ -34,6 +34,10 @@ int load_elf(task_struct* task, char* bin_name) {
 
 	struct file* file = tarfs_open(bin_name, O_RDONLY);
 
+	if (file == NULL) {
+     return -1;
+     }
+
 
 	char* dir = strstr(bin_name, "/");
 	size_t length = strlen(dir);

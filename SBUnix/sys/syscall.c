@@ -52,12 +52,9 @@ void sysret_to_ring3() {
     __asm__ __volatile__("pushfq;"
                          "orq $0x200, (%%rsp);" //enable interrupt after switch to ring3
                          "pop %%r11;"
-                         :: "c"(current->rip));
+                         ::"c"(current->rip));
     
     // switch stack
-    __asm__ __volatile__("pushq %%rbp;" // TODO: save rbp, causing kernel stack non-empty
-                         "mov %%rsp, %%rax;"
-                         :"=a"(tss.rsp0));
     __asm__ __volatile__("mov %%rax, %%rsp;"
                          ::"a"(current->rsp));
     
@@ -103,13 +100,13 @@ void do_syscall() {
                          "mov %ax, %gs;");
     
     // switch stack
-    // pushed all 6 callee-saved registers onto user stack
+    // already pushed all 6 callee-saved registers onto user stack
     // TODO: need to manipulate during do_fork/do_execve
     __asm__ __volatile__("pushq %%rbp;"
                          "mov %%rsp, %%rax;"
-                         :"=a"(current->rsp));// "=a"(current->rsp) uses rdx
+                         :"=a"(current->rsp));// "=a"(current->rsp) modifies rdx
     __asm__ __volatile__("mov %0, %%rsp;"
-                         ::"a"(tss.rsp0));// TODO: should use current->init_kern instead of tss.rsp0
+                         ::"a"(current->init_kern));
     
     /* push r11 (stored rflags), rcx (stored rip),
      * in case of syscall service routine mofidy them.
@@ -195,23 +192,6 @@ void do_syscall() {
             __asm__ __volatile__ ("mov %r14, %rdx;");
             __asm__ __volatile__ ("callq do_execv;"
                                   :"=a"(ret_val));
-            // TODO: need to verify
-            
-            // overwrite rcx (stored rip) to new rip
-            __asm__ __volatile__ ("mov %0, (%%rsp);"
-                                  ::"r"(current->rip));
-            
-            
-            // adjust user stack for the 2nd half of do_syscall
-            
-            // equivalent to push r14, r13, r12, r15, rbx (order matters)
-            current->rsp -= 0x28;
-            // equivalent to push rbp (= STACK_TOP)
-            current->rsp -= 0x8;
-            *(uint64_t *) current->rsp = STACK_TOP;
-
-            // compiler may adjust stack automatically
-            // current->rsp -= 0x8;
             break;
         case SYS_exit:
             __asm__ __volatile__ ("callq do_exit;"
@@ -253,8 +233,6 @@ void do_syscall() {
                           "popq %r11;");
     
     // switch back to user stack
-    __asm__ __volatile__("mov %%rsp, %%rax;"
-                         :"=a"(tss.rsp0));
     __asm__ __volatile__("mov %%rax, %%rsp;"
                          "popq %%rbp;"
                          ::"a"(current->rsp));

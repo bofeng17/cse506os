@@ -212,13 +212,9 @@ void func_init() {
     
     // currently init is kernel thread, doesn't have mm_struct and vma
     set_task_struct(current);
-    do_execv("bin/test_scanf", argv, envp);
+    do_execv("bin/test_hello", argv, envp);
 
     //do_fork();
-
-    sysret_to_ring3();
-
-    //do_exit (0);
 }
 
 task_struct*
@@ -418,8 +414,11 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     rsp = tmp;
 
     execv_task->rsp = (uint64_t) rsp;
-
-    //execv_task->mm->start_stack = (uint64_t) rsp;
+ 
+    // execv_task->mm->start_stack = (uint64_t) rsp;
+    
+    // return to ring3, moved from func_init to here
+    sysret_to_ring3();
 
     return 0;
 
@@ -509,9 +508,7 @@ int do_fork() {
 
     //memory portion begins here
     //child has it own kernel stack
-    new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
-
-    // TODO: necessary? new_task->init_kern = new_task->kernel_stack;
+    new_task->init_kern = new_task->kernel_stack = (uint64_t) kmalloc(KSTACK);
     
     /*
      * copy into child from parent:
@@ -527,66 +524,43 @@ int do_fork() {
     add_task(new_task);
 
     
-    // TODO: newly added, need testing!
-    new_task->code_entry = current->code_entry;
-    new_task->init_user_stack = current->init_user_stack;
-    // manipulate stack, so that iretq to ring3
-    new_task->rip = new_task->code_entry;
-    new_task->rsp = new_task->init_user_stack;
+    // TODO: tricky part starts here
     
-//     Too complicated!
-//    
-//        // TODO: tricky part begins here!!
-//        uint64_t *tmp_curr_rsp;
-//        uint64_t *tmp_chld_rsp;
-//    
-//        // copy top of kernel stack:
-//        __asm__ __volatile__ ("nop;"
-//                              "mov %%rsp, %0;"
-//                              :"=r"(tmp_curr_rsp));
-//        new_task->kernel_stack = new_task->init_kern - (current->init_kern - tmp_curr_rsp);
-//    
-//        /*
-//         * copy kernel stack: copy saved rbp from parent's kernel stack to child's
-//         * in do_syscall:
-//         *      pushq %r11 (saved rflags)
-//         *      pushq %rcx (saved rip)
-//         *      call  do_fork
-//         * in do_fork:
-//         *      push  %rbx
-//         *
-//         */
-//        tmp_chld_rsp = (uint64_t *)new_task->rsp;
-//        // copy rbx
-//        __asm__ __volatile__ ("nop;"
-//                              "mov (%%rsp), %0;"
-//                              :"=r"(*tmp_chld_rsp));
-//        // copy ret_addr of do_fork
-//        __asm__ __volatile__ ("mov 0x8(%%rsp), %0;"
-//                              :"=r"(*(tmp_chld_rsp+1)));
-//        // copy saved rip
-//        __asm__ __volatile__ ("mov 0x10(%%rsp), %0;"
-//                              :"=r"(*(tmp_chld_rsp+2)));
-//        // copy saved rflags
-//        __asm__ __volatile__ ("mov 0x18(%%rsp), %0;"
-//                              :"=r"(*(tmp_chld_rsp+3)));
-//    
-//        // copy top of user stack:
-//        new_task->rsp = current->rsp;
-//    
-//        // TODO: need to verify
-//        // don't need to copy user stack content: due to COW
-//    
-//    
-//        // set rip (not simply copied from parent): child process begins executing @ label child_ret below
-//        __asm__ __volatile__ ("nop;"
-//                              "movq $child_ret, %0;"
-//                              :"=r"(new_task->rip));
-//    
-//        // for child: return 0
-//        __asm__ __volatile__ ("child_ret:\t;"
-//                              "mov $0, %rax;"
-//                              "retq;");
+    /*
+     * copy kernel stack: copy saved rbp from parent's kernel stack to child's
+     * in do_syscall:
+     *      pushq %r11 (saved rflags)
+     *      pushq %rcx (saved rip)
+     *      call  do_fork
+     * in do_fork:
+     *      ... (ignored)
+     * (lower address)
+     */
+    // copy ret_addr of save rflags (i=1), saved rip, ret addr of do_fork
+    for (i = 1; i <= 3; i++) {
+        *((uint64_t *)new_task->init_kern - i) = *((uint64_t *)current->init_kern - i);
+    }
+    
+    // set (instead of copying) top of kernel stack:
+    new_task->kernel_stack = new_task->init_kern - 0x18;
+    // TODO: verify whether new_task->kernel_stack points to child process's own kernel stack now
+
+    
+    // don't need to copy user stack content: due to COW
+    // copy top of user stack:
+    new_task->rsp = current->rsp;
+
+ 
+    // set rip (not simply copied from parent): child process begins executing @ label child_ret below
+    __asm__ __volatile__ ("nop;"
+                          "movq $child_ret, %0;"
+                          :"=r"(new_task->rip));
+    
+    // for child: return 0
+    __asm__ __volatile__ ("child_ret:\t;"
+                          "mov $0, %rax;"
+                          "retq;");
+    // tricky part ends here
     
     // for parent: return child's pid
     return new_task->pid;

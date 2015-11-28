@@ -6,6 +6,7 @@ int main(int argc, char* argv[], char* envp[]) {
 
     char* s = malloc(100 * sizeof(char));
 
+    printf("please input :(enter to finish):");
 
     scanf("%s", s);
 

@@ -38,8 +38,8 @@ void isr_keyboard() {
             break;
         case 0x1C:// enter pressed
             // ASCII of line feed, the same to Linux
-            if(press_over==1){
-                press_over=0;
+            if(press_over==0){
+                press_over=1;
             }
             terminal_get_char (0x0A);
             // TODO: should directly push to shell, instead of buffering it
@@ -87,13 +87,10 @@ void isr_keyboard() {
             break;
     }
     pic_sendEOI(33);
-    print_key(char_1,1);
-    print_key(char_2,2);
+//    print_key(char_1,1);
+//    print_key(char_2,2);
 }
 
-void local_echo(){
-
-}
 void print_key(uint8_t key,int num) {
     size_t _console_row = console_row;
     size_t _console_column = console_column;

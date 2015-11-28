@@ -44,10 +44,10 @@ size_t get_size_oct(char* string)
 }
 
 
-//static inline struct posix_header_ustar *tarfs_next_header(void *ptr, size_t size)
-//{
-//    return ptr + ((size + 512 - 1)/512 + 1) * 512;
-//}
+static inline struct posix_header_ustar *tarfs_next_header(void *ptr, size_t size)
+{
+    return ptr + ((size + 512 - 1)/512 + 1) * 512;
+}
 
 static inline struct posix_header_ustar *tarfs_header_walk(struct posix_header_ustar *hdr)
 {

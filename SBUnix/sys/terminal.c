@@ -17,33 +17,38 @@ int terminal_write(int fd, char *buf, int count) {
     return count;
 }
 
+void local_echo() {
+    dprintf("%c", terminal_buffer[terminal_buf_count]);
+}
+
 int terminal_read(char *buf, int count) {
     // isr_keyboard puts char into terminal buffer
 
     // copy terminal buffer to libc scanf buffer
 
     // TODO: how to deal with empty buffer and count?
-    press_over = 1;
+    press_over = 0;
     __asm__ __volatile__ ("sti");
 
     //begin local echo
-    while (press_over == 1) {
-        // local_echo();
+    while (press_over == 0) {
+        //local_echo();
     }
-//    memcpy((void*)buf,(void*)terminal_buffer,count);
-    int n = 0; // number of chars put to buffer
-    do {
-        if (n > count)
-            break;
-        else {
-            dprintf("[in terminal] char is %c, count is %d\n",
-                    terminal_buffer[n], n);
-            *(buf + n) = *(terminal_buffer + n);
-            n++;
+    memcpy((void*) buf, (void*) terminal_buffer, count);
+    int n = count > terminal_buf_count ? terminal_buf_count : count; // number of chars put to buffer
 
-        }
-    } while (terminal_buffer[n] != '\n');
-    *(buf + n) ='\n';
+//    do {
+//        if (n > count)
+//            break;
+//        else {
+//            dprintf("[in terminal] char is %c, count is %d\n",
+//                    terminal_buffer[n], n);
+//            *(buf + n) = *(terminal_buffer + n);
+//            n++;
+//
+//        }
+//    } while (terminal_buffer[n] != '\n');
+//    *(buf + n) ='\n';
     memset(terminal_buffer, 0, MAX_BUFF);
     terminal_buf_count = 0;
 
@@ -67,7 +72,9 @@ void terminal_get_char(uint8_t ch) {
             terminal_buffer[terminal_buf_count] = ch;
             terminal_buf_count++;
             // for testing
-            dprintf("char is %c, buffer count is %d\n", ch, terminal_buf_count);
+           // local_echo();
+            dprintf("%c", ch);
+            //dprintf("char is %c, buffer count is %d\n", ch, terminal_buf_count);
         } else {
             printf("Terminal buffer is full!! And will be cleared !\n");
             memset(terminal_buffer, 0, MAX_BUFF);

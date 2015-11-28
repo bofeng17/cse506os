@@ -193,7 +193,7 @@ create_idle_thread() {
     idle->task_state = TASK_READY;
     idle->sleep_time = 0;
     idle->cr3 = get_CR3();
-    strcpy(idle->task_name, "idle thread");
+    strcpy(idle->task_name, "idle*");
     idle->mm = NULL;
     idle->wait_pid = 0;
 
@@ -534,9 +534,9 @@ int do_fork() {
 }
 
 int do_ps(ps_t ps) {
-    task_struct* cur = current->next;
+    task_struct* cur = current;
     int c = 0;
-    while (cur != current) {
+    do  {
         ps->id[c] = cur->pid;
         strcpy(ps->name[c], cur->task_name);
  //       strcpy(ps->state[c], cur->task_name);
@@ -569,7 +569,7 @@ int do_ps(ps_t ps) {
 
         cur = cur->next;
         c++;
-    }
+    }while((cur != current));
     return c;
 }
 

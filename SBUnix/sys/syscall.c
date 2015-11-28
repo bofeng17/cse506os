@@ -169,6 +169,10 @@ void do_syscall() {
             __asm__ __volatile__ ("callq get_cwd;"
                                   :"=a"(ret_val));
             break;
+        case SYS_setcwd:
+            __asm__ __volatile__ ("callq set_cwd;"
+                                  :"=a"(ret_val));
+            break;
             
         // file & terminal
         case SYS_read:

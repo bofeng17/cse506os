@@ -43,9 +43,13 @@ void ls_cmd()
 	
 	readdir(b, a);
 
+    char* final_name = malloc(30*sizeof(char));
+
 	for(i=0; i<a->num; i++)
 	{
-	printf("%s\n", a[i].name);
+	strcpy(final_name, a[i].name+length);
+		
+	printf("%s\n", final_name);
 }
 }
 

@@ -173,22 +173,16 @@ int scanf_buf_count; // TODO: usage differs from printf, how to use it?
 int scanf(const char *format, ...) {
     va_list val;
     int scaned = 0;
-    // TODO: must support %s, %d, and maybe %x
-    //    int 		val_int = 0;
-    //    uint64_t    val_long = 0;
-    //    char 		val_char = 0;
 
-    // TODO: where to store
-    //char* 		val_string = malloc(MAX_BUFF*sizeof(char));
     char* val_string = NULL;
     int* val_int = NULL;
     scanf_buf_count = 0;
 
     va_start(val, format);
 
-    // TODO: number of bytes read?
-    // ssize_t read(struct file *fd, void *buf, size_t count);
     read(0, scanf_buf, MAX_BUFF);
+//    printf("read chars is: %d\n", n);
+
     while (*format) {
         if (*format == '%') {
             format++;
@@ -196,7 +190,7 @@ int scanf(const char *format, ...) {
             switch (*format) {
             case 's':
                 val_string = va_arg(val, char*);
-               // use line feed as string termination
+                // use line feed as string termination
                 while (scanf_buf[scanf_buf_count] != '\n'
                         && scanf_buf[scanf_buf_count] != ' ') {
                     *val_string = scanf_buf[scanf_buf_count];
@@ -230,10 +224,15 @@ int scanf(const char *format, ...) {
         format++;
     }
     va_end(val);
-    /*
-     * return the number of input items successfully matched and assigned,
-     * which can be fewer than provided for, or even zero in the
-     * event of an early matching failure.
-     */
+
     return scaned;
+}
+
+//get a line of stdin_input
+int gets(char *str) {
+
+    int len = read(0, str, MAX_BUFF);
+    str[len--]='\0';
+
+    return len;
 }

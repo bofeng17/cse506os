@@ -210,7 +210,7 @@ void func_init() {
 
     char* envp[4] = { "e1", "e2", "e3", NULL };
     set_task_struct(current);
-    do_execv("bin/test_scanf", argv, envp);
+    do_execv("bin/sbush", argv, envp);
 
     //do_fork();
 

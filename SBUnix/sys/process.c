@@ -573,6 +573,14 @@ int do_ps(ps_t ps) {
     return c;
 }
 
+int do_getpid(){
+    return current->pid;
+}
+
+int do_getppid(){
+    return current->ppid;
+}
+
 void do_exit(int status) {
     // current = current->next;
     current->task_state = TASK_ZOMBIE;

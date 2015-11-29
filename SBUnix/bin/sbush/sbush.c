@@ -122,6 +122,13 @@ void cd_cmd(char* input)
 
 	}
 
+	void* tmp = opendir(path);
+		if(tmp == NULL)
+		{
+			printf("cd input is not even a directory!!!\n");
+			return;
+		}
+		
 	set_cwd(path);
 
 

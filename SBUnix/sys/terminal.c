@@ -4,10 +4,12 @@
 #include <sys/string.h>
 
 // variable and function declarations used by terminal are in sbunix.h
-
+#define CURSOR 135
 char terminal_buffer[MAX_BUFF];
 int terminal_buf_count; // number of char in the buffer
 extern volatile int press_over;
+
+int user_input;
 // for terminal write
 int terminal_write(int fd, char *buf, int count) {
     // TODO: stdout vs stderr
@@ -18,7 +20,7 @@ int terminal_write(int fd, char *buf, int count) {
 }
 
 //void local_echo() {
-//    dprintf("%c", terminal_buffer[terminal_buf_count]);
+//    printf("%c", terminal_buffer[terminal_buf_count-1]);
 //}
 
 int terminal_read(char *buf, int count) {
@@ -30,9 +32,13 @@ int terminal_read(char *buf, int count) {
     press_over = 0;
     __asm__ __volatile__ ("sti");
 
-    //begin local echo
+    user_input = 1; //set local echo flag
+
+    printf("%c",CURSOR);// input cursor ¦
+    console_column--;
+
     while (press_over == 0) {
-        //local_echo();
+        // local_echo();
     }
     memcpy((void*) buf, (void*) terminal_buffer, count);
     int n = count > terminal_buf_count ? terminal_buf_count : count; // number of chars put to buffer
@@ -53,7 +59,7 @@ int terminal_read(char *buf, int count) {
     terminal_buf_count = 0;
 
 //    __asm__ __volatile__ ("cli;");
-
+    user_input = 0;
     return n;
 }
 
@@ -62,8 +68,13 @@ void terminal_get_char(uint8_t ch) {
         if (terminal_buf_count > 0) {
             terminal_buf_count--;
             terminal_buffer[terminal_buf_count] = ' ';
+
+            printf("%c", ' ');
             console_column--;
-            printf("%c", terminal_buffer[terminal_buf_count]);
+
+            console_column--;
+
+            printf("%c", CURSOR);// input cursor
             console_column--;
 
         }
@@ -77,9 +88,19 @@ void terminal_get_char(uint8_t ch) {
         if (terminal_buf_count < MAX_BUFF) {
             terminal_buffer[terminal_buf_count] = ch;
             terminal_buf_count++;
-            // for testing
-           // local_echo();
-            printf("%c", ch);
+
+            //judge whether or not to local_echo user input
+            if (user_input == 1) {
+                if(ch=='\n'){
+                    printf("%c", ' ');
+                }
+
+                printf("%c", ch);
+
+                printf("%c",CURSOR);// input cursor ¦
+                console_column--;
+
+            }
             //dprintf("char is %c, buffer count is %d\n", ch, terminal_buf_count);
         } else {
             printf("Terminal buffer is full!! And will be cleared !\n");

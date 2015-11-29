@@ -406,6 +406,10 @@ kmalloc(int flag) {
 
     memset((void *) base, 0, PAGE_SIZE);
 
+    if(flag==KSTACK){
+        return (void *) (base+PAGE_SIZE);
+    }
+
     return (void *) (base);
 
 }

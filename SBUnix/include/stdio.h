@@ -34,5 +34,5 @@ extern int scanf_buf_count;
 
 
 int scanf(const char *format, ...);
-
+int gets(char *str) ;
 #endif

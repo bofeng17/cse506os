@@ -356,9 +356,8 @@ ssize_t do_write(int fd, const void *buf, size_t count) {
 // read syscall service routine
 ssize_t do_read(struct file *fd, void *buf, size_t count) {
     if (fd == STD_IN) {
-        terminal_read((char *)buf, count);
+      return  terminal_read((char *)buf, count);
     } else {
-        tarfs_read(fd, buf, count);
+      return  tarfs_read(fd, buf, count);
     }
-    return 0;
 }

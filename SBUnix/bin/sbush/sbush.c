@@ -90,6 +90,11 @@ void cd_cmd(char* input)
 
 	if(!strcmp(input, ".."))
 	{
+		if(strlen(path)==4)
+		{
+			printf("WARNING: bin is already our root directory!!!");
+			return;
+		}
 		for(i=strlen(path)-2; i>=0; i--) {
 			if(i == 0) {
 				strcpy(path, "/");

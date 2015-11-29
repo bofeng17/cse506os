@@ -25,15 +25,15 @@ void shellPrompt() {
 
 }
 
-void ps_cmd(){
-    ps_t ups= malloc(sizeof(ps_state));
+void ps_cmd() {
+    ps_t ups = malloc(sizeof(ps_state));
 
-    int no=ps(ups);
+    int no = ps(ups);
 
-    int i=0;
-    printf("PID        STATE     NAME\n");//name field is 14 char length, add space to keep aligned
-    for(i=0;i<no;i++){
-        printf("%d          %s%s\n",ups->id[i],ups->state[i],ups->name[i]);
+    int i = 0;
+    printf("PID        STATE     NAME\n"); //name field is 14 char length, add space to keep aligned
+    for (i = 0; i < no; i++) {
+        printf("%d          %s%s\n", ups->id[i], ups->state[i], ups->name[i]);
     }
 }
 
@@ -44,6 +44,7 @@ void ls_cmd() {
 
     get_cwd(direct);
 
+    size_t length = strlen(direct);
     //printf("TESTING GET_CWD: %s \n", direct);
 
     struct dirent* a = malloc(sizeof(struct dirent));
@@ -52,9 +53,12 @@ void ls_cmd() {
     void* b = opendir(direct);
 
     readdir(b, a);
+    char* final_name = malloc(30 * sizeof(char));
 
     for (i = 0; i < a->num; i++) {
-        printf("%s\n", a[i].name);
+        strcpy(final_name, a[i].name + length);
+
+        printf("%s\n", final_name);
     }
 }
 
@@ -172,6 +176,16 @@ int parseInputToParams(char* input, char* param[], char sep) {
     return count;
 }
 
+void pwd_cmd() {
+
+    char* pwd = malloc(30 * sizeof(char));
+
+    get_cwd(pwd);
+
+    printf("%s\n", pwd);
+
+}
+
 void executeCmd(char* input) {
 
     //int pid=0;
@@ -197,6 +211,8 @@ void executeCmd(char* input) {
         cd_cmd(param);
     } else if (!strcmp(cmd, "ps")) {
         ps_cmd();
+    } else if (!strcmp(cmd, "pwd")) {
+        pwd_cmd();
     } else if (!strcmp(cmd, "help")) {
 
     } else {
@@ -205,7 +221,6 @@ void executeCmd(char* input) {
                 cmd);
     }
 }
-
 int main(int argc, char* argv[], char* envp[]) {
 
     //getEnv(envp);
@@ -228,7 +243,7 @@ int main(int argc, char* argv[], char* envp[]) {
 
         shellPrompt();
         char* input = malloc(1024);
-        int n=gets(input);	//
+        int n = gets(input);	//
         /*int i=scanf("%[^\n]%*c",input);
 
          if(i==0){
@@ -239,8 +254,8 @@ int main(int argc, char* argv[], char* envp[]) {
         //gets(input);
         //fgets(input,MAX_LENGTH,stdin);
 //        printf("input length is:%d",n);
-        if(n>0)
-        executeCmd(input);
+        if (n > 0)
+            executeCmd(input);
 
     }
 

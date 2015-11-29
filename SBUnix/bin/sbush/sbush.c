@@ -143,6 +143,16 @@ void cd_cmd(char* input)
 
 }
 
+void pwd_cmd(){
+
+	char* pwd = malloc(30*sizeof(char));
+
+	get_cwd(pwd);
+
+	printf("%s", pwd);
+
+}
+
 
 
 int parseInputToParams(char* input,char* param[],char sep){
@@ -210,6 +220,10 @@ void executeCmd(char* input)
 	else if(!strcmp(cmd, "cd"))
 	{
 		cd_cmd(param);
+	}
+	else if(!strcmp(cmd, "pwd"))
+	{
+		pwd_cmd();
 	}
 	else 
 	{

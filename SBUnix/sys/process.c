@@ -311,26 +311,14 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 }
 
 int do_execv(char* bin_name, char ** argv, char** envp) {
-    // create new task
     task_struct* execv_task = current;
     
     int argc = 0;
     int envc = 0;
     char* argv_0 = bin_name;
     
-    //    set_task_struct(execv_task);
-    
-    // load bin_name elf
-    //struct file* file = tarfs_open(bin_name, O_RDONLY);
-    
-    /*if (file == NULL) {
-     return -1;
-     }*/
-    
     if (load_elf(execv_task, bin_name) < 0)
         return -1; // -1 if error
-    
-    //   setup_vma(execv_task->mm);
     
     //allocate heap
     //    uint64_t initial_heap_size = 2 * PAGE_SIZE;
@@ -346,7 +334,14 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     execv_task->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
     setup_vma(execv_task->mm);
     
-    // setup new task user stack, rsp, argv, envp
+    // very important!!
+    // flushing TLB after modifying page table
+    // only after flushing TLB can we start to make memory access
+    __asm__ __volatile__ ("mov %0, %%cr3;"
+                          ::"r"(current->cr3));
+    
+    
+    // copy argc, argv, envp onto user stack
     void* rsp = (void*) (STACK_TOP);
     
     void* tmp = rsp - 1;

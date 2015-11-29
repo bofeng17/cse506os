@@ -41,7 +41,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     } else {
         printf("in kernel mode\n");
     }
-
+    
     /*
      * Level 1 check:
      * check whether the given virt addr is in an addr range described VMA
@@ -116,7 +116,6 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                 // TODO: branch never reached by testing
                 // pf caused by COW
                 pt_perm_flag = PTE_P | PTE_U | PTE_W;
-                page_frame_des = allocate_page_user();
                 page_frame_src = self_ref_read(PT, pf_addr) & CLEAR_FLAG;
                 
                 /*
@@ -129,7 +128,8 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                     self_ref_write(PT, pf_addr,
                                    (page_frame_src | pt_perm_flag) & (~PTE_COW));
                 } else {
-                    
+                    page_frame_des = allocate_page_user();
+                    printf("physical page %p allocated\n", page_frame_des);
                     /*
                      * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
                      * so that we can copy content into that page frame

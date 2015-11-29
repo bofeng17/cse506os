@@ -492,8 +492,6 @@ void set_child_pt(task_struct* child) {
         }
         vma = vma->vm_next;
     }
-    
-    //	set_CR3(child->cr3);
 }
 
 // rewrite at Nov 26
@@ -520,6 +518,9 @@ int do_fork() {
     
     // set page table of child process, also modified new_task->cr3
     set_child_pt(new_task);
+    
+    __asm__ __volatile__ ("mov %0, %%cr3;"
+                          ::"r"(current->cr3));
     
     // add child task to run queue
     new_task->task_state = TASK_READY;

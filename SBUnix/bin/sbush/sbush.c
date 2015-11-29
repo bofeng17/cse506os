@@ -47,7 +47,7 @@ void ls_cmd()
 
 	for(i=0; i<a->num; i++)
 	{
-	strcpy(final_name, a[i].name+length);
+	strcpy(final_name, a[i].name);
 		
 	printf("%s\n", final_name);
 }

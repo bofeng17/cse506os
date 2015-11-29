@@ -238,7 +238,7 @@ int main(int argc, char* argv[],char* envp[]) {
 
 		shellPrompt();
 		char* input=malloc(1024);
-		scanf("%s",input);//different from standard scanf which ignores space!
+		gets(input);//different from standard scanf which ignores space!
 		/*int i=scanf("%[^\n]%*c",input);
 		
 		if(i==0){

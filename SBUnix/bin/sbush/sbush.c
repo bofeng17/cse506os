@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/tarfs.h>
+#include <sbush.h>
 
 #define MAX_ARGS 20
 

@@ -21,7 +21,7 @@ void shellPrompt() {
     strcpy(root_dir, "rootfs/");
     strcat(root_dir, cur_dir);
 
-    printf("Root@SBUINX:%s#", root_dir);
+    printf("root@SBUINX:%s#", root_dir);
 
 }
 
@@ -60,7 +60,7 @@ void ls_cmd() {
 
 void cat_cmd(char* input) {
     if (input == NULL) {
-        printf("===please input file name!===\n");
+        printf("===[ERROR] please enter file name!===\n");
         return;
     }
 
@@ -75,7 +75,7 @@ void cat_cmd(char* input) {
     char* test_wr = malloc(sizeof(char));
     struct file* file = open(cur, O_RDONLY);
     if (file == NULL) {
-        printf("no such file exists!!!");
+        printf("===[ERROR] no such file!===\n");
         return;
     }
     read(file, test_wr, 1000);
@@ -128,7 +128,7 @@ void cd_cmd(char* input) {
 
     void* tmp = opendir(path);
     if (tmp == NULL) {
-        printf("===[ERROR] cd input is not even a directory!===\n");
+        printf("===[ERROR] cd input is not a directory!===\n");
         return;
     }
 
@@ -238,7 +238,8 @@ int main(int argc, char* argv[], char* envp[]) {
          }*/
         //gets(input);
         //fgets(input,MAX_LENGTH,stdin);
-        printf("n is")
+//        printf("input length is:%d",n);
+        if(n>0)
         executeCmd(input);
 
     }

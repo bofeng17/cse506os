@@ -232,7 +232,7 @@ int scanf(const char *format, ...) {
 int gets(char *str) {
 
     int len = read(0, str, MAX_BUFF);
-    str[len-1]='\0';
+    str[len--]='\0';
 
     return len;
 }

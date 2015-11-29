@@ -209,6 +209,14 @@ void do_syscall() {
             __asm__ __volatile__ ("callq do_ps;"
                                   :"=a"(ret_val));
             break;
+        case SYS_getpid:
+            __asm__ __volatile__ ("callq do_getpid;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_getppid:
+            __asm__ __volatile__ ("callq do_getppid;"
+                                  :"=a"(ret_val));
+            break;
         default:
             printf("Syscall wasn't implemented\n");
             break;

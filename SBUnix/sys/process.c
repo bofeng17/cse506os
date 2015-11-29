@@ -577,33 +577,41 @@ int do_ps(ps_t ps) {
         //ps->state[c] = cur->task_state;
         switch (cur->task_state) {
         case TASK_NEW:
-            strcpy(ps->state[c], "new");
+            strcpy(ps->state[c], "new       ");
             break;
         case TASK_READY:
-            strcpy(ps->state[c], "ready");
+            strcpy(ps->state[c], "ready     ");
             break;
         case TASK_RUNNING:
-            strcpy(ps->state[c], "running");
+            strcpy(ps->state[c], "running   ");
             break;
         case TASK_SLEEPING:
-            strcpy(ps->state[c], "sleeping");
+            strcpy(ps->state[c], "sleeping  ");
             break;
         case TASK_BLOCKED:
-            strcpy(ps->state[c], "blocked");
+            strcpy(ps->state[c], "blocked   ");
             break;
         case TASK_ZOMBIE:
-            strcpy(ps->state[c], "zombie");
+            strcpy(ps->state[c], "zombie    ");
             break;
         case TASK_DEAD:
-            strcpy(ps->state[c], "dead");
+            strcpy(ps->state[c], "dead      ");
             break;
-        default: strcpy(ps->state[c], "unknown");
+        default: strcpy(ps->state[c], "unknown   ");
         }
 
         cur = cur->next;
         c++;
     }while((cur != current));
     return c;
+}
+
+int do_getpid(){
+    return current->pid;
+}
+
+int do_getppid(){
+    return current->ppid;
 }
 
 void do_exit(int status) {

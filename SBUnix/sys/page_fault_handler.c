@@ -25,22 +25,24 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     uint64_t tmp_phys_addr; // used in COW to store the original mapping of stolen tmp_vir_addr
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
-    printf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
-    if (pf_err_code & PF_BIT_0) {
-        printf("invalid access right | ");
-    } else {
-        printf("not present | ");
-    }
-    if (pf_err_code & PF_BIT_1) {
-        printf("write | ");
-    } else {
-        printf("read or execute | ");
-    }
-    if (pf_err_code & PF_BIT_2) {
-        printf("in user mode\n");
-    } else {
-        printf("in kernel mode\n");
-    }
+    
+//    printf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
+//    if (pf_err_code & PF_BIT_0) {
+//        printf("invalid access right | ");
+//    } else {
+//        printf("not present | ");
+//    }
+//    if (pf_err_code & PF_BIT_1) {
+//        printf("write | ");
+//    } else {
+//        printf("read or execute | ");
+//    }
+//    if (pf_err_code & PF_BIT_2) {
+//        printf("in user mode\n");
+//    } else {
+//        printf("in kernel mode\n");
+//    }
+
     
     /*
      * Level 1 check:

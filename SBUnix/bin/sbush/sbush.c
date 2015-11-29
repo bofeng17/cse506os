@@ -31,6 +31,8 @@ void ls_cmd()
 	
 	char* direct = malloc(sizeof(char));
 
+	size_t length = strlen(direct);
+
 	get_cwd(direct);
 
 	//printf("TESTING GET_CWD: %s \n", direct);

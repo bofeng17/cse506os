@@ -7,6 +7,11 @@
 
 #define MAX_ARGS 20
 
+/*int contain_slash(char*)
+{
+	size
+}*/
+
 void shellPrompt(){
 
 	char* cur_dir=malloc(10*sizeof(char));
@@ -16,14 +21,13 @@ void shellPrompt(){
  	strcpy(root_dir,"rootfs/");
 	strcat(root_dir, cur_dir);
 
-	printf("Root @ SBUINX: %s", root_dir);
+	printf("Root @ SBUINX: %s :", root_dir);
 	
 }
 
 void ls_cmd()
 {
 	int i;
-
 	
 	char* direct = malloc(sizeof(char));
 
@@ -74,9 +78,11 @@ void cat_cmd(char* input)
 
 void cd_cmd(char* input)
 {
-	/*if(input == NULL) {
-		set_pwd("rootfs");
-	}*/
+	if(input == NULL) {
+		//set_pwd("rootfs");
+		printf("cd parameter is NULL!!!");
+		return;
+	}
 	size_t i;
 	char* path = malloc(30*sizeof(char));
 
@@ -84,16 +90,17 @@ void cd_cmd(char* input)
 
 	if(!strcmp(input, ".."))
 	{
-		for(i=strlen(path)-1; i>=0; i--) {
+		for(i=strlen(path)-2; i>=0; i--) {
 			if(i == 0) {
 				strcpy(path, "/");
 				break;
 			}
 			if(path[i] == '/') {
-				path[i] = '\0';
+				path[i+1] = '\0';
 				break;
 			}
 		}
+	//strcpy(path, "/");
 
 		//add check if exists here
 

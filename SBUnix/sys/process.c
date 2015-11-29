@@ -212,9 +212,8 @@ void func_init() {
     
     // currently init is kernel thread, doesn't have mm_struct and vma
     set_task_struct(current);
+
     do_execv("bin/test_fork", argv, envp);
-    
-    //do_fork();
 }
 
 task_struct*

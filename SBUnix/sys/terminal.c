@@ -4,7 +4,7 @@
 #include <sys/string.h>
 
 // variable and function declarations used by terminal are in sbunix.h
-
+#define CURSOR 135
 char terminal_buffer[MAX_BUFF];
 int terminal_buf_count; // number of char in the buffer
 extern volatile int press_over;
@@ -33,6 +33,9 @@ int terminal_read(char *buf, int count) {
     __asm__ __volatile__ ("sti");
 
     user_input = 1; //set local echo flag
+
+    printf("%c",CURSOR);// input cursor ¦
+    console_column--;
 
     while (press_over == 0) {
         // local_echo();
@@ -65,8 +68,13 @@ void terminal_get_char(uint8_t ch) {
         if (terminal_buf_count > 0) {
             terminal_buf_count--;
             terminal_buffer[terminal_buf_count] = ' ';
+
+            printf("%c", ' ');
             console_column--;
-            printf("%c", terminal_buffer[terminal_buf_count]);
+
+            console_column--;
+
+            printf("%c", CURSOR);// input cursor
             console_column--;
 
         }
@@ -83,7 +91,15 @@ void terminal_get_char(uint8_t ch) {
 
             //judge whether or not to local_echo user input
             if (user_input == 1) {
+                if(ch=='\n'){
+                    printf("%c", ' ');
+                }
+
                 printf("%c", ch);
+
+                printf("%c",CURSOR);// input cursor ¦
+                console_column--;
+
             }
             //dprintf("char is %c, buffer count is %d\n", ch, terminal_buf_count);
         } else {

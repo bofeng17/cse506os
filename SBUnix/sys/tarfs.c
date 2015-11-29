@@ -27,7 +27,22 @@ typedef struct file tarfs_file;
 	return dest;
  }*/
 
+int contain_slash(char* name)
+{
+    int i;
+    int length = strlen(name);
 
+    for(i=0;i<length; i++)
+    {
+        if(name[i] == '/')
+        {
+            return 1;
+        }
+    }
+
+    return 0;
+
+}
 
 size_t get_size_oct(char* string)
 {
@@ -241,7 +256,7 @@ return output;
 
 }*/
 
-int do_readdir(void* fd, struct dirent *dirp)
+/*int do_readdir(void* fd, struct dirent *dirp)
 {
     uint64_t i=0;
     uint64_t size;
@@ -250,11 +265,13 @@ int do_readdir(void* fd, struct dirent *dirp)
 
     char* name = file->name;
 
+    size_t name_len = strlen(name);
+
     while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
     {
         
         size=get_size_oct(header_start->size);
-        if((!strncmp(header_start->name, name, 3)) & (strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
+        if((!strncmp(header_start->name, name, name_len)) & (strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
         {
             strcpy(dirp[i].name ,header_start->name);
             //header_start=(struct posix_header_ustar*)header_start+1;
@@ -280,7 +297,70 @@ int do_readdir(void* fd, struct dirent *dirp)
 
 //return output;
 
+}*/
+
+int do_readdir(void* fd, struct dirent *dirp)
+{
+    uint64_t i=0;
+    uint64_t size;
+    struct posix_header_ustar *header_start = (struct posix_header_ustar*)&_binary_tarfs_start;
+    struct posix_header_ustar *file = (struct posix_header_ustar*)(fd);
+
+    char* name = file->name;
+
+    size_t name_len = strlen(name);
+
+    while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
+    {
+        
+        size=get_size_oct(header_start->size);
+        if((!strncmp(header_start->name, name, name_len))&&(strcmp(header_start->name,name)))//here may be a bug in future,using strcmp
+            //(strcmp(header_start->typeflag, "5"))
+        {
+            char tmp[100];
+            
+            strcpy(tmp, (header_start->name)+strlen(name));
+
+            if(contain_slash(tmp))
+            {
+                if(!strcmp(header_start->typeflag, "5"))
+                {
+                    strcpy(dirp[i].name ,header_start->name);
+                    i++;
+                }
+            }
+            else
+            {
+                strcpy(dirp[i].name ,header_start->name);
+                i++;
+            }
+                
+            //strcpy(dirp[i].name ,header_start->name);
+            //header_start=(struct posix_header_ustar*)header_start+1;
+            //return (void*)header_start;
+            //i++;
+        }
+        
+        header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);
+    }
+
+    dirp->num = i;
+
+   if(i==0)
+   {
+    printf("the directory is empty!!!\n");
+    return -1;
+   }
+   else
+   {
+    return 0;
+   }
+    
+
+//return output;
+
 }
+
 
 
 int do_closedir(struct dirent* close)
@@ -356,9 +436,8 @@ ssize_t do_write(int fd, const void *buf, size_t count) {
 // read syscall service routine
 ssize_t do_read(struct file *fd, void *buf, size_t count) {
     if (fd == STD_IN) {
-        terminal_read((char *)buf, count);
+      return  terminal_read((char *)buf, count);
     } else {
-        tarfs_read(fd, buf, count);
+      return  tarfs_read(fd, buf, count);
     }
-    return 0;
 }

@@ -537,7 +537,7 @@ int do_fork() {
      * (lower address)
      */
     // copy ret_addr of save rflags (i=1), saved rip, ret addr of do_fork
-    for (i = 1; i <= 3; i++) {
+    for (int i = 1; i <= 3; i++) {
         *((uint64_t *)new_task->init_kern - i) = *((uint64_t *)current->init_kern - i);
     }
     

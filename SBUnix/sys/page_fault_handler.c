@@ -25,23 +25,25 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     uint64_t tmp_phys_addr; // used in COW to store the original mapping of stolen tmp_vir_addr
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
-//    printf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
+    
+//    dprintf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
 //    if (pf_err_code & PF_BIT_0) {
-//        printf("invalid access right | ");
+//        dprintf("invalid access right | ");
 //    } else {
-//        printf("not present | ");
+//        dprintf("not present | ");
 //    }
 //    if (pf_err_code & PF_BIT_1) {
-//        printf("write | ");
+//        dprintf("write | ");
 //    } else {
-//        printf("read or execute | ");
+//        dprintf("read or execute | ");
 //    }
 //    if (pf_err_code & PF_BIT_2) {
-//        printf("in user mode\n");
+//        dprintf("in user mode\n");
 //    } else {
-//        printf("in kernel mode\n");
+//        dprintf("in kernel mode\n");
 //    }
 
+    
     /*
      * Level 1 check:
      * check whether the given virt addr is in an addr range described VMA
@@ -116,7 +118,6 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                 // TODO: branch never reached by testing
                 // pf caused by COW
                 pt_perm_flag = PTE_P | PTE_U | PTE_W;
-                page_frame_des = allocate_page_user();
                 page_frame_src = self_ref_read(PT, pf_addr) & CLEAR_FLAG;
                 
                 /*
@@ -129,7 +130,8 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                     self_ref_write(PT, pf_addr,
                                    (page_frame_src | pt_perm_flag) & (~PTE_COW));
                 } else {
-                    
+                    page_frame_des = allocate_page_user();
+//                    dprintf("physical page %p allocated\n", page_frame_des);
                     /*
                      * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
                      * so that we can copy content into that page frame

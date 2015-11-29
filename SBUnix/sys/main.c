@@ -14,8 +14,6 @@ uint32_t* loader_stack; //points to top of the OS loader stack. Seems loader is 
 extern char kernmem, physbase; //only symbols-only declared here. Defined in linker script
 struct tss_t tss;
 
-size_t console_row;
-size_t console_column;
 uint32_t page_index = 0;
 uint32_t page_num = 0;
 uint64_t length = 0;

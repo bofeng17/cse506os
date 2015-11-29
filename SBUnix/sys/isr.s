@@ -56,6 +56,15 @@ isr33:
     sti
     iretq
 
+    .globl co_yield
+co_yield:
+    cli
+    push_al
+    call    schedule
+    pop_al
+    sti
+    iretq
+
 .macro CPU_Exceptions m
   .globl exception\m
   exception\m:

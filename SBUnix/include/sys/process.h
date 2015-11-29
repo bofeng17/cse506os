@@ -86,7 +86,9 @@ typedef struct task_struct {
 
 	uint64_t kernel_stack; /* task stack */
 	uint64_t init_kern;
+    uint64_t code_entry; /* entry point of the correpsonding elf */
 	uint64_t rip; /* instruction pointer */
+    uint64_t init_user_stack;
 	uint64_t rsp; /* process stack pointer */
 
 	uint64_t task_state; /* the current state of task */

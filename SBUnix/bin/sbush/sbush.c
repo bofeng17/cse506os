@@ -52,6 +52,7 @@ void ls_cmd() {
 
     void* b = opendir(direct);
 
+
     readdir(b, a);
     char* final_name = malloc(30 * sizeof(char));
 

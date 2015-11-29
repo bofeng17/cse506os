@@ -52,7 +52,7 @@ int load_elf(task_struct* task, char* bin_name) {
 	//dprintf("LOAD_ELF: \n");
 	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);// find program header
 
-	task->rip = elfh->e_entry;	//assign entry for the task
+	task->code_entry = task->rip = elfh->e_entry;	//assign entry for the task
 
 	//get the cur dir for the task
 

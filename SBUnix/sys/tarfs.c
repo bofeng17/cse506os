@@ -250,11 +250,13 @@ int do_readdir(void* fd, struct dirent *dirp)
 
     char* name = file->name;
 
+    size_t name_len = strlen(name);
+
     while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
     {
         
         size=get_size_oct(header_start->size);
-        if((!strncmp(header_start->name, name, 3)) & (strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
+        if((!strncmp(header_start->name, name, name_len)) & (strcmp(header_start->typeflag, "5")))//here may be a bug in future,using strcmp
         {
             strcpy(dirp[i].name ,header_start->name);
             //header_start=(struct posix_header_ustar*)header_start+1;

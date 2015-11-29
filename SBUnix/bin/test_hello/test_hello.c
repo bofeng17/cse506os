@@ -25,7 +25,7 @@ main (int argc, char* argv[], char* envp[])
 {
     //printf("Hello World!\n");
     
-    //    __asm__ __volatile__("INT $0x21;");
+    //    __asm__ __volatile__("INT $0x80;");
     //        char *ptr_test = (char *)0x200000;
     //        *ptr_test = 0;
     //    while (1) {

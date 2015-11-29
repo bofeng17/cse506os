@@ -49,7 +49,8 @@ void sysret_to_ring3() {
                          "mov %dx, %gs;");
     
     // mov rip in rcx & mov rflags into r11
-    __asm__ __volatile__("pushfq;"
+    __asm__ __volatile__("pushfq;" // TODO: should be fully tested
+//                       "pushq $0;"
                          "orq $0x200, (%%rsp);" //enable interrupt after switch to ring3
                          "pop %%r11;"
                          ::"c"(current->rip));

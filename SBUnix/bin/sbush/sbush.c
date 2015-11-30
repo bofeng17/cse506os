@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <sys/tarfs.h>
+#include <sbush.h>
 
 #define MAX_ARGS 20
 
@@ -141,6 +142,59 @@ void cd_cmd(char* input) {
 
 }
 
+ void sh_cmd(char* param)
+ {
+
+    if (param == NULL) {
+        printf("===[ERROR] please enter file name!===\n");
+        return;
+    }
+
+    char* cur = malloc(30 * sizeof(char));
+
+    get_cwd(cur);
+
+
+    strcat(cur, param);
+
+    struct file* file = open(cur, O_RDONLY);
+
+    if (file == NULL) {
+        printf("===[ERROR] no such script file!===\n");
+        return;
+    }
+
+    char* input = malloc(30*sizeof(char));
+
+    read(file, input, 1000);
+
+    if(input[0]=='#' && input[1]=='!')
+    {
+        
+        char* tmp = malloc(30*sizeof(char));
+       
+        while(strlen(input)>2){
+
+        input = strstr(input, "\n");
+        if(strlen(input)==1)
+        {
+            break;
+        }
+        strcpy(input, input+1);
+        strcpy(tmp, input);
+        executeCmd(tmp);
+        }
+      
+    }
+    else
+    {
+        printf("this is not a script file!!!\n");
+    }
+
+   
+
+ }
+
 int parseInputToParams(char* input, char* param[], char sep) {
     char ch;
     int status = 0;   //0 indicates current char is a space and 1 not
@@ -214,6 +268,8 @@ void executeCmd(char* input) {
         ps_cmd();
     } else if (!strcmp(cmd, "pwd")) {
         pwd_cmd();
+    }else if (!strcmp(cmd, "sh")) {
+        sh_cmd(param);
     } else if (!strcmp(cmd, "help")) {
 
     } else {

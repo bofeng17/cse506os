@@ -47,7 +47,7 @@ vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma);
  * check whether the given virt addr belongs to stack
  * ret 1 if found, otherwise 0
  */
-int belong_to_stack(uint64_t virt_addr, vma_struct *vma);
+// int belong_to_stack(uint64_t virt_addr, vma_struct *vma);
 
 /*
  * check whether the instruction casued pf is in exception table,

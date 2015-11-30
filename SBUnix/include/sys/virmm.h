@@ -55,6 +55,7 @@
 
 #define STACK_TOP 0x0000000100000000 // user stack top
 #define STACK_PAGES 0x100 // 512 pages
+#define HEAP_BASE 0x40000000// 1GB, user head base
 #define BRK_LIMIT (0x1000 * 0x1000)// 16M size
 #define PML4 4
 #define PDPT 3

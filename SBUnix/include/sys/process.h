@@ -84,12 +84,10 @@ typedef struct task_struct {
 	mm_struct* mm; /* Pointers to memory area descriptors */
 	uint64_t cr3;
 
-	uint64_t kernel_stack; /* task stack */
-	uint64_t init_kern;
-    uint64_t code_entry; /* entry point of the correpsonding elf */
+	uint64_t kernel_stack; /* process kernel stack pointer */
+	uint64_t init_kern; /* top of kernel stack */
 	uint64_t rip; /* instruction pointer */
-    uint64_t init_user_stack;
-	uint64_t rsp; /* process stack pointer */
+	uint64_t rsp; /* process user stack pointer */
 
 	uint64_t task_state; /* the current state of task */
 	uint64_t sleep_time;
@@ -118,14 +116,14 @@ int do_fork();
 void
 func_init();
 
-task_struct *
-create_idle_thread();
+//task_struct *
+//create_idle_thread();
+//
+//task_struct*
+//create_thread_init();
 
-task_struct*
-create_thread_init();
-
 task_struct *
-create_thread(uint64_t, char *);
+create_thread(void*, char *);
 
 void
 context_switch(task_struct *, task_struct *);
@@ -134,13 +132,14 @@ void
 schedule();
 
 void
-clear_zombie(task_struct*);
+clean_dead();
 
 task_struct *create_user_process(char* bin_name);
 
 void copy_mm(task_struct *);
 
 extern task_struct *current;
+extern task_struct* idle;
 
 #define CODE 0
 #define DATA 1
@@ -148,6 +147,8 @@ extern task_struct *current;
 #define STACK 3
 // get specific vma of mm
 vma_struct* get_vma(mm_struct* mm, int flag);
+
+#define DO_EXECV_TMP_ADDR_TRANSLATE(x) (STACK_TOP - (tmp_vir_addr + PAGE_SIZE - x))
 
 // exit error code
 #define ILLEGAL_MEM_ACC 1 // illegal memmory access, killed by page fault handler

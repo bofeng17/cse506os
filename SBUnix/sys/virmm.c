@@ -294,7 +294,7 @@ void initial_mapping() {
 }
 
 void set_CR3(uint64_t CR3) {
-    __asm volatile("mov %0, %%cr3":: "b"(CR3));
+    __asm volatile("mov %0, %%cr3":: "r"(CR3));
 }
 
 uint64_t get_CR3() {
@@ -415,9 +415,15 @@ kmalloc(int flag) {
 }
 
 void kfree(void* addr, int flag) {
-    memset((void *) addr, 0, PAGE_SIZE);
+    if(flag==KSTACK){
+        memset((void *) (addr-PAGE_SIZE), 0, PAGE_SIZE);
+    }else{
+        memset((void *) addr, 0, PAGE_SIZE);
+    }
+
     uint64_t base = get_base(flag);
     int bitmap_pos = ((uint64_t) addr - base) / PAGE_SIZE;
+
     switch (flag) {
     case KERNPT:
         kernpt_bitmap[bitmap_pos] = 0;

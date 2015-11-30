@@ -116,4 +116,7 @@ typedef struct ps_state {
 
 typedef ps_state* ps_t;
 int ps(ps_t ps);
+
+void yield();
+
 #endif

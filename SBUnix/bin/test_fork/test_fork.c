@@ -2,6 +2,17 @@
 #include <stdlib.h>
 #include <sys/defs.h>
 
+//int main (int argc, char* argv[], char* envp[]) {
+//    pid_t pid = fork();
+//    if (pid > 0) {
+//        printf("I am parent process\n");
+//    } else if (pid == 0) {
+//        printf("I am child process\n");
+//        
+//        char* argv[3] = { "a1", "a2", NULL };
+//        char* envp[4] = { "e1", "e2", "e3", NULL };
+//        execve("bin/test_hello", argv, envp);
+
 int main(int argc, char* argv[], char* envp[]) {
     //int *ptr = (int *)malloc(4);
     int count = 0;
@@ -27,28 +38,5 @@ int main(int argc, char* argv[], char* envp[]) {
             printf("error in fork!");
         }
     }
-
-//    int no = 1;
-//    int i = 10;
-//    while (i-- > 0) {
-//
-//        if (no > 0) {
-//            //*ptr = 0x10;
-//            printf("I am parent process");
-//            count += 2;
-//            printf("count is: %d pid is: %d\n", count, getpid());
-//            no=0;
-//            yield();
-//
-//        } else if (no == 0) {
-//            //*ptr = 0x20;
-//            printf("I am child process");
-//            count++;
-//            printf("count is: %d pid is: %d\n", count, getpid());
-//            no=1;
-//            yield();
-//
-//        }
-//    }
     return 0;
 }

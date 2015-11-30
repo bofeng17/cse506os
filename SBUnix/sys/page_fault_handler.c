@@ -131,7 +131,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                                    (page_frame_src | pt_perm_flag) & (~PTE_COW));
                 } else {
                     page_frame_des = allocate_page_user();
-//                    dprintf("physical page %p allocated\n", page_frame_des);
+                    dprintf("physical page %p allocated\n", page_frame_des);
                     /*
                      * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
                      * so that we can copy content into that page frame

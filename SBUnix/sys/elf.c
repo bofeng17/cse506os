@@ -7,25 +7,6 @@
 #include <sys/elf.h>
 #include <sys/string.h>
 
-void *memmove(void *dest, const void *src, size_t n) {
-	const char *s;
-	char *d;
-
-	s = src;
-	d = dest;
-	if (s < d && s + n > d) {
-		s += n;
-		d += n;
-		while (n-- > 0)
-			*--d = *--s;
-	} else {
-		while (n-- > 0)
-			*d++ = *s++;
-	}
-
-	return dest;
-}
-
 int load_elf(task_struct* task, char* bin_name) {
 
 
@@ -52,7 +33,7 @@ int load_elf(task_struct* task, char* bin_name) {
 	//dprintf("LOAD_ELF: \n");
 	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);// find program header
 
-	task->code_entry = task->rip = elfh->e_entry;	//assign entry for the task
+	task->rip = elfh->e_entry;	//assign entry for the task
 
 	//get the cur dir for the task
 
@@ -68,6 +49,7 @@ int load_elf(task_struct* task, char* bin_name) {
 				task->mm->end_code = pgh->p_vaddr + pgh->p_memsz;
 				//map code/text segment
 				uint64_t code_size = task->mm->end_code - task->mm->start_code;
+                // TODO: reference to original physical pages get lost. Need to free
 				umalloc((void*) task->mm->start_code, code_size);
 
 				memcpy((void*) task->mm->start_code,
@@ -89,6 +71,7 @@ int load_elf(task_struct* task, char* bin_name) {
 //                task->mm->end_data +=task->mm->bss;
 
                 //map data segment (include bss segment)
+                // TODO: reference to original physical pages get lost. Need to free
 				umalloc((void*) task->mm->start_data, data_size+task->mm->bss);
 
 				//copy data size

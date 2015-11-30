@@ -20,6 +20,12 @@ uint64_t length = 0;
 uint32_t first = 0;
 page_sp* page_struct_start;
 
+task_struct* idle;
+
+void test(){
+    printf("im'test\n");
+}
+
 void start(uint32_t* modulep, void* physbase, void* physfree) {
 
 	struct smap_t {
@@ -63,11 +69,15 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 
 	initial_mapping();	// map 32MB physical memory to virtual memory
 
-	task_struct* idle = create_idle_thread();
+	idle = create_thread(NULL,"idle*");
 	idle->task_state = TASK_READY;
 
-	task_struct* init = create_thread_init();
+	task_struct* init = create_thread(&func_init,"init");
 	init->task_state = TASK_READY;
+
+//    task_struct* test = create_thread(&test,"test");
+//    test->task_state = TASK_READY;
+
 //  task_struct* thread_a = create_thread ((uint64_t) & func_a, "a thread");
 //  thread_a->task_state = TASK_READY;
 //
@@ -78,10 +88,9 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 //
 //  create_thread ((uint64_t) & func_c, "c thread");
 //  print_threads (idle);
-
 //  task_struct* hello = create_user_process ("bin/hello");
 //  hello->task_state = TASK_READY;
-
+//
 //    char *ptr_test = (char *)0xffffffff84000000;
 //    *ptr_test = 0;
 
@@ -92,7 +101,8 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 //	int i = 0;
 	while (1) {
 //		dprintf("I'm idle %d \n", i++);
-		schedule();
+//		schedule();
+        __asm__ __volatile__ ("int $0x80;");
 //      __asm__ __volatile__ ("hlt");
 //      if (i == 100000)
 //	{

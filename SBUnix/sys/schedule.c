@@ -10,19 +10,19 @@ task_struct *prev;
 
 void schedule() {
     prev = current;
-    current = current->next;
 
     //set previous running task state to task_ready
-    if (current->task_state != TASK_ZOMBIE
-            && current->task_state != TASK_DEAD) {
+    if (!(current->task_state == TASK_ZOMBIE||current->task_state == TASK_DEAD)) {
         //not delete zombie from run queue, just skip it
         //zombie become dead when its parent read the return value
         // a kernel thread named clean_dead will run occasionally and clear dead tasks
         prev->task_state = TASK_READY;
     }
 
+    current = current->next;
+
     //current won't be null, if only one task exists, that must be idle
-    while (current->task_state != TASK_READY) {
+    while (current->task_state != TASK_READY&&current->task_state != TASK_DEAD) {
         current = current->next;
         if (current == prev)
             //already traverse the run queue, so break
@@ -54,22 +54,22 @@ void clean_dead() {
 //next sotred in %rsi
 void context_switch(task_struct *prev, task_struct *next) {
 
-    //    __asm__ __volatile__ ("pushq	%rax;"
-    //                          "pushq	%rbx;"
-    //                          "pushq	%rcx;"
-    //                          "pushq	%rdx;"
-    //                          "pushq	%rsi;"
-    //                          "pushq	%rdi;"
-    //                          "pushq	%rbp;"
-    //                          "pushq	%rsp;"
-    //                          "pushq	%r8;"
-    //                          "pushq	%r9;"
-    //                          "pushq	%r10;"
-    //                          "pushq	%r11;"
-    //                          "pushq	%r12;"
-    //                          "pushq	%r13;"
-    //                          "pushq	%r14;"
-    //                          "pushq	%r15;"
+    //    __asm__ __volatile__ ("pushq  %rax;"
+    //                          "pushq  %rbx;"
+    //                          "pushq  %rcx;"
+    //                          "pushq  %rdx;"
+    //                          "pushq  %rsi;"
+    //                          "pushq  %rdi;"
+    //                          "pushq  %rbp;"
+    //                          "pushq  %rsp;"
+    //                          "pushq  %r8;"
+    //                          "pushq  %r9;"
+    //                          "pushq  %r10;"
+    //                          "pushq  %r11;"
+    //                          "pushq  %r12;"
+    //                          "pushq  %r13;"
+    //                          "pushq  %r14;"
+    //                          "pushq  %r15;"
     //                          "pushfq;");
 
     /* move the current process page table base address to cr3 register */
@@ -114,22 +114,22 @@ void context_switch(task_struct *prev, task_struct *next) {
      */
 
     //    __asm__ __volatile__ ("popfq;"
-    //                          "popq	%r15;"
-    //                          "popq	%r14;"
-    //                          "popq	%r13;"
-    //                          "popq	%r12;"
-    //                          "popq	%r11;"
-    //                          "popq	%r10;"
-    //                          "popq	%r9;"
-    //                          "popq	%r8;"
-    //                          "popq	%rsp;"
-    //                          "popq	%rbp;"
-    //                          "popq	%rdi;"
-    //                          "popq	%rsi;"
-    //                          "popq	%rdx;"
-    //                          "popq	%rcx;"
-    //                          "popq	%rbx;"
-    //                          "popq	%rax;");
+    //                          "popq   %r15;"
+    //                          "popq   %r14;"
+    //                          "popq   %r13;"
+    //                          "popq   %r12;"
+    //                          "popq   %r11;"
+    //                          "popq   %r10;"
+    //                          "popq   %r9;"
+    //                          "popq   %r8;"
+    //                          "popq   %rsp;"
+    //                          "popq   %rbp;"
+    //                          "popq   %rdi;"
+    //                          "popq   %rsi;"
+    //                          "popq   %rdx;"
+    //                          "popq   %rcx;"
+    //                          "popq   %rbx;"
+    //                          "popq   %rax;");
     //TODO: movl %eax, last
     //Ref. <Understanding the Linux kernel>: page 108 step 9
 }

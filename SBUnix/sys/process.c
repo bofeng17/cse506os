@@ -645,17 +645,17 @@ void do_exit(int status) {
     schedule();
 }
 
-// find task_struc in run queue according to its pid
-task_struct *find_task_struct(int pid) {
-    task_struct run=current->next;
-    while(run->pid!=pid){
-        run=run.next;
-        if(run==current)
-            return NULL;
-    }
-
-    return run;
-}
+//// find task_struc in run queue according to its pid
+//task_struct *find_task_struct(int pid) {
+//    task_struct run=current->next;
+//    while(run->pid!=pid){
+//        run=run.next;
+//        if(run==current)
+//            return NULL;
+//    }
+//
+//    return run;
+//}
 
 void do_yield() {
     schedule();

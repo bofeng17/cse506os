@@ -99,10 +99,10 @@ void yield(void) {
 	syscall_0 (SYS_yield);
 }
 
-//pid_t waitpid(pid_t pid, int *status, int options) {
-//    return syscall_3(SYS_wait4, pid, (uint64_t)status, options);
-//}
-//
+pid_t waitpid(pid_t pid, int *status, int options) {
+    return syscall_3(SYS_wait4, pid, (uint64_t)status, options);
+}
+
 //struct timespec {
 //    uint64_t  tv_sec;        /* seconds */
 //    long   tv_nsec;       /* nanoseconds */

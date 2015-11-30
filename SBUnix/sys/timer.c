@@ -30,8 +30,8 @@ timer_init ()
     // Send the frequency divisor.
     outb (0x40, lobyte);
     outb (0x40, hibyte);
-      pic_set_mask (0);
-      pic_set_mask (1);
+//      pic_set_mask (0);
+//      pic_set_mask (1);
 }
 
 //extern task_struct* idle;

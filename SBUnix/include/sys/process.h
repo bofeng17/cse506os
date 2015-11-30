@@ -118,14 +118,14 @@ int do_fork();
 void
 func_init();
 
-task_struct *
-create_idle_thread();
+//task_struct *
+//create_idle_thread();
+//
+//task_struct*
+//create_thread_init();
 
-task_struct*
-create_thread_init();
-
 task_struct *
-create_thread(uint64_t, char *);
+create_thread(void*, char *);
 
 void
 context_switch(task_struct *, task_struct *);
@@ -134,13 +134,14 @@ void
 schedule();
 
 void
-clear_zombie(task_struct*);
+clean_dead();
 
 task_struct *create_user_process(char* bin_name);
 
 void copy_mm(task_struct *);
 
 extern task_struct *current;
+extern task_struct* idle;
 
 #define CODE 0
 #define DATA 1

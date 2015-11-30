@@ -45,13 +45,6 @@ int assign_pid() {
     return -1;
 }
 
-//insert new task to run queue
-void add_task(task_struct * task) {
-    end->next = task;
-    end = task;
-    end->next = front;
-}
-
 //only set task_struct vma_struct and mm_struct
 void set_task_struct(task_struct* task) {
     mm_struct* mstruct = kmalloc(MM);
@@ -182,28 +175,28 @@ void setup_vma(mm_struct* mstruct) {
 //    }
 //}
 
-task_struct *
-create_idle_thread() {
-    task_struct * idle = (task_struct*) (kmalloc(TASK));
-    
-    idle->ppid = 0;
-    idle->pid = assign_pid();
-    idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
-    //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
-    idle->task_state = TASK_READY;
-    idle->sleep_time = 0;
-    idle->cr3 = get_CR3();
-    strcpy(idle->task_name, "idle*");
-    idle->mm = NULL;
-    idle->wait_pid = 0;
-    
-    front = idle;
-    end = idle;
-    end->next = front;
-    current = idle;
-    
-    return idle;
-}
+//task_struct *
+//create_idle_thread() {
+//    task_struct * idle = (task_struct*) (kmalloc(TASK));
+//
+//    idle->ppid = 0;
+//    idle->pid = assign_pid();
+//    idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
+//    //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
+//    idle->task_state = TASK_READY;
+//    idle->sleep_time = 0;
+//    idle->cr3 = get_CR3();
+//    strcpy(idle->task_name, "idle*");
+//    idle->mm = NULL;
+//    idle->wait_pid = 0;
+//
+//    front = idle;
+//    end = idle;
+//    end->next = front;
+//    current = idle;
+//
+//    return idle;
+//}
 
 void func_init() {
     char* argv[3] = { "a1", "a2", NULL };
@@ -214,41 +207,53 @@ void func_init() {
     set_task_struct(current);
 
     do_execv("bin/test_fork", argv, envp);
+
+//    do_execv("bin/sbush", argv, envp);
 }
 
+//task_struct*
+//create_thread_init() {
+//
+//    task_struct * new_task = (task_struct*) (kmalloc(TASK));
+//
+//    new_task->ppid = 0;
+//    new_task->pid = assign_pid();
+//    new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
+//    new_task->rip = (uint64_t) &func_init;
+//    new_task->task_state = TASK_NEW;
+//    new_task->sleep_time = 0;
+//    new_task->cr3 = get_CR3();
+//    strcpy(new_task->task_name, "init");
+//
+//    //set_task_struct(new_task);
+//
+//    new_task->wait_pid = 0;
+//
+//    add_task(new_task);
+//
+//    return new_task;
+//
+//}
+
+//insert new task to run queue
+void add_task(task_struct * task) {
+
+    end->next = task;
+    end = task;
+    end->next = front;
+
+}
+
+
 task_struct*
-create_thread_init() {
+create_thread(void* thread, char * thread_name) {
     
     task_struct * new_task = (task_struct*) (kmalloc(TASK));
     
     new_task->ppid = 0;
     new_task->pid = assign_pid();
     new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
-    new_task->rip = (uint64_t) &func_init;
-    new_task->task_state = TASK_NEW;
-    new_task->sleep_time = 0;
-    new_task->cr3 = get_CR3();
-    strcpy(new_task->task_name, "init");
-    
-    set_task_struct(new_task);
-    
-    new_task->wait_pid = 0;
-    
-    add_task(new_task);
-    
-    return new_task;
-    
-}
-
-task_struct*
-create_thread(uint64_t thread, char * thread_name) {
-    
-    task_struct * new_task = (task_struct*) (kmalloc(TASK));
-    
-    new_task->ppid = 0;
-    new_task->pid = assign_pid();
-    new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
-    new_task->rip = thread;
+    new_task->rip =(uint64_t) thread;
     new_task->task_state = TASK_NEW;
     new_task->sleep_time = 0;
     new_task->cr3 = get_CR3();
@@ -256,8 +261,14 @@ create_thread(uint64_t thread, char * thread_name) {
     new_task->mm = NULL;
     new_task->wait_pid = 0;
     
+    if(current==NULL){
+        current=new_task;
+        front=new_task;
+        end=new_task;
+    }
+
     add_task(new_task);
-    
+
     return new_task;
     
 }
@@ -508,7 +519,7 @@ int do_fork() {
     new_task->ppid = current->pid;
     
     //copy task name
-    strcpy(new_task->task_name, current->task_name);
+    strcpy(new_task->task_name, "child");
     
     //memory portion begins here
     //child has it own kernel stack
@@ -624,6 +635,16 @@ int do_getpid(){
 
 int do_getppid(){
     return current->ppid;
+}
+
+pid_t do_waitpid(pid_t pid, int *status, int options){
+
+
+
+    //int80 call schedule
+    __asm__ __volatile__ ("int $0x80;");
+
+    return pid;
 }
 
 void do_exit(int status) {

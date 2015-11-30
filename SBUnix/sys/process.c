@@ -210,9 +210,21 @@ void func_init() {
     
     char* envp[4] = { "e1", "e2", "e3", NULL };
     
-    // currently init is kernel thread, doesn't have mm_struct and vma
+    // transform kernel thread init to user process
+    
+    // allocate mm_struct and vma for init
     set_task_struct(current);
-
+    
+    // allocate heap
+    current->mm->start_brk = (uint64_t) umalloc((void*)HEAP_BASE, PAGE_SIZE);
+    current->mm->brk = current->mm->start_brk + PAGE_SIZE;
+    
+    // allocate stack
+    umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
+    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
+    current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
+    
+    // vma_chain setup by setup_vma() in do_execev
     do_execv("bin/test_fork", argv, envp);
 }
 
@@ -317,35 +329,42 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     int envc = 0;
     char* argv_0 = bin_name;
     
-    if (load_elf(execv_task, bin_name) < 0)
-        return -1; // -1 if error
+    /*
+     * setup heap
+     * each process has at least one page in heap
+     * besides, argv is passed via heap
+     * so here needn't allocate page frames
+     * should be cautious about the assumption
+     */
+    current->mm->start_brk = HEAP_BASE;
+    execv_task->mm->brk = HEAP_BASE + PAGE_SIZE;
     
-    //allocate heap
-    //    uint64_t initial_heap_size = 2 * PAGE_SIZE;
+    /*
+     * setup stack: different from heap
+     * although each process has at least one page in stack
+     * envp is passed via stack which may be overwritten without allocating new stack
+     * 1) allocate a page frame 2) map a temporary virt addr to it
+     * 3) copy envp onto that page 4) remap it near STACK_TOP 
+     * 5) free the original page nearing STACK_TOP 
+     * TODO: decrease ref_count of physical page, if reaches -1, free that page
+     * still share stack top protection page after reallocation
+     */
+    uint64_t tmp_vir_addr = 0xffffffff80000000UL;
     
-    execv_task->mm->start_brk = (uint64_t) umalloc(
-                                                   (void*) (((execv_task->mm->end_data+execv_task->mm->bss) & CLEAR_OFFSET) + PAGE_SIZE),
-                                                   PAGE_SIZE);
-    
-    execv_task->mm->brk = execv_task->mm->start_brk + PAGE_SIZE;
-    
-    umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
-    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); //map one page initially
     execv_task->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
-    setup_vma(execv_task->mm);
     
-    // very important!!
-    // flushing TLB after modifying page table
+    // map a tmp_vir_addr (0xffffffff80000000UL) to the allocated page frame
+    self_ref_write(PT, tmp_vir_addr, allocate_page_user() | PTE_P | PTE_U | PTE_W);
+    
+    // flushing TLB immediately after modifying page table
     // only after flushing TLB can we start to make memory access
     __asm__ __volatile__ ("mov %0, %%cr3;"
                           ::"r"(current->cr3));
     
     
-    // copy argc, argv, envp onto user stack
-    void* rsp = (void*) (STACK_TOP);
-    
+    // copy argc, argv, envp onto the temporary virt addr
+    void* rsp = (void*) (tmp_vir_addr + PAGE_SIZE);
     void* tmp = rsp - 1;
-    
     uint64_t tmp2 = (uint64_t) tmp;
     
     // save envp string to the top area of user stack
@@ -367,7 +386,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     argc += 1;
     
     // align last byte
-    tmp = (void *) ((uint64_t) tmp & 0xfffffff8);
+    tmp = (void *) ((uint64_t) tmp & 0xfffffffffffffff8UL);
     
     // set null pointer between string area and envp
     tmp -= 8;	      // uint64_t is 8 bytes
@@ -376,13 +395,13 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     
     // store envp pointers in the proper place of user stack
     if (envc > 0) {
-        execv_task->mm->env_end = (uint64_t) envp[envc - 1];
+        execv_task->mm->env_end = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) envp[envc - 1]);
         while (envc-- > 0) {
             // envp[envc] = (char*) tmp--;
-            *((uint64_t*) tmp) = (uint64_t) envp[envc];
+            *((uint64_t*) tmp) = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) envp[envc]);
             tmp = (uint64_t*) tmp - 1;
         }
-        execv_task->mm->env_start = (uint64_t) envp[0];
+        execv_task->mm->env_start = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) envp[0]);
         // set 0 between envp and argv
         //tmp -= 8;	      // uint64_t is 8 bytes
         memset(tmp, 0, 8);
@@ -393,23 +412,41 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     // store argv pointers in the proper place of user stack
     if (argc > 0) {
         
-        execv_task->mm->arg_end = (uint64_t) argv[argc - 1];
+        execv_task->mm->arg_end = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) argv[argc - 1]);
         
         int argc2 = argc;
         while (argc2-- > 0) {
             //argv[argc2] = (char*) tmp--;
-            *((uint64_t*) tmp) = (uint64_t) argv[argc2];
+            *((uint64_t*) tmp) = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) argv[argc2]);
             tmp = (uint64_t*) tmp - 1;
         }
-        execv_task->mm->arg_start = (uint64_t) argv[0];
+        execv_task->mm->arg_start = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) argv[0]);
     }
     
     *((uint64_t*) tmp) = argc;
     rsp = tmp;
     
-    execv_task->rsp = (uint64_t) rsp;
+    // remap tmp_vir_addr to near STACK_TOP
+    execv_task->rsp = STACK_TOP - (tmp_vir_addr + PAGE_SIZE - (uint64_t) rsp);
+    self_ref_write(PT, STACK_TOP - PAGE_SIZE, self_ref_read(PT, tmp_vir_addr));
+    self_ref_write(PT, tmp_vir_addr, 0);
     
-    // execv_task->mm->start_stack = (uint64_t) rsp;
+    /*
+     * argc, argv, envp may be either stored on stack or rodata segment,
+     * must finish copying them onto user stack before load_elf,
+     * bacause load_elf will overwrite rodata segment
+     */
+    if (load_elf(execv_task, bin_name) < 0)
+        return -1; // -1 if error
+    
+    // flushing TLB immediately after modifying page table
+    // only after flushing TLB can we start to make memory access
+    __asm__ __volatile__ ("mov %0, %%cr3;"
+                          ::"r"(current->cr3));
+    
+    // setup vma_chain according to mm_struct
+    // needn't flush TLB because setup_vma doesn't modify page tale
+    setup_vma(execv_task->mm);
     
     // return to ring3, moved from func_init to here
     sysret_to_ring3();
@@ -460,6 +497,12 @@ void set_child_pt(task_struct* child) {
             end_addr &= CLEAR_OFFSET;
         }
         
+        if (vma -> vm_next == NULL) {
+            // This is the vma for stack
+            // Need to map one more page at the end to protect stack
+            end_addr += PAGE_SIZE;
+        }
+        
         while (start_addr < end_addr) {
             /*
              * for stack and heap/demand paging, must check if content is 0
@@ -487,6 +530,7 @@ void set_child_pt(task_struct* child) {
         }
         vma = vma->vm_next;
     }
+    
     
     // flushing TLB
     __asm__ __volatile__ ("mov %0, %%cr3;"
@@ -563,7 +607,7 @@ int do_fork() {
         // for parent: return child's pid
         return new_task->pid;
     }
-
+    
     // for child: return 0
     __asm__ __volatile__ ("child_ret:\t;"
                           "mov $0, %0;"

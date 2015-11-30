@@ -147,6 +147,8 @@ extern task_struct *current;
 // get specific vma of mm
 vma_struct* get_vma(mm_struct* mm, int flag);
 
+#define DO_EXECV_TMP_ADDR_TRANSLATE(x) (STACK_TOP - (tmp_vir_addr + PAGE_SIZE - x))
+
 // exit error code
 #define ILLEGAL_MEM_ACC 1 // illegal memmory access, killed by page fault handler
 task_struct *find_task_struct(int pid);

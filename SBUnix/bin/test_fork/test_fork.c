@@ -3,14 +3,15 @@
 #include <sys/defs.h>
 
 int main (int argc, char* argv[], char* envp[]) {
-    int *ptr = (int *)malloc(4);
     pid_t pid = fork();
     if (pid > 0) {
-        *ptr = 0x10;
-        printf("I am parent process %d\n",*ptr);
+        printf("I am parent process\n");
     } else if (pid == 0) {
-        *ptr = 0x20;
-        printf("I am child process %d\n", *ptr);
+        printf("I am child process\n");
+        
+        char* argv[3] = { "a1", "a2", NULL };
+        char* envp[4] = { "e1", "e2", "e3", NULL };
+        execve("bin/test_hello", argv, envp);
     }
     return 0;
 }

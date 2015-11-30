@@ -163,40 +163,6 @@ void setup_vma(mm_struct* mstruct) {
     vma_stack->vm_file = NULL;
     vma_stack->file_offset = 0;
 }
-//void
-//function_idle ()
-//{
-//  int i = 0;
-//  while (1)
-//    {
-//      dprintf ("I'm idle %d \n", i++);
-//      schedule ();
-////      __asm__ __volatile__ ("hlt");
-//    }
-//}
-
-//task_struct *
-//create_idle_thread() {
-//    task_struct * idle = (task_struct*) (kmalloc(TASK));
-//
-//    idle->ppid = 0;
-//    idle->pid = assign_pid();
-//    idle->kernel_stack = idle->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
-//    //idle->rip = (uint64_t) & function_idle; //idle will call schedule function
-//    idle->task_state = TASK_READY;
-//    idle->sleep_time = 0;
-//    idle->cr3 = get_CR3();
-//    strcpy(idle->task_name, "idle*");
-//    idle->mm = NULL;
-//    idle->wait_pid = 0;
-//
-//    front = idle;
-//    end = idle;
-//    end->next = front;
-//    current = idle;
-//
-//    return idle;
-//}
 
 void func_init() {
     char* argv[3] = { "a1", "a2", NULL };
@@ -211,29 +177,6 @@ void func_init() {
 //    do_execv("bin/sbush", argv, envp);
 }
 
-//task_struct*
-//create_thread_init() {
-//
-//    task_struct * new_task = (task_struct*) (kmalloc(TASK));
-//
-//    new_task->ppid = 0;
-//    new_task->pid = assign_pid();
-//    new_task->kernel_stack = new_task->init_kern = (uint64_t) kmalloc(KSTACK); //what is init_kern
-//    new_task->rip = (uint64_t) &func_init;
-//    new_task->task_state = TASK_NEW;
-//    new_task->sleep_time = 0;
-//    new_task->cr3 = get_CR3();
-//    strcpy(new_task->task_name, "init");
-//
-//    //set_task_struct(new_task);
-//
-//    new_task->wait_pid = 0;
-//
-//    add_task(new_task);
-//
-//    return new_task;
-//
-//}
 
 //insert new task to run queue
 void add_task(task_struct * task) {
@@ -657,15 +600,22 @@ void do_exit(int status) {
      * if yes, wake parent process
      */
     // find_task_struct takes as input pid, returns corresponding task_struct
-    //    if ((find_task_struct(current->wait_pid))->task_state == TASK_SLEEPING) {
-    //        (find_task_struct(current->wait_pid))->task_state = TASK_RUNNING;
+    //    if ((find_task_struct(current->wait_pid))->task_state == TASK_BLOCKED) {
+    //        (find_task_struct(current->wait_pid))->task_state = TASK_READY;
     //    }
     schedule();
 }
 
-// TODO
+// find task_struc in run queue according to its pid
 task_struct *find_task_struct(int pid) {
-    return NULL;
+    task_struct run=current->next;
+    while(run->pid!=pid){
+        run=run.next;
+        if(run==current)
+            return NULL;
+    }
+
+    return run;
 }
 
 void do_yield() {

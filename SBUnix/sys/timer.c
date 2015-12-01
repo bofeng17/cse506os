@@ -55,16 +55,18 @@ isr_timer ()
             system_boot_mS % 1000);
     console_row = _console_row;
     console_column = _console_column;
-
-    // for do_sleep
-    sleep_time_decrease ();
     
-    
-//    // for preemptive scheduling
-//    if (boot_count > 0) {
-//        // for cooperative scheduling:
+    // after 2s of boot, do...
+    if (boot_count > 400) {
+        // for do_sleep
+        sleep_time_decrease ();
+        
+        /*
+         * for preemptive scheduling
+         * schedule every 1s
+         */
 //        if (boot_count%200 == 0) {
 //            schedule();
 //        }
-//    }
+    }
 }

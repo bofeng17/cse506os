@@ -184,7 +184,7 @@ void func_init() {
     current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
     
     // vma_chain setup by setup_vma() in do_execev
-    do_execv("bin/test_fork", argv, envp);
+    do_execv("bin/test_hello", argv, envp);
     
     //    do_execv("bin/sbush", argv, envp);
 }
@@ -691,7 +691,7 @@ task_struct *find_task_struct(int pid) {
 // decrease sleep_time field of task_struct who are sleeping
 void sleep_time_decrease() {
     task_struct *task_sleep = current->next;
-    while (task_sleep != current) {
+    while (task_sleep != NULL && task_sleep != current) {
         if (task_sleep->task_state == TASK_SLEEPING) {
             task_sleep->sleep_time -= IRQ0_period;
             if (task_sleep->sleep_time <= 0) {

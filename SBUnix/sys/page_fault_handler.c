@@ -6,14 +6,7 @@
 #include <sys/tarfs.h>
 #include <sys/page_fault_handler.h>
 
-//void page_fault_handler () {
-//    uint64_t pf_addr;
-//    __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
-//    printf("page fault happens @%p!\n",pf_addr);
-//    __asm__ __volatile__("hlt");
-//}
-
-// 1st/2nd parm: registers/error_code pushed by CPU
+// parm: registers/error_code pushed by CPU
 void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     uint64_t pf_addr;
     task_struct *tsk = current; // Save current is critical in preemptive scheduling
@@ -26,22 +19,22 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
     
-    dprintf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
-    if (pf_err_code & PF_BIT_0) {
-        dprintf("invalid access right | ");
-    } else {
-        dprintf("not present | ");
-    }
-    if (pf_err_code & PF_BIT_1) {
-        dprintf("write | ");
-    } else {
-        dprintf("read or execute | ");
-    }
-    if (pf_err_code & PF_BIT_2) {
-        dprintf("in user mode\n");
-    } else {
-        dprintf("in kernel mode\n");
-    }
+//    dprintf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
+//    if (pf_err_code & PF_BIT_0) {
+//        dprintf("invalid access right | ");
+//    } else {
+//        dprintf("not present | ");
+//    }
+//    if (pf_err_code & PF_BIT_1) {
+//        dprintf("write | ");
+//    } else {
+//        dprintf("read or execute | ");
+//    }
+//    if (pf_err_code & PF_BIT_2) {
+//        dprintf("in user mode\n");
+//    } else {
+//        dprintf("in kernel mode\n");
+//    }
 
     
     /*
@@ -49,7 +42,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
      * check whether the given virt addr is in an addr range described VMA
      * or belong to the autho-growing stack
      */
-    if ((vma = in_vma(pf_addr, vma)) || belong_to_stack(pf_addr, vma)) {
+    if ((vma = in_vma(pf_addr, vma))) {
         /*
          * Level 2 check:
          * if bit 0 of pf_err_code is 0 (page not present)
@@ -131,7 +124,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                                    (page_frame_src | pt_perm_flag) & (~PTE_COW));
                 } else {
                     page_frame_des = allocate_page_user();
-//                    dprintf("physical page %p allocated\n", page_frame_des);
+                    //dprintf("physical page %p allocated\n", page_frame_des);
                     /*
                      * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
                      * so that we can copy content into that page frame
@@ -185,7 +178,6 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
             }
         }
     }
-    //    __asm__ __volatile__ ("hlt");
 }
 
 vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {
@@ -197,10 +189,6 @@ vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {
         }
     }
     return NULL;
-}
-
-int belong_to_stack(uint64_t virt_addr, vma_struct *vma) {
-    return 0;
 }
 
 // TODO: done with do_read, do_write ...

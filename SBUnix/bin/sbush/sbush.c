@@ -197,7 +197,6 @@ void sh_cmd(char* param,char* envp[])
 
    get_cwd(cur);
 
-
    strcat(cur, param);
 
    struct file* file = open(cur, O_RDONLY);

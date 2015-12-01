@@ -1,33 +1,4 @@
-p/x current->mm->start_code
-p/x new_task->mm->start_code
-p/x current->mm->end_code
-p/x new_task->mm->end_code
+p/x $rdi
+p/x $rsi
+p/x $rdx
 
-
-p/x current->mm->mmap
-p/x new_task->mm->mmap
-p/x current->mm->mmap->vm_start
-p/x current->mm->mmap->vm_end
-p/x new_task->mm->mmap->vm_start
-p/x new_task->mm->mmap->vm_end
-
-p/x current->mm->mmap->vm_next
-p/x new_task->mm->mmap->vm_next
-p/x current->mm->mmap->vm_next->vm_start
-p/x current->mm->mmap->vm_next->vm_end
-p/x new_task->mm->mmap->vm_next->vm_start
-p/x new_task->mm->mmap->vm_next->vm_end
-
-p/x current->mm->mmap->vm_next->vm_next
-p/x new_task->mm->mmap->vm_next->vm_next
-p/x current->mm->mmap->vm_next->vm_next->vm_start
-p/x current->mm->mmap->vm_next->vm_next->vm_end
-p/x new_task->mm->mmap->vm_next->vm_next->vm_start
-p/x new_task->mm->mmap->vm_next->vm_next->vm_end
-
-p/x current->mm->mmap->vm_next->vm_next->vm_next
-p/x new_task->mm->mmap->vm_next->vm_next->vm_next
-p/x current->mm->mmap->vm_next->vm_next->vm_next->vm_start
-p/x current->mm->mmap->vm_next->vm_next->vm_next->vm_end
-p/x new_task->mm->mmap->vm_next->vm_next->vm_next->vm_start
-p/x new_task->mm->mmap->vm_next->vm_next->vm_next->vm_end

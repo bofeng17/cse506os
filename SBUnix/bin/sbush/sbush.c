@@ -176,6 +176,10 @@ void cd_cmd(char* input) {
         while(strlen(input)>2){
 
         input = strstr(input, "\n");
+          if(input==NULL)
+        {
+            break;
+        }
         if(strlen(input)==1)
         {
             break;

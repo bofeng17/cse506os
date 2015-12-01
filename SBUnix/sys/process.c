@@ -185,18 +185,18 @@ void func_init() {
     
     // vma_chain setup by setup_vma() in do_execev
     do_execv("bin/test_fork", argv, envp);
-
-//    do_execv("bin/sbush", argv, envp);
+    
+    //    do_execv("bin/sbush", argv, envp);
 }
 
 
 //insert new task to run queue
 void add_task(task_struct * task) {
-
+    
     end->next = task;
     end = task;
     end->next = front;
-
+    
 }
 
 
@@ -221,9 +221,9 @@ create_thread(void* thread, char * thread_name) {
         front=new_task;
         end=new_task;
     }
-
+    
     add_task(new_task);
-
+    
     return new_task;
     
 }
@@ -298,8 +298,8 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
      * although each process has at least one page in stack
      * envp is passed via stack which may be overwritten without allocating new stack
      * 1) allocate a page frame 2) map a temporary virt addr to it
-     * 3) copy envp onto that page 4) remap it near STACK_TOP 
-     * 5) free the original page nearing STACK_TOP 
+     * 3) copy envp onto that page 4) remap it near STACK_TOP
+     * 5) free the original page nearing STACK_TOP
      * TODO: decrease ref_count of physical page, if reaches -1, free that page
      * still share stack top protection page after reallocation
      */
@@ -462,16 +462,16 @@ void set_child_pt(task_struct* child) {
              * for stack and heap/demand paging, must check if content is 0
              */
             // fix:
-//            if (self_ref_read(PML4, start_addr)) {
-//                // always true
-//                if (self_ref_read(PDPT, start_addr)) {
-//                    if (self_ref_read(PDT, start_addr)) {
-//                        if (self_ref_read(PT, start_addr)) {
-//                            content
-//                        }
-//                    }
-//                }
-//            }
+            //            if (self_ref_read(PML4, start_addr)) {
+            //                // always true
+            //                if (self_ref_read(PDPT, start_addr)) {
+            //                    if (self_ref_read(PDT, start_addr)) {
+            //                        if (self_ref_read(PT, start_addr)) {
+            //                            content
+            //                        }
+            //                    }
+            //                }
+            //            }
             // TODO: this assumes PT is already in memory, buggy!
             uint64_t content = self_ref_read(PT, start_addr);
             if (content) {
@@ -632,44 +632,47 @@ int do_getppid(){
 }
 
 pid_t do_waitpid(pid_t pid, int *status, int options){
-
-
-
-    //int80 call schedule
+    
+    if (current->wait_pid == pid) {
+        // if child process already exited
+        return pid;
+    }
+    
+    current->task_state = TASK_BLOCKED;
+    //int 0x80 call schedule, so that registers can be pushed
     __asm__ __volatile__ ("int $0x80;");
-
+    
     return pid;
 }
 
 void do_exit(int status) {
-    // current = current->next;
+    task_struct *parent;
     current->task_state = TASK_ZOMBIE;
     
     /*
-     * TODO: unfinished
      * Check if parent process is suspended (by calling waitpid())
      * if yes, wake parent process
      */
-    // find_task_struct takes as input pid, returns corresponding task_struct
-    //    if ((find_task_struct(current->wait_pid))->task_state == TASK_BLOCKED) {
-    //        (find_task_struct(current->wait_pid))->task_state = TASK_READY;
-    //    }
+    parent = find_task_struct(current->ppid);
+    parent->wait_pid = current->pid;
+    if (parent->task_state == TASK_BLOCKED) {
+        parent->task_state = TASK_READY;
+    }
+    // current exited, so doesn't need push registers
     schedule();
 }
-
-//// find task_struc in run queue according to its pid
-//task_struct *find_task_struct(int pid) {
-//    task_struct run=current->next;
-//    while(run->pid!=pid){
-//        run=run.next;
-//        if(run==current)
-//            return NULL;
-//    }
-//
-//    return run;
-//}
 
 void do_yield() {
     schedule();
 }
 
+// find task_struc in run queue according to its pid
+task_struct *find_task_struct(int pid) {
+    task_struct *run = current->next;
+    while(run -> pid != pid){
+        run = run -> next;
+        if(run == current)
+            return NULL;
+    }
+    return run;
+}

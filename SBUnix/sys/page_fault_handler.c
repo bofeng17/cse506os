@@ -42,7 +42,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
      * check whether the given virt addr is in an addr range described VMA
      * or belong to the autho-growing stack
      */
-    if (vma = in_vma(pf_addr, vma)) {
+    if ((vma = in_vma(pf_addr, vma))) {
         /*
          * Level 2 check:
          * if bit 0 of pf_err_code is 0 (page not present)

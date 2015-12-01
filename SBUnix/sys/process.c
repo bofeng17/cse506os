@@ -631,6 +631,7 @@ int do_getppid(){
     return current->ppid;
 }
 
+// 2nd/3rd parm ignored
 pid_t do_waitpid(pid_t pid, int *status, int options){
     
     if (current->wait_pid == pid) {
@@ -663,6 +664,7 @@ void do_exit(int status) {
 }
 
 void do_yield() {
+    // It is safe to call schedule directly instaed of int 0x80
     schedule();
 }
 

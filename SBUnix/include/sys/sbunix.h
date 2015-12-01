@@ -23,7 +23,7 @@ int terminal_read(char *buf, int count);
 void terminal_get_char(uint8_t c);
 
 
-#define DEBUG 1
+#define DEBUG 0
 #if DEBUG
 #define dprintf printf
 #else

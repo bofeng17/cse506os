@@ -172,9 +172,9 @@ void func_init() {
     // currently init is kernel thread, doesn't have mm_struct and vma
     set_task_struct(current);
 
-    do_execv("bin/test_fork", argv, envp);
+ //   do_execv("bin/test_fork", argv, envp);
 
-//    do_execv("bin/sbush", argv, envp);
+    do_execv("bin/sbush", argv, envp);
 }
 
 
@@ -186,7 +186,6 @@ void add_task(task_struct * task) {
     end->next = front;
 
 }
-
 
 task_struct*
 create_thread(void* thread, char * thread_name) {
@@ -621,4 +620,3 @@ void do_exit(int status) {
 void do_yield() {
     schedule();
 }
-

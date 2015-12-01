@@ -8,10 +8,6 @@
 
 #define MAX_ARGS 20
 
-/*int contain_slash(char*)
- {
- size
- }*/
 
 void shellPrompt() {
 
@@ -24,6 +20,42 @@ void shellPrompt() {
 
     printf("root@SBUINX:%s#", root_dir);
 
+}
+
+int parseInputToParams(char* input, char* param[], char sep) {
+    char ch;
+    int status = 0;   //0 indicates current char is a space and 1 not
+    int count = 0;
+    while (*input) {
+        ch = *input;
+        if (ch == sep && status == 0) {
+            status = 0;         //  ls
+        }                       // ^
+        if (ch == sep && status == 1) {
+            *input = '\0';
+            status = 0;         //ls -a
+        }                       //  ^
+        if (ch != sep && status == 0) {
+            //args[count]=malloc(sizeof(input));
+            param[count++] = input;
+            status = 1;         //ls -a
+        }                       //  ^
+        if (ch != sep && status == 1) {
+            status = 1;         //pwd
+        }                       // ^
+        input++;
+        if (*input == '\n')
+            *input = '\0';
+    }
+    param[count] = NULL;
+    /*#ifdef DEBUG
+     int i=0;
+     for(i=0;i<count;i++)
+     printf("(parseInputToParams) arg %d is :%s\n",i,param[i]);
+
+     printf("count is: %d\n",count);
+     #endif */
+    return count;
 }
 
 void ps_cmd() {
@@ -142,94 +174,6 @@ void cd_cmd(char* input) {
 
 }
 
- void sh_cmd(char* param)
- {
-
-    if (param == NULL) {
-        printf("===[ERROR] please enter file name!===\n");
-        return;
-    }
-
-    char* cur = malloc(30 * sizeof(char));
-
-    get_cwd(cur);
-
-
-    strcat(cur, param);
-
-    struct file* file = open(cur, O_RDONLY);
-
-    if (file == NULL) {
-        printf("===[ERROR] no such script file!===\n");
-        return;
-    }
-
-    char* input = malloc(30*sizeof(char));
-
-    read(file, input, 1000);
-
-    if(input[0]=='#' && input[1]=='!')
-    {
-        
-        char* tmp = malloc(30*sizeof(char));
-       
-        while(strlen(input)>2){
-
-        input = strstr(input, "\n");
-        if(strlen(input)==1)
-        {
-            break;
-        }
-        strcpy(input, input+1);
-        strcpy(tmp, input);
-        executeCmd(tmp);
-        }
-      
-    }
-    else
-    {
-        printf("this is not a script file!!!\n");
-    }
-
-   
-
- }
-
-int parseInputToParams(char* input, char* param[], char sep) {
-    char ch;
-    int status = 0;   //0 indicates current char is a space and 1 not
-    int count = 0;
-    while (*input) {
-        ch = *input;
-        if (ch == sep && status == 0) {
-            status = 0;			//  ls
-        }						// ^
-        if (ch == sep && status == 1) {
-            *input = '\0';
-            status = 0;			//ls -a
-        }						//  ^
-        if (ch != sep && status == 0) {
-            //args[count]=malloc(sizeof(input));
-            param[count++] = input;
-            status = 1;			//ls -a
-        }						//  ^
-        if (ch != sep && status == 1) {
-            status = 1;			//pwd
-        }						// ^
-        input++;
-        if (*input == '\n')
-            *input = '\0';
-    }
-    param[count] = NULL;
-    /*#ifdef DEBUG
-     int i=0;
-     for(i=0;i<count;i++)
-     printf("(parseInputToParams) arg %d is :%s\n",i,param[i]);
-
-     printf("count is: %d\n",count);
-     #endif	*/
-    return count;
-}
 
 void pwd_cmd() {
 
@@ -241,21 +185,125 @@ void pwd_cmd() {
 
 }
 
-void executeCmd(char* input) {
+void sh_cmd(char* param,char* envp[])
+{
 
-    //int pid=0;
-    //int status=0;
+   if (param == NULL) {
+       printf("===[ERROR] please enter file name!===\n");
+       return;
+   }
+
+   char* cur = malloc(30 * sizeof(char));
+
+   get_cwd(cur);
+
+
+   strcat(cur, param);
+
+   struct file* file = open(cur, O_RDONLY);
+
+   if (file == NULL) {
+       printf("===[ERROR] no such script file!===\n");
+       return;
+   }
+
+   char* input = malloc(30*sizeof(char));
+
+   read(file, input, 1000);
+
+   if(input[0]=='#' && input[1]=='!')
+   {
+
+       char* tmp = malloc(30*sizeof(char));
+
+       while(strlen(input)>2){
+
+       input = strstr(input, "\n");
+       if(strlen(input)==1)
+       {
+           break;
+       }
+       strcpy(input, input+1);
+       strcpy(tmp, input);
+       executeCmd(tmp,envp);
+       }
+
+   }
+   else
+   {
+       printf("===[ERROR] Not a script file!===\n");
+   }
+
+}
+
+void executeBin(char* cmd,char* args[],char* envp[]){
+    int result=0;
+    if(!strncmp(cmd,".",1)||!strncmp(cmd,"/",1)){// direct execute
+        result=execve(cmd, args, envp);
+
+        if(result<0){
+            printf("===[ERROR] cannot direct execute :%s !===\n",cmd);
+            return;
+        }
+    }else{
+        printf("===[ERROR] cannot execute :%s !===\n",cmd);
+
+//        char* path[MAX_ARGS];
+//        int n=parseInputToParams(env.PATH,path,':');//get cmd path in PATH
+//        int i=0;
+//        int times=n;
+//        while(i<n){
+//            char* fullPath=malloc(MAX_LENGTH*sizeof(char));
+//            strcpy(fullPath, path[i]);
+//            strcpy(fullPath+strlen(fullPath), "/");
+//            strcpy(fullPath+strlen(fullPath), cmd);
+//            if(execve(fullPath, args, envp)<0){
+//                times--;
+//            }else{
+//                return;
+//
+//            }
+//
+//            //printf("(PATH) result is %d\n",result);
+//
+//            i++;
+//            // if(result==0){
+//            //  printf("(return) result is %d\n",result);
+//            //  return result;
+//            // }
+//        }
+//
+//        if(times==0){
+//            printf("===cannot execute :%s [error]!===\n",cmd);
+//            printf("enter 'exit' to quit or other to continue!\n");
+//        }
+    }
+
+
+    //printf("(return) result is %d\n",result);
+
+
+    //return result;
+}
+
+void executeCmd(char* input,char* envp[]) {
+
+    int status=0;
     char* args[MAX_ARGS];
 
     int n = parseInputToParams(input, args, ' ');
 
-    //parseInputToParams(input,args,' ');
     char* cmd = args[0];
     char* param;
     if (n > 1) {
         param = args[1];
     } else {
         param = NULL;
+    }
+
+    int isBgJob=!strcmp(args[n-1],"&");
+    if(isBgJob){
+        args[n-1]=NULL;
     }
 
     if (!strcmp(cmd, "ls")) {
@@ -269,15 +317,35 @@ void executeCmd(char* input) {
     } else if (!strcmp(cmd, "pwd")) {
         pwd_cmd();
     }else if (!strcmp(cmd, "sh")) {
-        sh_cmd(param);
+        sh_cmd(param,envp);
     } else if (!strcmp(cmd, "help")) {
 
-    } else {
-        printf(
-                "===[ERROR] %s command not found! (Try `help' for more info.)===\n",
-                cmd);
+    }else {//execute bin or executables
+       pid_t pid = fork();
+        if(pid == 0) {
+            executeBin(args[0],args,envp);
+            exit(0);
+        }else if(pid>0){
+            if(isBgJob){
+                printf("backgroud job pid is:%d\n",pid);
+            }else{
+                waitpid(pid, &status, 0);
+            }
+        }else{
+            printf("===[ERROR] fork failed!===\n");
+        }
+
     }
+//    else {
+//
+//        printf(
+//                "===[ERROR] %s command not found! (Try `help' for more info.)===\n",
+//                cmd);
+//    }
 }
+
+
+
 int main(int argc, char* argv[], char* envp[]) {
 
     //getEnv(envp);
@@ -312,7 +380,7 @@ int main(int argc, char* argv[], char* envp[]) {
         //fgets(input,MAX_LENGTH,stdin);
 //        printf("input length is:%d",n);
         if (n > 0)
-            executeCmd(input);
+            executeCmd(input,envp);
 
     }
 

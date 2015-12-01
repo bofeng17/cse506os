@@ -54,9 +54,11 @@ void isr_keyboard() {
                     } else {
                         char_1 = scan_code[key_code];
                         char_2 = 0;
+                        terminal_get_char (char_1);
+
                         // TODO: should put format check here!
                         if (char_1 >= 'a' && char_1 <= 'z') {
-                            terminal_get_char (char_1);
+                          //  terminal_get_char (char_1);
                             if (CONTROL == 1) {
                                 /*
                                  * ctl + a -> 1, ctl + z -> 26
@@ -68,7 +70,7 @@ void isr_keyboard() {
                             }
                         }
                         if (key_code >= 2 && key_code <= 13) {// 1 -- =
-                            terminal_get_char (char_1);
+                            //terminal_get_char (char_1);
                         }
                     }
                 } else {//SHITF pressed

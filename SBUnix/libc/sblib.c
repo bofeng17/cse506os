@@ -229,3 +229,22 @@ void *memset(void *s, int ch, size_t n) {
 //    free(dir);
 //    return n;
 //}
+// convert string to integer (positive)
+int stoi(char* s){
+    int i=0;
+    int result=0;
+
+
+
+    while(s[i]>='0'&&s[i]<='9'){
+        result*=10;
+        result+=(s[i]-'0');
+        i++;
+    }
+
+    if(i==0){
+        return -1;
+    }
+
+    return result;
+}

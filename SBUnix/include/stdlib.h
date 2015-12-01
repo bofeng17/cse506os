@@ -120,4 +120,7 @@ int ps(ps_t ps);
 void yield();
 void clear_screen();
 
+// convert string to integer (positive)
+int stoi(char* s);
+
 #endif

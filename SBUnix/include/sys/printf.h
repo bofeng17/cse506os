@@ -30,13 +30,9 @@ extern size_t console_row;
 extern size_t console_column;
 extern uint8_t console_color;
 
-static inline uint8_t make_color(enum vga_color fg, enum vga_color bg) {
-    return fg | bg << 4;
-}
+uint8_t make_color(enum vga_color fg, enum vga_color bg);
+uint16_t make_vgaentry(char c, uint8_t color);
 
-static inline uint16_t make_vgaentry(char c, uint8_t color){
-    return (uint16_t)c | ((uint16_t)color) << 8;
-}
 void console_initialize();
 void console_putchar(char c);
 

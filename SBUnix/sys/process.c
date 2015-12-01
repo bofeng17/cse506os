@@ -173,27 +173,11 @@ void func_init() {
     
     // allocate mm_struct and vma for init
     set_task_struct(current);
-<<<<<<< HEAD
 
  //   do_execv("bin/test_fork", argv, envp);
 
     do_execv("bin/sbush", argv, envp);
-=======
-    
-    // allocate heap
-    current->mm->start_brk = (uint64_t) umalloc((void*)HEAP_BASE, PAGE_SIZE);
-    current->mm->brk = current->mm->start_brk + PAGE_SIZE;
-    
-    // allocate stack
-    umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
-    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
-    current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
-    
-    // vma_chain setup by setup_vma() in do_execev
-    do_execv("bin/test_fork", argv, envp);
-    
-    //    do_execv("bin/sbush", argv, envp);
->>>>>>> origin/master
+
 }
 
 

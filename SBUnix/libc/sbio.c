@@ -77,6 +77,7 @@ int printf(const char *format, ...) {
 
     // TODO: be cautious here, not fully verified
     write(1, printf_buf, printf_buf_count);
+    memset((void*)printf_buf,0,MAX_BUFF);
 
     return printed;
 }
@@ -232,7 +233,7 @@ int scanf(const char *format, ...) {
 int gets(char *str) {
 
     int len = read(0, str, MAX_BUFF);
-    str[len--]='\0';
+    str[--len]='\0';
 
     return len;
 }

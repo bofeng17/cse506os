@@ -115,7 +115,7 @@ void print_char(char arg) {
  * printf %s, and terminal write
  */
 void print_string(char* arg, int count) {
-    while(count) {//be careful here
+    while(count) {
         print_char(*arg);
         arg++;
         count--;

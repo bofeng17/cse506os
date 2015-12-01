@@ -256,15 +256,15 @@ void test_selfref(uint64_t testaddr) {
     uint64_t l4inx = get_pml4e_index(testaddr);
     void* l4vir = &global_PML4->PML4E[l4inx];
     uint64_t l4val = global_PML4->PML4E[l4inx];
-    dprintf("=========================\n");
+    printf("=========================\n");
 
-    dprintf("testaddr is: %x\n", testaddr);
+    printf("testaddr is: %x\n", testaddr);
 
-    dprintf("(page walk)PML4 entry addr is: %x, value is: %x \n", l4vir, l4val);
+    printf("(page walk)PML4 entry addr is: %x, value is: %x \n", l4vir, l4val);
 
     uint64_t l4val_ref = self_ref_read(PML4, testaddr);
-    dprintf("(self refer) PML4 entry value is: %x \n", l4val_ref);
-    dprintf("=========================\n");
+    printf("(self refer) PML4 entry value is: %x \n", l4val_ref);
+    printf("=========================\n");
 
 }
 

@@ -173,7 +173,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                 do_exit(-ILLEGAL_MEM_ACC);
             } else {
                 // pf caused by kernel bugs or (extreme memory shortage)
-                printf("Kernel Pannic @ %p!\n", pf_addr);
+                printf("Kernel Panic @%p by %p!\n", pf_addr,regs->rip);
                 __asm__ __volatile__("hlt");
             }
         }

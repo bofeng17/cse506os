@@ -65,6 +65,12 @@ co_yield:
     sti
     iretq
 
+    .globl _hlt # for testing preemptive scheduling
+_hlt:
+    sti
+    hlt
+    retq
+
 .macro CPU_Exceptions m
   .globl exception\m
   exception\m:

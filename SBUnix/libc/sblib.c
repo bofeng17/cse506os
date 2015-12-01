@@ -192,15 +192,15 @@ int ps(ps_t ps){
 //    return fd;
 //}
 //
-//void *memset(void *s, int ch, size_t n) {
-//    char* tmp = s;
-//    while(n > 0) {
-//        *tmp = ch;
-//        tmp++;
-//        n--;
-//    }
-//    return s;
-//}
+void *memset(void *s, int ch, size_t n) {
+    char* tmp = s;
+    while(n > 0) {
+        *tmp = ch;
+        tmp++;
+        n--;
+    }
+    return s;
+}
 //
 //int getdents(uint32_t fd, struct dirent *dirp, uint32_t count) {
 //    return syscall_3(SYS_getdents, fd, (uint64_t)dirp, count);

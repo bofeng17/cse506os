@@ -9,7 +9,7 @@ int main(int argc, char* argv[], char* envp[]) {
 
     int len=gets(g);
 
-    printf("you entered: %s ,length is %d\n",g, len);
+    printf("you entered: %s,length is %d\n",g, len);
 
     char* s = malloc(100 * sizeof(char));
     int n = 0;

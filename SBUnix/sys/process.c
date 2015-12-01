@@ -240,10 +240,10 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
     char** params = *params_p;
     if (params != NULL) {
         params_no = count_args(params);
-        dprintf("param_no is %d\n", params_no);
+        //dprintf("param_no is %d\n", params_no);
         i = params_no - 1;
         while (params[i] != NULL) {
-            dprintf("%s\n", params[i]);
+            //dprintf("%s\n", params[i]);
             
             rsp = (char*) rsp - strlen(params[i]);
             
@@ -461,6 +461,18 @@ void set_child_pt(task_struct* child) {
             /*
              * for stack and heap/demand paging, must check if content is 0
              */
+            // fix:
+//            if (self_ref_read(PML4, start_addr)) {
+//                // always true
+//                if (self_ref_read(PDPT, start_addr)) {
+//                    if (self_ref_read(PDT, start_addr)) {
+//                        if (self_ref_read(PT, start_addr)) {
+//                            content
+//                        }
+//                    }
+//                }
+//            }
+            // TODO: this assumes PT is already in memory, buggy!
             uint64_t content = self_ref_read(PT, start_addr);
             if (content) {
                 page_sp * page = get_page_frame_descriptor(content);

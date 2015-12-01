@@ -42,6 +42,7 @@
 isr32:
     cli
     push_al
+    mov 0x90(%rsp), %rdi
     call    isr_timer
     pop_al
     sti

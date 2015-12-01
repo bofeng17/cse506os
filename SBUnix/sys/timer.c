@@ -14,6 +14,7 @@ uint32_t IRQ0_period = 5; // 5 mS between IRQs
 uint16_t PIT_reload_value = 5965; // 11930/2 50 HZ
 
 uint32_t boot_count = 0;
+uint32_t scheduled = 0;
 
 //Every time the mode/command register is written to, all internal logic in the selected PIT channel is reset, and the output immediately goes to its initial state
 void
@@ -35,9 +36,7 @@ timer_init ()
     //      pic_set_mask (1);
 }
 
-void
-isr_timer ()
-{
+void isr_timer (uint64_t cs) {
     size_t _console_row = console_row;
     size_t _console_column = console_column;
     console_row = 24;
@@ -55,6 +54,8 @@ isr_timer ()
             system_boot_mS % 1000);
     console_row = _console_row;
     console_column = _console_column;
+    
+    //printf("%d   ",cs);
     
     // after 2s of boot, do...
     if (boot_count > 400) {

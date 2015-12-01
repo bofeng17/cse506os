@@ -54,33 +54,36 @@ void isr_keyboard() {
                     } else {
                         char_1 = scan_code[key_code];
                         char_2 = 0;
-                        // put into terminal_buffer
-                        terminal_ch = char_1;
                         // TODO: should put format check here!
                         if (char_1 >= 'a' && char_1 <= 'z') {
+                            terminal_get_char (char_1);
                             if (CONTROL == 1) {
                                 /*
                                  * ctl + a -> 1, ctl + z -> 26
                                  * currently not supported
                                  */
-                                terminal_ch = char_1 - 0x60;
+                                //terminal_ch = char_1 - 0x60;
                                 char_2 = char_1 - 0x20;
                                 char_1 = '^';
                             }
                         }
-                        terminal_get_char (terminal_ch);
+                        if (key_code >= 2 && key_code <= 13) {// 1 -- =
+                            terminal_get_char (char_1);
+                        }
                     }
                 } else {//SHITF pressed
                     char_1 = scan_code_shift[key_code];
                     char_2 = 0;
-                    // put into terminal_buffer
-                    terminal_get_char (char_1);
                     if (char_1 >= 'A' && char_1 <= 'Z') {
+                        terminal_get_char (char_1);
                         if (CONTROL == 1) {
                             // needn't put into terminal_buffer
                             char_2 = char_1;
                             char_1 = '^';
                         }
+                    }
+                    if (key_code >= 2 && key_code <= 13) { // shift+1 -- shift+=
+                        terminal_get_char (char_1);
                     }
                 }
             }

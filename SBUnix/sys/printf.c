@@ -18,7 +18,7 @@ void console_initialize() {
     console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
 }
 
-inline void console_putchar(char c) {
+void console_putchar(char c) {
     if (c == '\n'){
         console_column=0;
         console_row = (console_row+1)%VGA_HEIGHT;
@@ -98,7 +98,7 @@ int printf(const char *format, ...) {
     return printed;
 }
 
-inline void print_char(char arg) {
+void print_char(char arg) {
     console_putchar(arg);
 }
 
@@ -107,7 +107,7 @@ inline void print_char(char arg) {
  * printf %s, and terminal write
  */
 void print_string(char* arg, int count) {
-    while(count) {//be careful here
+    while(count) {
         print_char(*arg);
         arg++;
         count--;

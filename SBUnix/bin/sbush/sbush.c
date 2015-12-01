@@ -8,7 +8,6 @@
 
 #define MAX_ARGS 20
 
-
 void shellPrompt() {
 
     char* cur_dir = malloc(10 * sizeof(char));
@@ -84,7 +83,6 @@ void ls_cmd() {
     //printf("dirent size: %d\n", sizeof(struct dirent));
 
     void* b = opendir(direct);
-
 
     readdir(b, a);
     char* final_name = malloc(30 * sizeof(char));
@@ -174,7 +172,6 @@ void cd_cmd(char* input) {
 
 }
 
-
 void pwd_cmd() {
 
     char* pwd = malloc(30 * sizeof(char));
@@ -185,67 +182,68 @@ void pwd_cmd() {
 
 }
 
-void sh_cmd(char* param,char* envp[])
-{
+void sh_cmd(char* param, char* envp[]) {
 
-   if (param == NULL) {
-       printf("===[ERROR] please enter file name!===\n");
-       return;
-   }
+    if (param == NULL) {
+        printf("===[ERROR] please enter file name!===\n");
+        return;
+    }
 
-   char* cur = malloc(30 * sizeof(char));
+    char* cur = malloc(30 * sizeof(char));
 
-   get_cwd(cur);
+    get_cwd(cur);
 
-   strcat(cur, param);
+    strcat(cur, param);
 
-   struct file* file = open(cur, O_RDONLY);
+    struct file* file = open(cur, O_RDONLY);
 
-   if (file == NULL) {
-       printf("===[ERROR] no such script file!===\n");
-       return;
-   }
+    if (file == NULL) {
+        printf("===[ERROR] no such script file!===\n");
+        return;
+    }
 
-   char* input = malloc(30*sizeof(char));
+    char* input = malloc(30 * sizeof(char));
 
-   read(file, input, 1000);
+    read(file, input, 1000);
 
-   if(input[0]=='#' && input[1]=='!')
-   {
+    if (input[0] == '#' && input[1] == '!') {
 
-       char* tmp = malloc(30*sizeof(char));
+        char* tmp = malloc(30 * sizeof(char));
 
-       while(strlen(input)>2){
+        while (strlen(input) > 2) {
 
-       input = strstr(input, "\n");
-       if(strlen(input)==1)
-       {
-           break;
-       }
-       strcpy(input, input+1);
-       strcpy(tmp, input);
-       executeCmd(tmp,envp);
-       }
+            input = strstr(input, "\n");
+            if (strlen(input) == 1) {
+                break;
+            }
+            strcpy(input, input + 1);
+            strcpy(tmp, input);
+            executeCmd(tmp, envp);
+        }
 
-   }
-   else
-   {
-       printf("===[ERROR] Not a script file!===\n");
-   }
+    } else {
+        printf("===[ERROR] Not a script file!===\n");
+    }
 
 }
 
-void executeBin(char* cmd,char* args[],char* envp[]){
-    int result=0;
-    if(!strncmp(cmd,".",1)||!strncmp(cmd,"/",1)){// direct execute
-        result=execve(cmd, args, envp);
+void executeBin(char* cmd, char* args[], char* envp[]) {
+    int result = 0;
+    result = execve(cmd, args, envp);
 
-        if(result<0){
-            printf("===[ERROR] cannot direct execute :%s !===\n",cmd);
-            return;
-        }
-    }else{
-        printf("===[ERROR] cannot execute :%s !===\n",cmd);
+    if (result < 0) {
+        printf("===[ERROR] cannot direct execute :%s !===\n", cmd);
+        return;
+    }
+//    if(!strncmp(cmd,".",1)||!strncmp(cmd,"/",1)){// direct execute
+//        result=execve(cmd, args, envp);
+//
+//        if(result<0){
+//            printf("===[ERROR] cannot direct execute :%s !===\n",cmd);
+//            return;
+//        }
+//    }else{
+//        printf("===[ERROR] cannot execute :%s !===\n",cmd);
 
 //        char* path[MAX_ARGS];
 //        int n=parseInputToParams(env.PATH,path,':');//get cmd path in PATH
@@ -276,18 +274,15 @@ void executeBin(char* cmd,char* args[],char* envp[]){
 //            printf("===cannot execute :%s [error]!===\n",cmd);
 //            printf("enter 'exit' to quit or other to continue!\n");
 //        }
-    }
-
-
-    //printf("(return) result is %d\n",result);
-
-
-    //return result;
 }
 
-void executeCmd(char* input,char* envp[]) {
+//printf("(return) result is %d\n",result);
 
-    int status=0;
+//return result;
+
+void executeCmd(char* input, char* envp[]) {
+
+    int status = 0;
     char* args[MAX_ARGS];
 
     int n = parseInputToParams(input, args, ' ');
@@ -300,9 +295,9 @@ void executeCmd(char* input,char* envp[]) {
         param = NULL;
     }
 
-    int isBgJob=!strcmp(args[n-1],"&");
-    if(isBgJob){
-        args[n-1]=NULL;
+    int isBgJob = !strcmp(args[n - 1], "&");
+    if (isBgJob) {
+        args[n - 1] = NULL;
     }
 
     if (!strcmp(cmd, "ls")) {
@@ -315,22 +310,28 @@ void executeCmd(char* input,char* envp[]) {
         ps_cmd();
     } else if (!strcmp(cmd, "pwd")) {
         pwd_cmd();
-    }else if (!strcmp(cmd, "sh")) {
-        sh_cmd(param,envp);
+    } else if (!strcmp(cmd, "sh")) {
+        sh_cmd(param, envp);
+    } else if (!strcmp(cmd, "exit")) {
+
     } else if (!strcmp(cmd, "help")) {
 
-    }else {//execute bin or executables
-       pid_t pid = fork();
-        if(pid == 0) {
-            executeBin(args[0],args,envp);
+    } else {    //execute bin or executables
+        pid_t pid = fork();
+        if (pid == 0) {
+            if (open(args[0],O_RDONLY) == NULL) {
+                printf("===[ERROR] not find executable %s !===\n",args[0]);
+            } else {
+                executeBin(args[0], args, envp);
+            }
             exit(0);
-        }else if(pid>0){
-            if(isBgJob){
-                printf("backgroud job pid is:%d\n",pid);
-            }else{
+        } else if (pid > 0) {
+            if (isBgJob) {
+                printf("background job pid is:%d\n", pid);
+            } else {
                 waitpid(pid, &status, 0);
             }
-        }else{
+        } else {
             printf("===[ERROR] fork failed!===\n");
         }
 
@@ -342,8 +343,6 @@ void executeCmd(char* input,char* envp[]) {
 //                cmd);
 //    }
 }
-
-
 
 int main(int argc, char* argv[], char* envp[]) {
 
@@ -379,7 +378,7 @@ int main(int argc, char* argv[], char* envp[]) {
         //fgets(input,MAX_LENGTH,stdin);
 //        printf("input length is:%d",n);
         if (n > 0)
-            executeCmd(input,envp);
+            executeCmd(input, envp);
 
     }
 

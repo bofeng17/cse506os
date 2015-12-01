@@ -58,12 +58,6 @@ size_t get_size_oct(char* string)
     return result;
 }
 
-
-static inline struct posix_header_ustar *tarfs_next_header(void *ptr, size_t size)
-{
-    return ptr + ((size + 512 - 1)/512 + 1) * 512;
-}
-
 static inline struct posix_header_ustar *tarfs_header_walk(struct posix_header_ustar *hdr)
 {
     uint64_t size = get_size_oct(hdr->size);
@@ -85,7 +79,7 @@ tarfs_file* tarfs_open(char *name, int flags)
     //printf("im in tarfs open 1\n");
     if(name==NULL)
     {
-        printf("ERROR: provided file name is null\n");
+        dprintf("ERROR: provided file name is null\n");
         //printf("im in tarfs open 2\n");
         return NULL;
     }
@@ -119,10 +113,9 @@ tarfs_file* tarfs_open(char *name, int flags)
     
     //printf("im in tarfs open 6\n");
     
-    printf("ERROR: tarfs open file failed\n");
-    return NULL;
+    dprintf("ERROR: tarfs open file failed\n");
     }
-    printf("we only support O_RDONLY flags\n");
+    dprintf("we only support O_RDONLY flags\n");
     return NULL;
     
 }
@@ -175,7 +168,7 @@ void* find_file(char* filename)
     
     if(filename==NULL)
     {
-        printf("ERROR: provided file name is null\n");
+        dprintf("ERROR: provided file name is null\n");
         return NULL;
     }
     
@@ -203,7 +196,7 @@ void* do_opendir(const char* name)
  
     if(name==NULL)
     {
-        printf("ERROR: provided file name is null\n");
+        dprintf("ERROR: provided file name is null\n");
         return NULL;
     }
 

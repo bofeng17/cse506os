@@ -174,7 +174,14 @@ void func_init() {
     // allocate mm_struct and vma for init
     set_task_struct(current);
 
- //   do_execv("bin/test_fork", argv, envp);
+    // allocate heap
+    current->mm->start_brk = (uint64_t) umalloc((void*)HEAP_BASE, PAGE_SIZE);
+    current->mm->brk = current->mm->start_brk + PAGE_SIZE;
+
+    // allocate stack
+    umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
+    umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
+    current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
 
     do_execv("bin/sbush", argv, envp);
 
@@ -268,6 +275,8 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 
 int do_execv(char* bin_name, char ** argv, char** envp) {
     task_struct* execv_task = current;
+    //set task name
+    strcpy(execv_task->task_name, bin_name);
     
     int argc = 0;
     int envc = 0;
@@ -503,7 +512,7 @@ int do_fork() {
     new_task->ppid = current->pid;
     
     //copy task name
-    strcpy(new_task->task_name, "child");
+    strcpy(new_task->task_name, current->task_name);
     
     //memory portion begins here
     //child has it own kernel stack

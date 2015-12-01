@@ -118,5 +118,6 @@ typedef ps_state* ps_t;
 int ps(ps_t ps);
 
 void yield();
+void clear_screen();
 
 #endif

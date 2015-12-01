@@ -312,18 +312,21 @@ void executeCmd(char* input, char* envp[]) {
         pwd_cmd();
     } else if (!strcmp(cmd, "sh")) {
         sh_cmd(param, envp);
+    } else if (!strcmp(cmd, "clear")) {
+        clear_screen();
     } else if (!strcmp(cmd, "exit")) {
 
     } else if (!strcmp(cmd, "help")) {
 
     } else {    //execute bin or executables
+        if (open(args[0], O_RDONLY) == NULL) {
+            printf("===[ERROR] not find executable %s !===\n", args[0]);
+            return;
+        }
+
         pid_t pid = fork();
         if (pid == 0) {
-            if (open(args[0],O_RDONLY) == NULL) {
-                printf("===[ERROR] not find executable %s !===\n",args[0]);
-            } else {
                 executeBin(args[0], args, envp);
-            }
             exit(0);
         } else if (pid > 0) {
             if (isBgJob) {
@@ -354,6 +357,7 @@ int main(int argc, char* argv[], char* envp[]) {
     //executeScript(argv[1],envp);
     //exit(0);
     //}
+    clear_screen();
 
     printf("---------------------------------------------------------------\n");
     printf("--------------Welcome! Thanks for using SBUINX!----------------\n");

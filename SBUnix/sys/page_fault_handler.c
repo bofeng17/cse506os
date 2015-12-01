@@ -14,7 +14,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     uint64_t pt_perm_flag;
     uint64_t page_frame_des; // physical addr of page frame newly allocated. Destination
     uint64_t page_frame_src; // physical addr of existed page frame read by self_ref_read(). Source
-    uint64_t tmp_vir_addr = 0xffffffff80000000UL; // used in COW to map newly allocated page frame
+    uint64_t tmp_vir_addr = 0xffffffff80000000UL + PAGE_SIZE; // used in COW to map newly allocated page frame
     uint64_t tmp_phys_addr; // used in COW to store the original mapping of stolen tmp_vir_addr
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
@@ -126,7 +126,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                     page_frame_des = allocate_page_user();
                     //dprintf("physical page %p allocated\n", page_frame_des);
                     /*
-                     * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
+                     * steal tmp_vir_addr (0xffffffff80000000UL+PAGE_SIZE) and point it to the allocated page frame
                      * so that we can copy content into that page frame
                      * before stealing, save the original mapping
                      */

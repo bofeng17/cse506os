@@ -103,19 +103,9 @@ pid_t waitpid(pid_t pid, int *status, int options) {
     return syscall_3(SYS_wait4, pid, (uint64_t)status, options);
 }
 
-//struct timespec {
-//    uint64_t  tv_sec;        /* seconds */
-//    long   tv_nsec;       /* nanoseconds */
-//};
-//unsigned int sleep(unsigned int seconds) {
-//    struct timespec *a = malloc(sizeof(struct timespec));
-//    struct timespec *b = malloc(sizeof(struct timespec));
-//
-//    a->tv_sec = seconds;
-//
-//    return syscall_2(SYS_nanosleep,(uint64_t)a,(uint64_t)b);
-//}
-//
+void sleep(uint32_t seconds) {
+    syscall_1(SYS_sleep, seconds);
+}
 
 // memory
 //typedef uint64_t size_t;

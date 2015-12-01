@@ -183,7 +183,13 @@ void func_init() {
     umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
     current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
 
+
     do_execv("bin/sbush", argv, envp);
+
+    
+    // vma_chain setup by setup_vma() in do_execev
+    //do_execv("bin/test_hello", argv, envp);
+    
 
 }
 
@@ -630,24 +636,27 @@ int do_getppid(){
     return current->ppid;
 }
 
-// 2nd/3rd parm ignored
+// 3rd parm ignored
 pid_t do_waitpid(pid_t pid, int *status, int options){
-    
-    if (current->wait_pid == pid) {
-        // if child process already exited
-        return pid;
+    if (current->wait_pid != pid) {
+        // if child process not exited
+        current->task_state = TASK_BLOCKED;
+        //int 0x80 call schedule, so that registers can be pushed
+        __asm__ __volatile__ ("int $0x80;");
     }
+    // TODO: release the resource of child process
     
-    current->task_state = TASK_BLOCKED;
-    //int 0x80 call schedule, so that registers can be pushed
-    __asm__ __volatile__ ("int $0x80;");
+    // pass ret_val of child to *status
+    *status = find_task_struct(pid)->ret_val;
     
+    // if child process already exited, return at once
     return pid;
 }
 
 void do_exit(int status) {
     task_struct *parent;
     current->task_state = TASK_ZOMBIE;
+    current->ret_val = status;
     
     /*
      * Check if parent process is suspended (by calling waitpid())
@@ -662,12 +671,18 @@ void do_exit(int status) {
     schedule();
 }
 
-void do_yield() {
-    // It is safe to call schedule directly instaed of int 0x80
-    schedule();
+void do_sleep(uint32_t seconds) {
+    current->task_state = TASK_SLEEPING;
+    current->sleep_time = seconds * 1000;
+    __asm__ __volatile__ ("int $0x80;");
 }
 
-// find task_struc in run queue according to its pid
+void do_yield() {
+    // Although it is safe to call schedule directly instaed of int 0x80
+    __asm__ __volatile__ ("int $0x80;");
+}
+
+// find task_struct in run queue according to its pid
 task_struct *find_task_struct(int pid) {
     task_struct *run = current->next;
     while(run -> pid != pid){
@@ -678,3 +693,18 @@ task_struct *find_task_struct(int pid) {
     return run;
 }
 
+
+// decrease sleep_time field of task_struct who are sleeping
+void sleep_time_decrease() {
+    task_struct *task_sleep = current->next;
+    while (task_sleep != NULL && task_sleep != current) {
+        if (task_sleep->task_state == TASK_SLEEPING) {
+            task_sleep->sleep_time -= IRQ0_period;
+            if (task_sleep->sleep_time <= 0) {
+                task_sleep->sleep_time = 0;
+                task_sleep->task_state = TASK_READY;
+            }
+        }
+        task_sleep = task_sleep->next;
+    }
+}

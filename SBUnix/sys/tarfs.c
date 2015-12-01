@@ -95,7 +95,7 @@ tarfs_file* tarfs_open(char *name, int flags)
         if(!strcmp(header_start->name, name))//here may be a bug in future,using strcmp
         {
             //printf("im in tarfs open 4\n");
-            printf("size= %d\n", size);
+            //dprintf("size= %d\n", size);
             tarfs_file* file=(tarfs_file*)kmalloc(1);
             file->file_header=header_start;
             file->size=size;

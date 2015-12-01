@@ -141,6 +141,10 @@ int ps(ps_t ps){
  return syscall_1(SYS_ps,(uint64_t)ps);
 }
 
+void clear_screen(){
+    syscall_0 (SYS_clear);
+}
+
 //
 //
 //// signals

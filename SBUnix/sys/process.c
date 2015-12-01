@@ -13,7 +13,7 @@ task_struct* front;
 task_struct* end;
 task_struct* current;
 
-int track_task[PROCESS_NUMBER];
+int pid_list[PROCESS_NUMBER];
 
 int count_args(char ** args) {
     if (args == NULL)
@@ -29,15 +29,15 @@ int count_args(char ** args) {
 void init_process_id() {
     int i;
     for (i = 0; i < PROCESS_NUMBER; i++) {
-        track_task[i] = 0;
+        pid_list[i] = 0;
     }
 }
 
 int assign_pid() {
     int i;
     for (i = 0; i < PROCESS_NUMBER; i++) {
-        if (track_task[i] == 0) {
-            track_task[i] = 1;
+        if (pid_list[i] == 0) {
+            pid_list[i] = 1;
             return i;
         }
     }
@@ -196,10 +196,12 @@ void func_init() {
 
 //insert new task to run queue
 void add_task(task_struct * task) {
-    
+
+    //linked list add operation needs to be careful!
+    task->next=end->next;
     end->next = task;
     end = task;
-    end->next = front;
+
     
 }
 
@@ -649,6 +651,8 @@ pid_t do_waitpid(pid_t pid, int *status, int options){
     // pass ret_val of child to *status
     *status = find_task_struct(pid)->ret_val;
     
+    find_task_struct(pid)->task_state=TASK_DEAD;
+
     // if child process already exited, return at once
     return pid;
 }

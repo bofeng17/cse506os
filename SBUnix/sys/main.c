@@ -101,6 +101,7 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 //	int i = 0;
 	while (1) {
 //		dprintf("I'm idle %d \n", i++);
+	    //clean_dead();
         __asm__ __volatile__ ("int $0x80;");
         
 //        // for preemptive scheduling

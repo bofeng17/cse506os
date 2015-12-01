@@ -31,8 +31,9 @@ main (int argc, char* argv[], char* envp[])
     //    while (1) {
     //        ;
     //    }
-//    printf("Hello World!\n");
-    printf("%c, %s, %d, %x, %p\n",'f', "this is a simple test", 987, 0x12345678, 0x12345678);
+    printf("Hello TEST World!\n");
+
+//    printf("%c, %s, %d, %x, %p\n",'f', "this is a simple test", 987, 0x12345678, 0x12345678);
 
     int x = 1;
     char y='h';

@@ -88,6 +88,59 @@ typedef struct ptt* pt_t;
 
 extern pml4_t global_PML4;
 
+#define VM_READ         0x00000001      /* currently active flags */
+#define VM_WRITE        0x00000002
+#define VM_EXEC         0x00000004
+#define VM_SHARED       0x00000008
+
+typedef struct vma_struct {
+    struct mm_struct *vm_mm; /* Pointer to the memory descriptor that owns the region */
+
+    uint64_t vm_start; /* First linear address inside the region */
+    uint64_t vm_end; /* First linear address after the region */
+    struct vma_struct *vm_next; /* Next region in the process list */
+
+    uint64_t permission_flag; /* Flags read, write, execute permissions */
+    struct file *vm_file; /* Reference to file descriptors for file opened for writing */
+    uint64_t file_offset; /* the vm_start byte in memory corresoonding to file_offset byte in file, used by demand paging*/
+} vma_struct;
+
+typedef struct mm_struct {
+
+    struct vma_struct *mmap; /* Pointer to the head of the list of memory region objects */
+
+    uint64_t start_code; /* Initial address of executable code */
+    uint64_t end_code; /* Final address of executable code */
+
+    uint64_t start_data; /* Initial address of initialized data */
+    uint64_t end_data; /* Final address of initialized data */
+
+    uint64_t start_brk; /* Initial address of the heap */
+    uint64_t brk; /* Current final address of the heap */
+
+    uint64_t start_stack; /* Initial address of User Mode stack */
+
+    uint64_t arg_start; /* Initial address of command-line arguments */
+    uint64_t arg_end; /* Final address of command-line arguments */
+
+    uint64_t env_start; /* Initial address of environment variables */
+    uint64_t env_end; /* Final address of environment variables */
+
+    uint64_t bss; // size of bss segment
+    uint64_t rss; /* Number of page frames allocated to the process */
+
+    uint64_t total_vm; /* Size of the process address space (number of pages) */
+    uint64_t stack_vm; /* Number of pages in the User Mode stack */
+
+} mm_struct;
+
+#define CODE 0
+#define DATA 1
+#define HEAP 2
+#define STACK 3
+// get specific vma of mm
+vma_struct* get_vma(mm_struct* mm, int flag);
+
 void
 init_mm();
 
@@ -146,4 +199,6 @@ uint64_t
 self_ref_read(int level, uint64_t vir);
 
 void test_selfref(uint64_t testaddr);
+
+void free_vma(vma_struct* mm);
 #endif

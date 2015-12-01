@@ -23,6 +23,18 @@ int terminal_write(int fd, char *buf, int count) {
 //    printf("%c", terminal_buffer[terminal_buf_count-1]);
 //}
 
+void do_clear(){
+
+        for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
+            for (size_t x = 0; x < VGA_WIDTH; x++) {
+                const size_t index = y * VGA_WIDTH + x;
+                console_buffer[index] = make_vgaentry(' ', console_color);
+            }
+        }
+        console_row = 0;
+        console_column =0;
+}
+
 int terminal_read(char *buf, int count) {
     // isr_keyboard puts char into terminal buffer
 
@@ -64,17 +76,19 @@ int terminal_read(char *buf, int count) {
 }
 
 void terminal_get_char(uint8_t ch) {
+    console_color = make_color(COLOR_LIGHT_GREY, COLOR_BLACK);
+
     if (ch == 0x08) { // backspace \b
         if (terminal_buf_count > 0) {
             terminal_buf_count--;
             terminal_buffer[terminal_buf_count] = ' ';
 
-            printf("%c", ' ');
+            console_putchar(' ');
             console_column--;
 
             console_column--;
 
-            printf("%c", CURSOR);// input cursor
+            console_putchar(CURSOR);// input cursor
             console_column--;
 
         }
@@ -92,12 +106,12 @@ void terminal_get_char(uint8_t ch) {
             //judge whether or not to local_echo user input
             if (user_input == 1) {
                 if(ch=='\n'){
-                    printf("%c", ' ');
+                    console_putchar(' ');
                 }
 
-                printf("%c", ch);
+                console_putchar(ch);
 
-                printf("%c",CURSOR);// input cursor ¦
+                console_putchar(CURSOR);// input cursor ¦
                 console_column--;
 
             }

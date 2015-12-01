@@ -9,10 +9,12 @@ extern task_struct* current;
 task_struct *prev;
 
 void schedule() {
+
     prev = current;
 
     //set previous running task state to task_ready
-    if (!(current->task_state == TASK_ZOMBIE||current->task_state == TASK_DEAD)) {
+//    if (!(current->task_state == TASK_ZOMBIE||current->task_state == TASK_DEAD)) {
+    if (current->task_state == TASK_RUNNING) {
         //not delete zombie from run queue, just skip it
         //zombie become dead when its parent read the return value
         // a kernel thread named clean_dead will run occasionally and clear dead tasks
@@ -22,7 +24,7 @@ void schedule() {
     current = current->next;
 
     //current won't be null, if only one task exists, that must be idle
-    while (current->task_state != TASK_READY&&current->task_state != TASK_DEAD) {
+    while (current->task_state != TASK_READY) {
         current = current->next;
         if (current == prev)
             //already traverse the run queue, so break
@@ -42,12 +44,32 @@ void schedule() {
 // delete dead tasks from run queue
 void clean_dead() {
 
-//    if (current == idle) {
-//        task_struct* run=current;
-//        while (current->next != idle) {
-//
-//        }
+//    task_struct* pre = NULL;
+//    task_struct* cur = current->next;
+//    while (cur->task_state != TASK_DEAD) {
+//        pre = cur;
+//        cur = cur->next;
 //    }
+//
+//    pre->next = cur->next;
+//    kfree(cur);
+
+    task_struct* cur = current;
+    task_struct* dead;
+    while (cur->next != current&&cur->next!=NULL ) {
+        if (cur->next->task_state == TASK_DEAD) {
+            dead = cur->next;
+            cur->next = cur->next->next;        //delete dead task
+
+            pid_list[dead->pid]=0;
+            kfree((void*) dead->kernel_stack, KSTACK);
+            free_vma(dead->mm->mmap);        // free VMA
+            kfree((void*) dead->mm, MM);
+            kfree(dead, TASK);
+
+        } else
+            cur = cur->next;        //not delete, just move to next task
+    }
 }
 
 //prev stored in %rdi (because it is the first arg in function call)

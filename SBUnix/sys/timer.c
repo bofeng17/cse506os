@@ -10,8 +10,8 @@ uint32_t IRQ0_fractions = 999.847746; //Fractions of 1 mS between IRQs
 //uint16_t PIT_reload_value = 1193; //Current PIT reload value 1193. accurate: 1000.152277 HZ
 
 //the next two lines are modified during building preemptive scheduling
-uint32_t IRQ0_period = 10; //10 mS between IRQs
-uint16_t PIT_reload_value = 11930; //100 HZ
+uint32_t IRQ0_period = 5; // 5 mS between IRQs
+uint16_t PIT_reload_value = 5965; // 11930/2 50 HZ
 
 uint32_t boot_count = 0;
 
@@ -42,8 +42,10 @@ isr_timer ()
     size_t _console_column = console_column;
     console_row = 24;
     console_column = 67;
-    if (boot_count % 6000 != 0)
-    { //To be precise, because the Period is 0.999847746ms instead of 1ms
+    
+    // for printf boot_time on lower-right corner
+    if (boot_count % 6000 != 0) {
+        //To be precise, because the Period is 0.999847746ms instead of 1ms
         system_boot_mS += IRQ0_period;
     }
     pic_sendEOI (33);
@@ -54,7 +56,11 @@ isr_timer ()
     console_row = _console_row;
     console_column = _console_column;
 
+    // for do_sleep
+    sleep_time_decrease ();
     
+    
+//    // for preemptive scheduling
 //    if (boot_count > 0) {
 //        // for cooperative scheduling:
 //        if (boot_count%200 == 0) {

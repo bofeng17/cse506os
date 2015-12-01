@@ -90,10 +90,10 @@ typedef struct task_struct {
 	uint64_t rsp; /* process user stack pointer */
 
 	uint64_t task_state; /* the current state of task */
-	uint64_t sleep_time;
+	uint64_t sleep_time; /* sleep time (mili second) remained */
 
 	int wait_pid; /* pid of child last exited */
-	uint64_t alarm; /* initialize alarm */
+	int64_t ret_val; /* ret_val of the process */
 	char cur_dir[NAME_LENGTH]; /* current directory */
 
 } task_struct;
@@ -152,11 +152,22 @@ vma_struct* get_vma(mm_struct* mm, int flag);
 
 // exit error code
 #define ILLEGAL_MEM_ACC 1 // illegal memmory access, killed by page fault handler
-task_struct *find_task_struct(int pid);
+
+int do_getpid();
+
+int do_getppid();
+
+pid_t do_waitpid(pid_t pid, int *status, int options);
 
 void do_exit(int status);
 
+void do_sleep(uint32_t seconds);
+
 void do_yield();
 
+task_struct *find_task_struct(int pid);
+
+extern uint32_t IRQ0_period; // period timer interrupt
+void sleep_time_decrease();
 
 #endif

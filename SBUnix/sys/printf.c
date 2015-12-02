@@ -116,7 +116,11 @@ void print_char(char arg) {
  */
 void print_string(char* arg, int count) {
     while(count) {
+//        __asm__ __volatile__ ("1:\t");
         print_char(*arg);
+//        __asm__ __volatile__ (".section __ex_table, \"a\";"
+//                              ".long 1b;"
+//                              ".previous;");
         arg++;
         count--;
     }

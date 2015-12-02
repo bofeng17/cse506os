@@ -244,6 +244,8 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
         while (params[i] != NULL) {
             //dprintf("%s\n", params[i]);
             
+            
+            // TODO: sometimes params[i] is NULL and causes kernel panic, while timer is on
             rsp = (char*) rsp - strlen(params[i]);
             
             j = 0;

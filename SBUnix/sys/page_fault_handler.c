@@ -178,7 +178,17 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                 do_exit(-ILLEGAL_MEM_ACC);
             } else {
                 // pf caused by kernel bugs or (extreme memory shortage)
+//                extern size_t console_row;
+//                extern size_t console_column;
+//                console_row = 0;
+//                console_column = 0;
+//                uint64_t *stk_ptr = 0;
                 printf("Kernel Panic @%p by %p!\n", pf_addr,regs->rip);
+//                __asm__ __volatile__("mov %%rsp, %0;"
+//                                     :"=r"(stk_ptr));
+//                for (int i = 0; i < 20; i ++) {
+//                    printf("%p %p\n",*(stk_ptr+2*i),*(stk_ptr+2*i+1));
+                }
                 __asm__ __volatile__("int $0x3");
             }
         }

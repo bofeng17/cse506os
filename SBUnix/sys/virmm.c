@@ -256,15 +256,15 @@ void test_selfref(uint64_t testaddr) {
     uint64_t l4inx = get_pml4e_index(testaddr);
     void* l4vir = &global_PML4->PML4E[l4inx];
     uint64_t l4val = global_PML4->PML4E[l4inx];
-    dprintf("=========================\n");
+    printf("=========================\n");
 
-    dprintf("testaddr is: %x\n", testaddr);
+    printf("testaddr is: %x\n", testaddr);
 
-    dprintf("(page walk)PML4 entry addr is: %x, value is: %x \n", l4vir, l4val);
+    printf("(page walk)PML4 entry addr is: %x, value is: %x \n", l4vir, l4val);
 
     uint64_t l4val_ref = self_ref_read(PML4, testaddr);
-    dprintf("(self refer) PML4 entry value is: %x \n", l4val_ref);
-    dprintf("=========================\n");
+    printf("(self refer) PML4 entry value is: %x \n", l4val_ref);
+    printf("=========================\n");
 
 }
 
@@ -406,8 +406,8 @@ kmalloc(int flag) {
 
     memset((void *) base, 0, PAGE_SIZE);
 
-    if(flag==KSTACK){
-        return (void *) (base+PAGE_SIZE);
+    if (flag == KSTACK) {
+        return (void *) (base + PAGE_SIZE);
     }
 
     return (void *) (base);
@@ -415,9 +415,9 @@ kmalloc(int flag) {
 }
 
 void kfree(void* addr, int flag) {
-    if(flag==KSTACK){
-        memset((void *) (addr-PAGE_SIZE), 0, PAGE_SIZE);
-    }else{
+    if (flag == KSTACK) {
+        memset((void *) (addr - PAGE_SIZE), 0, PAGE_SIZE);
+    } else {
         memset((void *) addr, 0, PAGE_SIZE);
     }
 
@@ -474,13 +474,12 @@ umalloc(void* addr, size_t size) {
     uint64_t gap = (ret_addr + PAGE_SIZE - (uint64_t) addr);
 
     //if size < gap, then no need to allocate more pages
-    if (size>gap) {
+    if (size > gap) {
         page_num += (size - gap) / PAGE_SIZE;
         if ((size - gap) % PAGE_SIZE) {
             page_num += 1;
         }
     }
-
 
     uint64_t vmalloc_base = ret_addr;
 
@@ -633,3 +632,13 @@ void* do_sbrk(size_t brk_size) {
 
 }
 
+void free_vma(vma_struct* mm) {
+        vma_struct *p = mm;
+        vma_struct *q = NULL;
+        while (p != NULL) {
+            q = p->vm_next;
+            kfree((void*)p,VMA);
+            p = q;
+        }
+
+}

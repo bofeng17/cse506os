@@ -6,41 +6,40 @@
 
 // mode(unused): enum { O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000 };
 struct file* open(char *name, int flags) {
-	return (struct file*) syscall_2(SYS_open, (uint64_t) name, flags);
+    return (struct file*) syscall_2(SYS_open, (uint64_t) name, flags);
 }
 
 ssize_t read(struct file* fd, void *buf, size_t count) {
-	return syscall_3(SYS_read, (uint64_t) fd, (uint64_t) buf, count);
+    return syscall_3(SYS_read, (uint64_t) fd, (uint64_t) buf, count);
 }
 
 ssize_t write(int fd, const void *buf, size_t count) {
-	return syscall_3(SYS_write, fd, (uint64_t) buf, count);
+    return syscall_3(SYS_write, fd, (uint64_t) buf, count);
 }
 
 void* opendir(const char* name) {
-	return (void*) syscall_1(SYS_opendir, (uint64_t) name);
+    return (void*) syscall_1(SYS_opendir, (uint64_t) name);
 }
 
 /*struct dirent* readdir(void* fd) {
-	return (struct dirent*) syscall_1(SYS_open, (uint64_t) fd);
-}*/
+ return (struct dirent*) syscall_1(SYS_open, (uint64_t) fd);
+ }*/
 
-int readdir(void* fd, struct dirent *dirp){
-    return syscall_2(SYS_readdir, (uint64_t)fd, (uint64_t)dirp);
+int readdir(void* fd, struct dirent *dirp) {
+    return syscall_2(SYS_readdir, (uint64_t) fd, (uint64_t) dirp);
 }
 
 int closedir(struct dirent* close) {
-	return syscall_1(SYS_closedir, (uint64_t) close);
+    return syscall_1(SYS_closedir, (uint64_t) close);
 }
 
-char* get_cwd(char* buf){
-	return (char*)syscall_1(SYS_getcwd, (uint64_t) buf);
+char* get_cwd(char* buf) {
+    return (char*) syscall_1(SYS_getcwd, (uint64_t) buf);
 }
 
-char* set_cwd(char* buf){
-	return (char*)syscall_1(SYS_setcwd, (uint64_t) buf);
+char* set_cwd(char* buf) {
+    return (char*) syscall_1(SYS_setcwd, (uint64_t) buf);
 }
-
 
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
 ////typedef uint64_t off_t;
@@ -50,7 +49,7 @@ char* set_cwd(char* buf){
 //}
 //
 void close(struct file* fd) {
-	syscall_1(SYS_close, (uint64_t) fd);
+    syscall_1(SYS_close, (uint64_t) fd);
 }
 
 //duplicate a file descriptor
@@ -73,59 +72,49 @@ void close(struct file* fd) {
  * and can be collected using one of the wait(2) family of calls
  */
 void exit(int status) {
-	syscall_1(SYS_exit, status);
+    syscall_1(SYS_exit, status);
 }
 
 pid_t fork(void) {
-	return syscall_0(SYS_fork);
+    return syscall_0(SYS_fork);
 }
 
 int execve(const char *filename, char * const argv[], char * const envp[]) {
-	return syscall_3(SYS_execve, (uint64_t) filename, (uint64_t) argv,
-			(uint64_t) envp);
+    return syscall_3(SYS_execve, (uint64_t) filename, (uint64_t) argv,
+            (uint64_t) envp);
 }
 
 pid_t getpid(void) {
-	return syscall_0(SYS_getpid);
+    return syscall_0(SYS_getpid);
 }
 
 // get parent pid
 pid_t getppid(void) {
-	return syscall_0(SYS_getppid);
+    return syscall_0(SYS_getppid);
 }
 
 // in POSIX, return value type is int
 void yield(void) {
-	syscall_0 (SYS_yield);
+    syscall_0(SYS_yield);
 }
 
 pid_t waitpid(pid_t pid, int *status, int options) {
-    return syscall_3(SYS_wait4, pid, (uint64_t)status, options);
+    return syscall_3(SYS_wait4, pid, (uint64_t) status, options);
 }
 
-//struct timespec {
-//    uint64_t  tv_sec;        /* seconds */
-//    long   tv_nsec;       /* nanoseconds */
-//};
-//unsigned int sleep(unsigned int seconds) {
-//    struct timespec *a = malloc(sizeof(struct timespec));
-//    struct timespec *b = malloc(sizeof(struct timespec));
-//
-//    a->tv_sec = seconds;
-//
-//    return syscall_2(SYS_nanosleep,(uint64_t)a,(uint64_t)b);
-//}
-//
+void sleep(uint32_t seconds) {
+    syscall_1(SYS_sleep, seconds);
+}
 
 // memory
 //typedef uint64_t size_t;
 void* malloc(size_t size) {
-	void *a = sbrk(size);
-	if (a == ((void*) (-1))) {
-		return NULL;
-	} else {
-		return a;
-	}
+    void *a = sbrk(size);
+    if (a == ((void*) (-1))) {
+        return NULL;
+    } else {
+        return a;
+    }
 }
 
 //void free(void *ptr){
@@ -142,13 +131,17 @@ void* malloc(size_t size) {
 
 //if success return previous heap break, otherwise return (void*) -1
 void* sbrk(size_t size) {
-	return (void*) syscall_1(SYS_sbrk, size);
+    return (void*) syscall_1(SYS_sbrk, size);
 }
 
 //process related functions
 
-int ps(ps_t ps){
- return syscall_1(SYS_ps,(uint64_t)ps);
+int ps(ps_t ps) {
+    return syscall_1(SYS_ps, (uint64_t) ps);
+}
+
+void clear_screen() {
+    syscall_0(SYS_clear);
 }
 
 //
@@ -202,15 +195,15 @@ int ps(ps_t ps){
 //    return fd;
 //}
 //
-//void *memset(void *s, int ch, size_t n) {
-//    char* tmp = s;
-//    while(n > 0) {
-//        *tmp = ch;
-//        tmp++;
-//        n--;
-//    }
-//    return s;
-//}
+void *memset(void *s, int ch, size_t n) {
+    char* tmp = s;
+    while (n > 0) {
+        *tmp = ch;
+        tmp++;
+        n--;
+    }
+    return s;
+}
 //
 //int getdents(uint32_t fd, struct dirent *dirp, uint32_t count) {
 //    return syscall_3(SYS_getdents, fd, (uint64_t)dirp, count);
@@ -235,3 +228,38 @@ int ps(ps_t ps){
 //    free(dir);
 //    return n;
 //}
+// convert string to integer (positive)
+int stoi(char* s) {
+    int i = 0;
+    int result = 0;
+
+    while (s[i] >= '0' && s[i] <= '9') {
+        result *= 10;
+        result += (s[i] - '0');
+        i++;
+    }
+
+    if (i == 0) {
+        return -1;
+    }
+
+    return result;
+}
+
+#define LINE_LENGTH 1024
+
+// return a line of given string
+int read_line(char* str, char* line) {
+    int i = 0;
+
+    if (str != NULL && line != NULL) {
+        while (str[i] != '\n') {
+            line[i] = str[i];
+            i++;
+        }
+    }
+
+    line[i] = '\0';
+
+    return i;
+}

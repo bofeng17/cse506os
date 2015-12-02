@@ -222,7 +222,15 @@ void do_syscall() {
             __asm__ __volatile__ ("callq do_waitpid;"
                                   :"=a"(ret_val));
             break;
-        default:
+        case SYS_sleep:
+            __asm__ __volatile__ ("callq do_sleep;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_clear:
+            __asm__ __volatile__ ("callq do_clear;"
+                                  :"=a"(ret_val));
+            break;
+         default:
             printf("Syscall wasn't implemented\n");
             break;
     }

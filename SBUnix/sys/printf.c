@@ -12,31 +12,39 @@ size_t console_row;
 size_t console_column;
 uint8_t console_color;
 
+uint8_t make_color(enum vga_color fg, enum vga_color bg) {
+    return fg | bg << 4;
+}
+
+uint16_t make_vgaentry(char c, uint8_t color){
+    return (uint16_t)c | ((uint16_t)color) << 8;
+}
+
 void console_initialize() {
     console_row = 0;
     console_column = 0;
     console_color = make_color(COLOR_LIGHT_RED, COLOR_BLACK);
 }
 
-inline void console_putchar(char c) {
+void console_putchar(char c) {
+    if (console_row == 0 && console_column == 0) {
+        for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {// don't flush the last row (used by timer)
+            for (size_t x = 0; x < VGA_WIDTH; x++) {
+                const size_t index = y * VGA_WIDTH + x;
+                console_buffer[index] = make_vgaentry(' ', console_color);
+            }
+        }
+    }
     if (c == '\n'){
         console_column=0;
-        console_row = (console_row+1)%VGA_HEIGHT;
+        console_row = (console_row+1) % (VGA_HEIGHT - 1);
     } else {
         const size_t index = console_row * VGA_WIDTH + console_column;
         console_buffer[index] = make_vgaentry(c, console_color);
         if (++console_column == VGA_WIDTH) {
             console_column = 0;
-            if (++console_row == VGA_HEIGHT) {
+            if (++console_row == (VGA_HEIGHT - 1)) { // don't write to the last row (used by timer)
                 console_row = 0;
-            }
-        }
-    }
-    if (console_row == 0 && console_column == 0) {
-        for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
-            for (size_t x = 0; x < VGA_WIDTH; x++) {
-                const size_t index = y * VGA_WIDTH + x;
-                console_buffer[index] = make_vgaentry(' ', console_color);
             }
         }
     }
@@ -98,7 +106,7 @@ int printf(const char *format, ...) {
     return printed;
 }
 
-inline void print_char(char arg) {
+void print_char(char arg) {
     console_putchar(arg);
 }
 
@@ -107,7 +115,7 @@ inline void print_char(char arg) {
  * printf %s, and terminal write
  */
 void print_string(char* arg, int count) {
-    while(count) {//be careful here
+    while(count) {
         print_char(*arg);
         arg++;
         count--;

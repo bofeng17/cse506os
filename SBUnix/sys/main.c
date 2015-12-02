@@ -43,17 +43,17 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 			page_num = length >> 12;
 			page_index = (uint32_t)((smap->base) >> 12);
 
-			printf("smaplength is %x, smapbase is %x\n", smap->length,
+			dprintf("smaplength is %x, smapbase is %x\n", smap->length,
 					smap->base);
 
-			printf("Available Physical Memory [%x-%x]\n", smap->base,
+			dprintf("Available Physical Memory [%x-%x]\n", smap->base,
 					smap->base + smap->length);
 		}
 	}
 
 	page_struct_start = (page_sp*) (0xffffffff80000000UL + physfree);
 
-	printf("tarfs in [%p:%p]\n", &_binary_tarfs_start, &_binary_tarfs_end);
+	dprintf("tarfs in [%p:%p]\n", &_binary_tarfs_start, &_binary_tarfs_end);
 	dprintf("page_num=%x\n", page_num);
 	dprintf("page index=%x\n", page_index);
 	init_phy_page(get_num_init((uint64_t) physfree), page_num, page_index);
@@ -101,11 +101,13 @@ void start(uint32_t* modulep, void* physbase, void* physfree) {
 //	int i = 0;
 	while (1) {
 //		dprintf("I'm idle %d \n", i++);
-//		schedule();
+	    //clean_dead();
         __asm__ __volatile__ ("int $0x80;");
+        
+//        // for preemptive scheduling
 //      __asm__ __volatile__ ("hlt");
-//      if (i == 100000)
-//	{
+        
+//      if (i == 100000) {
 //	  thread_c->task_state = TASK_READY;
 //	}
 	}

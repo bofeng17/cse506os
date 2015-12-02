@@ -26,14 +26,16 @@
 
 #define SYS_mmap		9
 
-// defined by mysefl
+// defined by myself
+#define SYS_sleep        99
 #define SYS_yield       100
 #define SYS_opendir     101
 #define SYS_readdir     102
 #define SYS_closedir    103
 #define SYS_setcwd      104
-#define SYS_sbrk       13
-#define SYS_ps 14
+#define SYS_sbrk         13
+#define SYS_ps           14
+#define SYS_clear        15
 
 // init msr registers
 void syscall_init();

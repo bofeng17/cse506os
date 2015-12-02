@@ -31,8 +31,8 @@ int
 execve(const char *filename, char * const argv[], char * const envp[]);
 pid_t
 waitpid(pid_t pid, int *status, int options);
-unsigned int
-sleep(unsigned int seconds);
+
+void sleep(uint32_t seconds);
 
 // signals
 typedef void
@@ -118,5 +118,9 @@ typedef ps_state* ps_t;
 int ps(ps_t ps);
 
 void yield();
+void clear_screen();
 
+// convert string to integer (positive)
+int stoi(char* s);
+int read_line(char* str, char* line);
 #endif

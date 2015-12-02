@@ -4,8 +4,7 @@
 #include <sys/defs.h>
 
 void timer_init();
-//uint16_t timer_read();
 
-void isr_timer();
+void isr_timer(uint64_t cs);
 
 #endif

@@ -6,14 +6,7 @@
 #include <sys/tarfs.h>
 #include <sys/page_fault_handler.h>
 
-//void page_fault_handler () {
-//    uint64_t pf_addr;
-//    __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
-//    printf("page fault happens @%p!\n",pf_addr);
-//    __asm__ __volatile__("hlt");
-//}
-
-// 1st/2nd parm: registers/error_code pushed by CPU
+// parm: registers/error_code pushed by CPU
 void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     uint64_t pf_addr;
     task_struct *tsk = current; // Save current is critical in preemptive scheduling
@@ -21,7 +14,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     uint64_t pt_perm_flag;
     uint64_t page_frame_des; // physical addr of page frame newly allocated. Destination
     uint64_t page_frame_src; // physical addr of existed page frame read by self_ref_read(). Source
-    uint64_t tmp_vir_addr = 0xffffffff80000000UL; // used in COW to map newly allocated page frame
+    uint64_t tmp_vir_addr = 0xffffffff80000000UL + PAGE_SIZE; // used in COW to map newly allocated page frame
     uint64_t tmp_phys_addr; // used in COW to store the original mapping of stolen tmp_vir_addr
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
@@ -49,7 +42,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
      * check whether the given virt addr is in an addr range described VMA
      * or belong to the autho-growing stack
      */
-    if ((vma = in_vma(pf_addr, vma)) || belong_to_stack(pf_addr, vma)) {
+    if ((vma = in_vma(pf_addr, vma))) {
         /*
          * Level 2 check:
          * if bit 0 of pf_err_code is 0 (page not present)
@@ -131,9 +124,9 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                                    (page_frame_src | pt_perm_flag) & (~PTE_COW));
                 } else {
                     page_frame_des = allocate_page_user();
-                    dprintf("physical page %p allocated\n", page_frame_des);
+                    //dprintf("physical page %p allocated\n", page_frame_des);
                     /*
-                     * steal tmp_vir_addr (0xffffffff80000000UL) and point it to the allocated page frame
+                     * steal tmp_vir_addr (0xffffffff80000000UL+PAGE_SIZE) and point it to the allocated page frame
                      * so that we can copy content into that page frame
                      * before stealing, save the original mapping
                      */
@@ -157,6 +150,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
             } else {
                 // TODO: branch never reached by testing
                 // pf caused by illegal access of user, kill user process
+                printf("pid %d illegal access, kill!\n", current->pid);
                 do_exit(-ILLEGAL_MEM_ACC);
             }
         }
@@ -168,6 +162,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
         if (pf_err_code & PF_BIT_2) {
             // TODO: branch never reached by testing
             // pf caused by illegal access of user, kill user process
+            printf("pid %d illegal access, kill!\n", current->pid);
             do_exit(-ILLEGAL_MEM_ACC);
         } else {
             /*
@@ -177,15 +172,15 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
             if (search_exception_table(regs->rip)) {
                 // TODO: branch never reached by testing
                 // pf caused by wrong syscall parm provided by user, kill user process
+                printf("pid %d illegal access, kill!\n", current->pid);
                 do_exit(-ILLEGAL_MEM_ACC);
             } else {
                 // pf caused by kernel bugs or (extreme memory shortage)
-                printf("Kernel Pannic @ %p!\n", pf_addr);
+                printf("Kernel Panic @%p by %p!\n", pf_addr,regs->rip);
                 __asm__ __volatile__("hlt");
             }
         }
     }
-    //    __asm__ __volatile__ ("hlt");
 }
 
 vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {
@@ -197,10 +192,6 @@ vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {
         }
     }
     return NULL;
-}
-
-int belong_to_stack(uint64_t virt_addr, vma_struct *vma) {
-    return 0;
 }
 
 // TODO: done with do_read, do_write ...

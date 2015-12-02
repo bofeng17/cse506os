@@ -1,28 +1,30 @@
 #include <stdio.h>
 #include <sys/defs.h>
 
-void
-test (int x, int y, char *s, char a, int d)
+
+int main (int argc, char* argv[], char* envp[])
 {
-    printf("%d\n",x);
-    printf("%d\n",y);
-    printf("%s\n",s);
-    printf("%c\n",a);
-    printf("%d\n",d);
-    
-}
 
-// bss
-int c[4096];
-//int d;
+//    printf("%d %s %s %s %s %s %s\n", argc, argv[0],argv[1],argv[2], envp[0],envp[1],envp[2]);
+    printf("test \n");
+    printf("hello \n");
+    printf("world \n");
+    printf("test \n");
+    printf("hello \n");
+    printf("world \n");
+    printf("test \n");
+    printf("hello \n");
+    printf("world \n");
+    printf("test \n");
+    printf("hello \n");
+    printf("world \n");
+    printf("test \n");
+    printf("hello \n");
+    printf("world \n");
+    printf("test \n");
+    printf("hello \n");
+    printf("world \n");
 
-// data
-int data_arr[8192] = {1,2,3,4};
-char* s = "hello\n";
-
-int
-main (int argc, char* argv[], char* envp[])
-{
     //printf("Hello World!\n");
     
     //    __asm__ __volatile__("INT $0x80;");
@@ -31,17 +33,15 @@ main (int argc, char* argv[], char* envp[])
     //    while (1) {
     //        ;
     //    }
-//    printf("Hello World!\n");
-    printf("%c, %s, %d, %x, %p\n",'f', "this is a simple test", 987, 0x12345678, 0x12345678);
+    printf("Hello TEST World!\n");
 
-    int x = 1;
-    char y='h';
-    test(c[3], data_arr[0], s, y, x);
-    
+//    printf("%c, %s, %d, %x, %p\n",'f', "this is a simple test", 987, 0x12345678, 0x12345678);
+
 //    int n = 1, fd = 1, count = 5;
 //    char* s = "hello\n";
     //    __asm__ __volatile__("syscall"
     //                         :
     //                         :"a"(n), "D"(fd), "S"((uint64_t)s), "d"(count));
+
     return 0;
 }

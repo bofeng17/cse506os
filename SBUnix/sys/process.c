@@ -13,7 +13,7 @@ task_struct* front;
 task_struct* end;
 task_struct* current;
 
-int track_task[PROCESS_NUMBER];
+int pid_list[PROCESS_NUMBER];
 
 int count_args(char ** args) {
     if (args == NULL)
@@ -29,15 +29,15 @@ int count_args(char ** args) {
 void init_process_id() {
     int i;
     for (i = 0; i < PROCESS_NUMBER; i++) {
-        track_task[i] = 0;
+        pid_list[i] = 0;
     }
 }
 
 int assign_pid() {
     int i;
     for (i = 0; i < PROCESS_NUMBER; i++) {
-        if (track_task[i] == 0) {
-            track_task[i] = 1;
+        if (pid_list[i] == 0) {
+            pid_list[i] = 1;
             return i;
         }
     }
@@ -173,32 +173,37 @@ void func_init() {
     
     // allocate mm_struct and vma for init
     set_task_struct(current);
-    
+
     // allocate heap
     current->mm->start_brk = (uint64_t) umalloc((void*)HEAP_BASE, PAGE_SIZE);
     current->mm->brk = current->mm->start_brk + PAGE_SIZE;
-    
+
     // allocate stack
     umalloc((void*) STACK_TOP, PAGE_SIZE); // guarantee one page mapped above STACK_TOP
     umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
     current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
+
+
+    do_execv("bin/sbush", argv, envp);
+
     
     // vma_chain setup by setup_vma() in do_execev
-    do_execv("bin/test_fork", argv, envp);
+    //do_execv("bin/test_hello", argv, envp);
+    
 
-//    do_execv("bin/sbush", argv, envp);
 }
 
 
 //insert new task to run queue
 void add_task(task_struct * task) {
-
+    //linked list add operation needs to be careful!
+    // end is always non NULL!
+    task->next=end->next;
     end->next = task;
     end = task;
-    end->next = front;
 
+    
 }
-
 
 task_struct*
 create_thread(void* thread, char * thread_name) {
@@ -221,9 +226,9 @@ create_thread(void* thread, char * thread_name) {
         front=new_task;
         end=new_task;
     }
-
+    
     add_task(new_task);
-
+    
     return new_task;
     
 }
@@ -240,10 +245,10 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
     char** params = *params_p;
     if (params != NULL) {
         params_no = count_args(params);
-        dprintf("param_no is %d\n", params_no);
+        //dprintf("param_no is %d\n", params_no);
         i = params_no - 1;
         while (params[i] != NULL) {
-            dprintf("%s\n", params[i]);
+            //dprintf("%s\n", params[i]);
             
             rsp = (char*) rsp - strlen(params[i]);
             
@@ -278,6 +283,8 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 
 int do_execv(char* bin_name, char ** argv, char** envp) {
     task_struct* execv_task = current;
+    //set task name
+    strcpy(execv_task->task_name, bin_name);
     
     int argc = 0;
     int envc = 0;
@@ -298,8 +305,8 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
      * although each process has at least one page in stack
      * envp is passed via stack which may be overwritten without allocating new stack
      * 1) allocate a page frame 2) map a temporary virt addr to it
-     * 3) copy envp onto that page 4) remap it near STACK_TOP 
-     * 5) free the original page nearing STACK_TOP 
+     * 3) copy envp onto that page 4) remap it near STACK_TOP
+     * 5) free the original page nearing STACK_TOP
      * TODO: decrease ref_count of physical page, if reaches -1, free that page
      * still share stack top protection page after reallocation
      */
@@ -461,6 +468,18 @@ void set_child_pt(task_struct* child) {
             /*
              * for stack and heap/demand paging, must check if content is 0
              */
+            // fix:
+            //            if (self_ref_read(PML4, start_addr)) {
+            //                // always true
+            //                if (self_ref_read(PDPT, start_addr)) {
+            //                    if (self_ref_read(PDT, start_addr)) {
+            //                        if (self_ref_read(PT, start_addr)) {
+            //                            content
+            //                        }
+            //                    }
+            //                }
+            //            }
+            // TODO: this assumes PT is already in memory, buggy!
             uint64_t content = self_ref_read(PT, start_addr);
             if (content) {
                 page_sp * page = get_page_frame_descriptor(content);
@@ -501,7 +520,7 @@ int do_fork() {
     new_task->ppid = current->pid;
     
     //copy task name
-    strcpy(new_task->task_name, "child");
+    strcpy(new_task->task_name, current->task_name);
     
     //memory portion begins here
     //child has it own kernel stack
@@ -572,43 +591,49 @@ int do_fork() {
 }
 
 int do_ps(ps_t ps) {
-    task_struct* cur = current;
-    int c = 0;
-    do  {
-        ps->id[c] = cur->pid;
-        strcpy(ps->name[c], cur->task_name);
-        //       strcpy(ps->state[c], cur->task_name);
-        
-        //ps->state[c] = cur->task_state;
-        switch (cur->task_state) {
-            case TASK_NEW:
-                strcpy(ps->state[c], "new       ");
-                break;
-            case TASK_READY:
-                strcpy(ps->state[c], "ready     ");
-                break;
-            case TASK_RUNNING:
-                strcpy(ps->state[c], "running   ");
-                break;
-            case TASK_SLEEPING:
-                strcpy(ps->state[c], "sleeping  ");
-                break;
-            case TASK_BLOCKED:
-                strcpy(ps->state[c], "blocked   ");
-                break;
-            case TASK_ZOMBIE:
-                strcpy(ps->state[c], "zombie    ");
-                break;
-            case TASK_DEAD:
-                strcpy(ps->state[c], "dead      ");
-                break;
-            default: strcpy(ps->state[c], "unknown   ");
-        }
-        
-        cur = cur->next;
-        c++;
-    }while((cur != current));
-    return c;
+    if (ps) { // if ps != NULL
+        task_struct* cur = current;
+        int c = 0;
+        do  {
+            ps->id[c] = cur->pid;
+            strcpy(ps->name[c], cur->task_name);
+            //       strcpy(ps->state[c], cur->task_name);
+            
+            //ps->state[c] = cur->task_state;
+            switch (cur->task_state) {
+                case TASK_NEW:
+                    strcpy(ps->state[c], "new       ");
+                    break;
+                case TASK_READY:
+                    strcpy(ps->state[c], "ready     ");
+                    break;
+                case TASK_RUNNING:
+                    strcpy(ps->state[c], "running   ");
+                    break;
+                case TASK_SLEEPING:
+                    strcpy(ps->state[c], "sleeping  ");
+                    break;
+                case TASK_BLOCKED:
+                    strcpy(ps->state[c], "blocked   ");
+                    break;
+                case TASK_ZOMBIE:
+                    strcpy(ps->state[c], "zombie    ");
+                    break;
+                case TASK_DEAD:
+                    strcpy(ps->state[c], "dead      ");
+                    break;
+                default: strcpy(ps->state[c], "unknown   ");
+            }
+            
+            cur = cur->next;
+            c++;
+        }while((cur != current));
+        return c;
+    } else {
+        // ps == NULL
+        printf("error: buff not allocated\n");
+        return -1;
+    }
 }
 
 int do_getpid(){
@@ -619,45 +644,92 @@ int do_getppid(){
     return current->ppid;
 }
 
+// 3rd parm ignored
 pid_t do_waitpid(pid_t pid, int *status, int options){
+    task_struct *child;
+    if (current->wait_pid != pid) {
+        // if child process not exited
+        current->task_state = TASK_BLOCKED;
+        //int 0x80 call schedule, so that registers can be pushed
+        __asm__ __volatile__ ("int $0x80;");
+    }
+    // TODO: release the resource of child process
+    
+    // pass ret_val of child to *status
+    if ((child = find_task_struct(pid))) { // if should always be ture, here just for security
+        *status = child->ret_val;
+        child->task_state=TASK_DEAD;
+    } else {
+        printf("parent doesn't have a child of pid %d!\n", pid);
+        
+    }
 
-
-
-    //int80 call schedule
-    __asm__ __volatile__ ("int $0x80;");
-
+    // if child process already exited, return at once
     return pid;
 }
 
 void do_exit(int status) {
-    // current = current->next;
+    task_struct *parent;
     current->task_state = TASK_ZOMBIE;
+    current->ret_val = status;
     
     /*
-     * TODO: unfinished
      * Check if parent process is suspended (by calling waitpid())
      * if yes, wake parent process
      */
-    // find_task_struct takes as input pid, returns corresponding task_struct
-    //    if ((find_task_struct(current->wait_pid))->task_state == TASK_BLOCKED) {
-    //        (find_task_struct(current->wait_pid))->task_state = TASK_READY;
-    //    }
+    if ((parent = find_task_struct(current->ppid))) {
+        // if found task_struct of parent process
+        parent->wait_pid = current->pid;
+        if (parent->task_state == TASK_BLOCKED) {
+            parent->task_state = TASK_READY;
+        }
+    } else {
+        // if parent process exits
+        printf("cannot find parent process of pid %d (may terminated)\n", current->ppid);
+    }
+    // current exited, so doesn't need push registers
     schedule();
 }
 
-//// find task_struc in run queue according to its pid
-//task_struct *find_task_struct(int pid) {
-//    task_struct run=current->next;
-//    while(run->pid!=pid){
-//        run=run.next;
-//        if(run==current)
-//            return NULL;
-//    }
-//
-//    return run;
-//}
+void do_sleep(uint32_t seconds) {
+    current->task_state = TASK_SLEEPING;
+    current->sleep_time = seconds * 1000;
+    __asm__ __volatile__ ("int $0x80;");
+}
 
 void do_yield() {
-    schedule();
+    // Although it is safe to call schedule directly instaed of int 0x80
+    __asm__ __volatile__ ("int $0x80;");
 }
 
+// find task_struct in run queue according to its pid
+task_struct *find_task_struct(int pid) {
+    task_struct *traverse = current;
+    while (traverse) { // if traverse != NULL
+        if (traverse -> pid == pid) {
+            return traverse;
+        }
+        if ((traverse = traverse -> next) == current) {
+            break;
+        }
+    }
+    return NULL;
+}
+
+
+// decrease sleep_time field of task_struct who are sleeping
+void sleep_time_decrease() {
+    task_struct *traverse = current;
+    while (traverse) { // always trie: current->task_state != TASK_SLEEPING
+        if (traverse -> task_state == TASK_SLEEPING) {
+            traverse->sleep_time -= IRQ0_period;
+            if (traverse->sleep_time <= 0) {
+                traverse->sleep_time = 0;
+                traverse->task_state = TASK_READY;
+            }
+        }
+        if ((traverse = traverse -> next) == current) {
+            break;
+        }
+    }
+}

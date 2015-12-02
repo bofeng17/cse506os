@@ -2,6 +2,7 @@
 #define _PROCESS_H
 
 #include <sys/defs.h>
+#include <sys/virmm.h>
 
 #define KERNPT_NUMBER 128
 #define PROCESS_NUMBER 128
@@ -27,51 +28,6 @@ enum TASK_STATE {
     TASK_DEAD
 };
 
-#define VM_READ         0x00000001      /* currently active flags */
-#define VM_WRITE        0x00000002
-#define VM_EXEC         0x00000004
-#define VM_SHARED       0x00000008
-
-typedef struct vma_struct {
-	struct mm_struct *vm_mm; /* Pointer to the memory descriptor that owns the region */
-
-	uint64_t vm_start; /* First linear address inside the region */
-	uint64_t vm_end; /* First linear address after the region */
-	struct vma_struct *vm_next; /* Next region in the process list */
-
-	uint64_t permission_flag; /* Flags read, write, execute permissions */
-	struct file *vm_file; /* Reference to file descriptors for file opened for writing */
-	uint64_t file_offset; /* the vm_start byte in memory corresoonding to file_offset byte in file, used by demand paging*/
-} vma_struct;
-
-typedef struct mm_struct {
-
-	struct vma_struct *mmap; /* Pointer to the head of the list of memory region objects */
-
-	uint64_t start_code; /* Initial address of executable code */
-	uint64_t end_code; /* Final address of executable code */
-
-	uint64_t start_data; /* Initial address of initialized data */
-	uint64_t end_data; /* Final address of initialized data */
-
-	uint64_t start_brk; /* Initial address of the heap */
-	uint64_t brk; /* Current final address of the heap */
-
-	uint64_t start_stack; /* Initial address of User Mode stack */
-
-	uint64_t arg_start; /* Initial address of command-line arguments */
-	uint64_t arg_end; /* Final address of command-line arguments */
-
-	uint64_t env_start; /* Initial address of environment variables */
-	uint64_t env_end; /* Final address of environment variables */
-
-	uint64_t bss; // size of bss segment
-	uint64_t rss; /* Number of page frames allocated to the process */
-
-	uint64_t total_vm; /* Size of the process address space (number of pages) */
-	uint64_t stack_vm; /* Number of pages in the User Mode stack */
-
-} mm_struct;
 
 typedef struct task_struct {
 
@@ -90,10 +46,10 @@ typedef struct task_struct {
 	uint64_t rsp; /* process user stack pointer */
 
 	uint64_t task_state; /* the current state of task */
-	uint64_t sleep_time;
+	uint64_t sleep_time; /* sleep time (mili second) remained */
 
 	int wait_pid; /* pid of child last exited */
-	uint64_t alarm; /* initialize alarm */
+	int64_t ret_val; /* ret_val of the process */
 	char cur_dir[NAME_LENGTH]; /* current directory */
 
 } task_struct;
@@ -141,22 +97,28 @@ void copy_mm(task_struct *);
 extern task_struct *current;
 extern task_struct* idle;
 
-#define CODE 0
-#define DATA 1
-#define HEAP 2
-#define STACK 3
-// get specific vma of mm
-vma_struct* get_vma(mm_struct* mm, int flag);
+extern int pid_list[PROCESS_NUMBER];
 
 #define DO_EXECV_TMP_ADDR_TRANSLATE(x) (STACK_TOP - (tmp_vir_addr + PAGE_SIZE - x))
 
 // exit error code
 #define ILLEGAL_MEM_ACC 1 // illegal memmory access, killed by page fault handler
-task_struct *find_task_struct(int pid);
+
+int do_getpid();
+
+int do_getppid();
+
+pid_t do_waitpid(pid_t pid, int *status, int options);
 
 void do_exit(int status);
 
+void do_sleep(uint32_t seconds);
+
 void do_yield();
 
+task_struct *find_task_struct(int pid);
+
+extern uint32_t IRQ0_period; // period timer interrupt
+void sleep_time_decrease();
 
 #endif

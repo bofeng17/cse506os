@@ -70,8 +70,8 @@ enum {
 	O_CREAT = 0x40,
 	O_DIRECTORY = 0x10000
 };
-struct file*
-open(char *name, int flags);
+int
+open(char *name, struct file*, int flags);
 ssize_t
 read(struct file* fd, void *buf, size_t count);
 ssize_t
@@ -102,6 +102,8 @@ void* opendir(const char* name);
 int readdir(void* fd, struct dirent *dirp);
 
 int closedir(struct dirent* close);
+
+int check_file(char* name);
 
 void *
 memset(void *s, int ch, size_t n);

@@ -13,8 +13,9 @@ main (int argc, char* argv[], char* envp[])
    char* input_filename = malloc(sizeof(char));
    scanf("%s", input_filename);
    char* test_wr=malloc(sizeof(char));
-   struct file* file = open(input_filename, O_RDONLY);
-    if (file == NULL) {
+   struct file* file = malloc(sizeof(struct file));
+   int i= open(input_filename, file,  O_RDONLY);
+    if (i == -1) {
    	 printf("no such file exists!!!");
      return -1;
      }

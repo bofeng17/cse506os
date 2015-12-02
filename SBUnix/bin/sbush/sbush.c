@@ -136,8 +136,9 @@ void cat_cmd(char* input) {
     char test_wr[MAX_BUFFER];
     memset((void*) test_wr, 0, MAX_BUFFER);
 
-    struct file* file = open(cur, O_RDONLY);
-    if (file == NULL) {
+    struct file* file = malloc(sizeof(struct file));
+    int i = open(cur, file, O_RDONLY);
+    if (i == -1) {
         printf("===[ERROR] no such file!===\n");
         return;
     }
@@ -234,9 +235,10 @@ void sh_cmd(char* param, char* envp[]) {
 
     strcat(cur, param);
 
-    struct file* file = open(cur, O_RDONLY);
+    struct file* file = malloc(sizeof(struct file));
+    int i = open(cur, file, O_RDONLY);
 
-    if (file == NULL) {
+    if (i == -1) {
         printf("===[ERROR] no such script file!===\n");
         return;
     }
@@ -378,7 +380,7 @@ void executeCmd(char* input, char* envp[]) {
     } else if (!strcmp(cmd, "help")) {
 
     } else {    //execute bin or executables
-        if (open(args[0], O_RDONLY) == NULL) {
+        if (check_file(args[0]) == -1) {
             printf("===[ERROR] not find executable %s !===\n", args[0]);
             return;
         }

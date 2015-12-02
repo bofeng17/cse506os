@@ -50,19 +50,20 @@ int terminal_read(char *buf, int count) {
 
     // copy terminal buffer to libc scanf buffer
 
-    // TODO: how to deal with empty buffer and count?
     press_over = 0;
     __asm__ __volatile__ ("sti");
 
     user_input = 1; //set local echo flag
 
-
     printf("%c", CURSOR); // input cursor ¦
     console_column--;
 
     clear_bottom();
+
 //    current->task_state = TASK_BLOCKED;
 //    pid_t io_pid = current->pid;
+//
+//    __asm__ __volatile__ ("int $0x80;");// call schedule
 
     while (press_over == 0) {
         // local_echo();

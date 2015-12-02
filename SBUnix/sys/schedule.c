@@ -24,7 +24,7 @@ void schedule() {
     current = current->next;
 
     //current won't be null, if only one task exists, that must be idle
-    while (current->task_state != TASK_READY) {
+    while (current->task_state != TASK_READY && current != idle) {
         current = current->next;
         if (current == prev)
             //already traverse the run queue, so break
@@ -56,12 +56,12 @@ void clean_dead() {
 
     task_struct* cur = current;
     task_struct* dead;
-    while (cur->next != current&&cur->next!=NULL ) {
+    while (cur->next != current && cur->next != NULL) {
         if (cur->next->task_state == TASK_DEAD) {
             dead = cur->next;
             cur->next = cur->next->next;        //delete dead task
 
-            pid_list[dead->pid]=0;
+            pid_list[dead->pid] = 0;
             kfree((void*) dead->kernel_stack, KSTACK);
             free_vma(dead->mm->mmap);        // free VMA
             kfree((void*) dead->mm, MM);

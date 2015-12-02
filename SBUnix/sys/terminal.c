@@ -23,6 +23,14 @@ int terminal_write(int fd, char *buf, int count) {
 //void local_echo() {
 //    printf("%c", terminal_buffer[terminal_buf_count-1]);
 //}
+void clear_bottom(){
+    for (size_t y = console_row+1; y < VGA_HEIGHT - 1; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t index = y * VGA_WIDTH + x;
+            console_buffer[index] = make_vgaentry(' ', console_color);
+        }
+    }
+}
 
 void do_clear() {
     for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
@@ -35,6 +43,8 @@ void do_clear() {
     console_column = 0;
 }
 
+
+
 int terminal_read(char *buf, int count) {
     // isr_keyboard puts char into terminal buffer
 
@@ -46,9 +56,11 @@ int terminal_read(char *buf, int count) {
 
     user_input = 1; //set local echo flag
 
+
     printf("%c", CURSOR); // input cursor ¦
     console_column--;
 
+    clear_bottom();
 //    current->task_state = TASK_BLOCKED;
 //    pid_t io_pid = current->pid;
 

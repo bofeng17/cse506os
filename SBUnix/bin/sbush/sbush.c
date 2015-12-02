@@ -7,17 +7,24 @@
 #include <sbush.h>
 
 #define MAX_ARGS 20
+#define MAX_LENGTH 100
+#define MAX_BUFFER 1024
 
 void shellPrompt() {
 
-    char* cur_dir = malloc(10 * sizeof(char));
+    char cur_dir[MAX_LENGTH];
 
     get_cwd(cur_dir);
-    char* root_dir = malloc(20 * sizeof(char));
+
+    char root_dir[MAX_LENGTH];
+
     strcpy(root_dir, "rootfs/");
     strcat(root_dir, cur_dir);
 
     printf("root@SBUINX:%s#", root_dir);
+
+    memset((void*) cur_dir, 0, MAX_LENGTH);
+    memset((void*) root_dir, 0, MAX_LENGTH);
 
 }
 
@@ -60,6 +67,10 @@ int parseInputToParams(char* input, char* param[], char sep) {
 void ps_cmd() {
     ps_t ups = malloc(sizeof(ps_state));
 
+    if(ups==NULL){
+        printf("===[ERROR] malloc failed,out of memory!===\n");
+        return;
+    }
     int no = ps(ups);
 
     int i = 0;
@@ -72,7 +83,7 @@ void ps_cmd() {
 void ls_cmd() {
     int i;
 
-    char* direct = malloc(sizeof(char));
+    char direct[MAX_LENGTH];
 
     get_cwd(direct);
 
@@ -82,16 +93,25 @@ void ls_cmd() {
     struct dirent* a = malloc(sizeof(struct dirent));
     //printf("dirent size: %d\n", sizeof(struct dirent));
 
+    if(a==NULL){
+        printf("===[ERROR] malloc failed,out of memory!===\n");
+        return;
+    }
+
     void* b = opendir(direct);
 
     readdir(b, a);
-    char* final_name = malloc(30 * sizeof(char));
+
+    char final_name[MAX_LENGTH];
 
     for (i = 0; i < a->num; i++) {
         strcpy(final_name, a[i].name + length);
 
         printf("%s\n", final_name);
     }
+
+    memset((void*) direct, 0, MAX_LENGTH);
+    memset((void*) final_name, 0, MAX_LENGTH);
 }
 
 void cat_cmd(char* input) {
@@ -100,7 +120,7 @@ void cat_cmd(char* input) {
         return;
     }
 
-    char* cur = malloc(30 * sizeof(char));
+    char cur[MAX_LENGTH];
 
     get_cwd(cur);
 
@@ -108,7 +128,8 @@ void cat_cmd(char* input) {
 
     //char* input_filename = malloc(sizeof(char));
     //scanf("%s", input_filename);
-    char* test_wr = malloc(sizeof(char));
+    char test_wr[MAX_BUFFER];
+
     struct file* file = open(cur, O_RDONLY);
     if (file == NULL) {
         printf("===[ERROR] no such file!===\n");
@@ -116,6 +137,10 @@ void cat_cmd(char* input) {
     }
     read(file, test_wr, 1000);
     printf("%s\n", test_wr);
+
+    memset((void*) cur, 0, MAX_LENGTH);
+    memset((void*) test_wr, 0, MAX_BUFFER);
+
 }
 
 void cd_cmd(char* input) {
@@ -125,7 +150,7 @@ void cd_cmd(char* input) {
         return;
     }
     size_t i;
-    char* path = malloc(30 * sizeof(char));
+    char path[MAX_LENGTH];
 
     get_cwd(path);
 
@@ -170,15 +195,18 @@ void cd_cmd(char* input) {
 
     set_cwd(path);
 
+    memset((void*) path, 0, MAX_LENGTH);
 }
 
 void pwd_cmd() {
 
-    char* pwd = malloc(30 * sizeof(char));
+    char pwd[MAX_LENGTH];
 
     get_cwd(pwd);
 
     printf("%s\n", pwd);
+
+    memset((void*) pwd, 0, MAX_LENGTH);
 
 }
 
@@ -189,7 +217,7 @@ void sh_cmd(char* param, char* envp[]) {
         return;
     }
 
-    char* cur = malloc(30 * sizeof(char));
+    char cur[MAX_LENGTH];
 
     get_cwd(cur);
 
@@ -202,28 +230,45 @@ void sh_cmd(char* param, char* envp[]) {
         return;
     }
 
-    char* input = malloc(30 * sizeof(char));
+    char input[MAX_BUFFER];
 
-    read(file, input, 1000);
+    int count = read(file, input, MAX_BUFFER);
 
-    if (input[0] == '#' && input[1] == '!') {
+//    if (input[0] == '#' && input[1] == '!') {
+    if (!strcmp(input, "#!")) {
+        char line[MAX_LENGTH];
+        int index = 0;
 
-        char* tmp = malloc(30 * sizeof(char));
+        // move i to the first letter of second line
+        while (input[index++] != '\n')
+            ;
 
-        while (strlen(input) > 2) {
-
-            input = strstr(input, "\n");
-            if (strlen(input) == 1) {
-                break;
-            }
-            strcpy(input, input + 1);
-            strcpy(tmp, input);
-            executeCmd(tmp, envp);
+        // parse command and execute
+        while (index < count) {
+            int i = read_line(input + index, line);
+            executeCmd(line, envp);
+            index += i + 1;
         }
+
+//        while (strlen(input) > 2) {
+//
+//            input = strstr(input, "\n");
+//            if (strlen(input) == 1) {
+//                break;
+//            }
+//            strcpy(input, input + 1);
+//            strcpy(line, input);
+//            executeCmd(line, envp);
+//        }
+
+        memset((void*) line, 0, MAX_LENGTH);
 
     } else {
         printf("===[ERROR] Not a script file!===\n");
     }
+
+    memset((void*) cur, 0, MAX_LENGTH);
+    memset((void*) input, 0, MAX_BUFFER);
 
 }
 
@@ -326,7 +371,7 @@ void executeCmd(char* input, char* envp[]) {
 
         pid_t pid = fork();
         if (pid == 0) {
-                executeBin(args[0], args, envp);
+            executeBin(args[0], args, envp);
             exit(0);
         } else if (pid > 0) {
             if (isBgJob) {
@@ -357,6 +402,7 @@ int main(int argc, char* argv[], char* envp[]) {
     //executeScript(argv[1],envp);
     //exit(0);
     //}
+    char input[1024];
     clear_screen();
 
     printf("---------------------------------------------------------------\n");
@@ -369,7 +415,8 @@ int main(int argc, char* argv[], char* envp[]) {
     while (1) {
 
         shellPrompt();
-        char* input = malloc(1024);
+        // char* input = malloc(1024);
+        memset((void*) input, 0, 1024);
         int n = gets(input);	//
         /*int i=scanf("%[^\n]%*c",input);
 

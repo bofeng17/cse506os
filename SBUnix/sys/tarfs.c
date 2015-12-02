@@ -88,7 +88,7 @@ tarfs_file* tarfs_open(char *name, int flags) {
                     {
                 //printf("im in tarfs open 4\n");
                 //dprintf("size= %d\n", size);
-                tarfs_file* file = (tarfs_file*) kmalloc(1);
+                tarfs_file* file = (tarfs_file*) kmalloc(FILE);
                 file->file_header = header_start;
                 file->size = size;
 
@@ -144,7 +144,7 @@ size_t tarfs_read(struct file *fd, void* buf, size_t size) {
 }
 
 void tarfs_close(tarfs_file* fd) {
-    kfree(fd, 1);
+    kfree(fd, FILE);
 }
 
 void* find_file(char* filename) {

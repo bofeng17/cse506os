@@ -63,20 +63,20 @@ void isr_timer (uint64_t cs) {
     if (boot_count > 400) {
         // for do_sleep
         sleep_time_decrease ();
-//        /*
-//         * for preemptive scheduling
-//         * schedule every 0.5s
-//         */
-//        if (boot_count%100 == 0) {
-//            // time slice runs up, ready to schedule
-//            ready_schedule = 1;
-//        }
-//        if (ready_schedule && ((cs != 0x8) || (current -> pid == 0))) {
-//            // if readu for schedule, and
-//            // timer interrupt happens in user mode or in kernel mode executing idle thread
-//            ready_schedule = 0;
-//            schedule();
-//        } // otherwise try to schedule during next timer interrupt
+        /*
+         * for preemptive scheduling
+         * schedule every 0.5s
+         */
+        if (boot_count%100 == 0) {
+            // time slice runs up, ready to schedule
+            ready_schedule = 1;
+        }
+        if (ready_schedule && ((cs != 0x8) || (current -> pid == 0))) {
+            // if readu for schedule, and
+            // timer interrupt happens in user mode or in kernel mode executing idle thread
+            ready_schedule = 0;
+            schedule();
+        } // otherwise try to schedule during next timer interrupt
     }
     
 

@@ -67,6 +67,10 @@ int parseInputToParams(char* input, char* param[], char sep) {
 void ps_cmd() {
     ps_t ups = malloc(sizeof(ps_state));
 
+    if(ups==NULL){
+        printf("===[ERROR] malloc failed,out of memory!===\n");
+        return;
+    }
     int no = ps(ups);
 
     int i = 0;
@@ -88,6 +92,11 @@ void ls_cmd() {
 
     struct dirent* a = malloc(sizeof(struct dirent));
     //printf("dirent size: %d\n", sizeof(struct dirent));
+
+    if(a==NULL){
+        printf("===[ERROR] malloc failed,out of memory!===\n");
+        return;
+    }
 
     void* b = opendir(direct);
 

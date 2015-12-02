@@ -254,13 +254,13 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
             }
             rsp = (char*) rsp - strlen(params[i]);
             
-            if (flag == ENVP_PARAMS) {
+//            if (flag == ENVP_PARAMS) {
                 params[i] = (char*) rsp;
-            }
+//            }
             
-            if (flag == ARGV_PARAMS) {
-                params[i + 1] = (char*) rsp;
-            }
+//            if (flag == ARGV_PARAMS) {
+//                params[i + 1] = (char*) rsp;
+//            }
             rsp = (char*) rsp - 1;
             *((char*) rsp) = '\0';
             
@@ -314,7 +314,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     
     int argc = 0;
     int envc = 0;
-    char* argv_0 = bin_name;
+//    char* argv_0 = bin_name;
     
     // copy argc, argv, envp onto the temporary virt addr
     void* rsp = (void*) (tmp_vir_addr + PAGE_SIZE);
@@ -328,16 +328,16 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     argc = set_params_to_stack(&tmp2, &argv, ARGV_PARAMS);
     
     tmp = (void*) tmp2;
-    //copy argv_0 (binary name) and set argv0 pointer
-    tmp = (char*) tmp - strlen(argv_0);
-    int j = 0;
-    while (argv_0[j] != '\0') {
-        *((char*) tmp++) = argv_0[j++];
-    }
-    tmp = (char*) tmp - strlen(argv_0);
-    argv[0] = (char*) tmp;
-    
-    argc += 1;
+//    //copy argv_0 (binary name) and set argv0 pointer
+//    tmp = (char*) tmp - strlen(argv_0);
+//    int j = 0;
+//    while (argv_0[j] != '\0') {
+//        *((char*) tmp++) = argv_0[j++];
+//    }
+//    tmp = (char*) tmp - strlen(argv_0);
+//    argv[0] = (char*) tmp;
+//    
+//    argc += 1;
     
     // align last byte
     tmp = (void *) ((uint64_t) tmp & 0xfffffffffffffff8UL);

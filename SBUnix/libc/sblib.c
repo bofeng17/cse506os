@@ -5,8 +5,12 @@
 // files
 
 // mode(unused): enum { O_RDONLY = 0, O_WRONLY = 1, O_RDWR = 2, O_CREAT = 0x40, O_DIRECTORY = 0x10000 };
-struct file* open(char *name, int flags) {
-    return (struct file*) syscall_2(SYS_open, (uint64_t) name, flags);
+int open(char *name, struct file* file, int flags) {
+     return syscall_3(SYS_open, (uint64_t) name,(uint64_t) file, flags);
+}
+
+int check_file(char* name) {
+    return syscall_1(SYS_checkfile, (uint64_t) name);
 }
 
 ssize_t read(struct file* fd, void *buf, size_t count) {
@@ -39,6 +43,10 @@ char* get_cwd(char* buf) {
 
 char* set_cwd(char* buf) {
     return (char*) syscall_1(SYS_setcwd, (uint64_t) buf);
+}
+
+void read_rootfs(struct dirent *dirp){
+     syscall_1(SYS_readrootfs, (uint64_t)dirp);
 }
 
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };

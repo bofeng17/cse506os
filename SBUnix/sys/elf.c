@@ -21,9 +21,19 @@ int load_elf(task_struct* task, char* bin_name) {
 
 
 	char* dir = strstr(bin_name, "/");
+	char tmp[100]="init";
+
+	/*size_t length = strlen(dir);
+	size_t length1 = strlen(bin_name);
+	strncpy(task->cur_dir, bin_name, length1-length+1);*/
+
 	size_t length = strlen(dir);
 	size_t length1 = strlen(bin_name);
-	strncpy(task->cur_dir, bin_name, length1-length+1);
+	strcpy(task->cur_dir, "rootfs/");
+	strncpy(tmp, bin_name, length1-length+1);
+	//strcat(tmp,"\0");
+	strcat(task->cur_dir, tmp);
+
 
 
 	void* file_start = (void*) file->start;

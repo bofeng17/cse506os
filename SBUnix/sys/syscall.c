@@ -143,7 +143,8 @@ void do_syscall() {
     switch (syscall_no) {
         // file
         case SYS_open:
-            __asm__ __volatile__ ("callq tarfs_open;"
+            __asm__ __volatile__ ("mov %r14, %rdx;");
+            __asm__ __volatile__ ("callq do_tarfs_open;"
                                   :"=a"(ret_val));
             break;
         case SYS_close:
@@ -168,6 +169,15 @@ void do_syscall() {
             break;
         case SYS_setcwd:
             __asm__ __volatile__ ("callq set_cwd;"
+                                  :"=a"(ret_val));
+            break;
+
+        case SYS_checkfile:
+            __asm__ __volatile__ ("callq check_file_exist;"
+                                  :"=a"(ret_val));
+            break;
+        case SYS_readrootfs:
+            __asm__ __volatile__ ("callq do_read_rootfs;"
                                   :"=a"(ret_val));
             break;
             

@@ -112,6 +112,56 @@ tarfs_file* tarfs_open(char *name, int flags) {
 
 }
 
+
+int do_tarfs_open(char *name, struct file* file, int flags) {
+    if (flags == O_RDONLY) {
+        struct posix_header_ustar *header_start =
+                (struct posix_header_ustar*) &_binary_tarfs_start;
+        uint64_t size;
+        //printf("im in tarfs open 1\n");
+        if (name == NULL) {
+            dprintf("ERROR: provided file name is null\n");
+            //printf("im in tarfs open 2\n");
+            return -1;
+        }
+
+        while (header_start < (struct posix_header_ustar*) &_binary_tarfs_end) {
+            //printf("im in tarfs open 3\n");
+            size = get_size_oct(header_start->size);
+
+            //printf("size= %d\n", size);
+
+            //if(!tarfs_namencmp(header_start->name, name, sizeof(header_start->name)))
+            if (!strcmp(header_start->name, name)) //here may be a bug in future,using strcmp
+                    {
+                //printf("im in tarfs open 4\n");
+                //dprintf("size= %d\n", size);
+                //tarfs_file* file = (tarfs_file*) kmalloc(1);
+                file->file_header = header_start;
+                file->size = size;
+
+                file->start = (void*) header_start + 512;
+
+                return 0;
+
+                //return file;
+            }
+            //printf("im in tarfs open 5\n");
+            //header_start=tarfs_next_header(header_start, size);
+            header_start = (struct posix_header_ustar*) ((void*) header_start
+                    + ((size + 511) / 512 + 1) * 512);
+
+        }
+
+        //printf("im in tarfs open 6\n");
+
+        dprintf("ERROR: tarfs open file failed\n");
+    }
+    dprintf("we only support O_RDONLY flags\n");
+    return -1;
+
+}
+
 size_t tarfs_read(struct file *fd, void* buf, size_t size) {
     size_t i;
     char* tmp1, *tmp2;
@@ -171,6 +221,35 @@ void* find_file(char* filename) {
     }
 
     return NULL;
+
+}
+
+
+int check_file_exist(char* filename) {
+    struct posix_header_ustar *header_start =
+            (struct posix_header_ustar*) &_binary_tarfs_start;
+    uint64_t size;
+
+    if (filename == NULL) {
+        dprintf("ERROR: provided file name is null\n");
+        return -1;
+    }
+
+    while (header_start < (struct posix_header_ustar*) &_binary_tarfs_end) {
+
+        size = get_size_oct(header_start->size);
+        if (!strcmp(header_start->name, filename)) //here may be a bug in future,using strcmp
+                {
+            //header_start = (struct posix_header_ustar*) header_start + 1;
+            //return (void*) header_start;
+                    return 0;
+        }
+
+        header_start = (struct posix_header_ustar*) ((void*) header_start
+                + ((size + 511) / 512 + 1) * 512);
+    }
+
+    return -1;
 
 }
 
@@ -329,6 +408,37 @@ int do_readdir(void* fd, struct dirent *dirp) {
     }
 
 //return output;
+
+}
+
+void do_read_rootfs(struct dirent* dir)
+{
+    uint64_t i=0;
+    uint64_t size;
+    struct posix_header_ustar *header_start = (struct posix_header_ustar*)&_binary_tarfs_start;
+
+    while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
+    {
+        
+        size=get_size_oct(header_start->size);
+
+        char* tmp = strstr(header_start->name, "/");
+        if(tmp==NULL)
+        {
+            break;
+        }
+
+        if(strlen(tmp)==1)
+        {
+            strcpy(dir[i].name ,header_start->name);
+            i++;
+        }
+        
+        
+        header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);
+    }
+
+    dir->num = i;
 
 }
 

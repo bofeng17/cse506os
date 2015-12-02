@@ -13,10 +13,12 @@
 void shellPrompt() {
 
     char cur_dir[MAX_LENGTH];
+    memset((void*) cur_dir, 0, MAX_LENGTH);
 
     get_cwd(cur_dir);
 
     char root_dir[MAX_LENGTH];
+    memset((void*) root_dir, 0, MAX_LENGTH);
 
     strcpy(root_dir, "rootfs/");
     strcat(root_dir, cur_dir);
@@ -84,6 +86,7 @@ void ls_cmd() {
     int i;
 
     char direct[MAX_LENGTH];
+    memset((void*) direct, 0, MAX_LENGTH);
 
     get_cwd(direct);
 
@@ -103,6 +106,7 @@ void ls_cmd() {
     readdir(b, a);
 
     char final_name[MAX_LENGTH];
+    memset((void*) final_name, 0, MAX_LENGTH);
 
     for (i = 0; i < a->num; i++) {
         strcpy(final_name, a[i].name + length);
@@ -121,6 +125,7 @@ void cat_cmd(char* input) {
     }
 
     char cur[MAX_LENGTH];
+    memset((void*) cur, 0, MAX_LENGTH);
 
     get_cwd(cur);
 
@@ -129,6 +134,7 @@ void cat_cmd(char* input) {
     //char* input_filename = malloc(sizeof(char));
     //scanf("%s", input_filename);
     char test_wr[MAX_BUFFER];
+    memset((void*) test_wr, 0, MAX_BUFFER);
 
     struct file* file = open(cur, O_RDONLY);
     if (file == NULL) {
@@ -138,8 +144,8 @@ void cat_cmd(char* input) {
     read(file, test_wr, 1000);
     printf("%s\n", test_wr);
 
-    memset((void*) cur, 0, MAX_LENGTH);
-    memset((void*) test_wr, 0, MAX_BUFFER);
+//    memset((void*) cur, 0, MAX_LENGTH);
+//    memset((void*) test_wr, 0, MAX_BUFFER);
 
 }
 
@@ -149,8 +155,11 @@ void cd_cmd(char* input) {
         printf("===[ERROR] cd parameter is NULL!===\n");
         return;
     }
+
     size_t i;
+
     char path[MAX_LENGTH];
+    memset((void*) path, 0, MAX_LENGTH);
 
     get_cwd(path);
 
@@ -195,18 +204,19 @@ void cd_cmd(char* input) {
 
     set_cwd(path);
 
-    memset((void*) path, 0, MAX_LENGTH);
+//    memset((void*) path, 0, MAX_LENGTH);
 }
 
 void pwd_cmd() {
 
     char pwd[MAX_LENGTH];
+    memset((void*) pwd, 0, MAX_LENGTH);
 
     get_cwd(pwd);
 
     printf("%s\n", pwd);
 
-    memset((void*) pwd, 0, MAX_LENGTH);
+//    memset((void*) pwd, 0, MAX_LENGTH);
 
 }
 
@@ -218,6 +228,7 @@ void sh_cmd(char* param, char* envp[]) {
     }
 
     char cur[MAX_LENGTH];
+    memset((void*) cur, 0, MAX_LENGTH);
 
     get_cwd(cur);
 
@@ -231,12 +242,15 @@ void sh_cmd(char* param, char* envp[]) {
     }
 
     char input[MAX_BUFFER];
+    memset((void*) input, 0, MAX_BUFFER);
 
     int count = read(file, input, MAX_BUFFER);
 
 //    if (input[0] == '#' && input[1] == '!') {
     if (!strcmp(input, "#!")) {
         char line[MAX_LENGTH];
+        memset((void*) line, 0, MAX_LENGTH);
+
         int index = 0;
 
         // move i to the first letter of second line
@@ -267,8 +281,8 @@ void sh_cmd(char* param, char* envp[]) {
         printf("===[ERROR] Not a script file!===\n");
     }
 
-    memset((void*) cur, 0, MAX_LENGTH);
-    memset((void*) input, 0, MAX_BUFFER);
+//    memset((void*) cur, 0, MAX_LENGTH);
+//    memset((void*) input, 0, MAX_BUFFER);
 
 }
 
@@ -402,7 +416,7 @@ int main(int argc, char* argv[], char* envp[]) {
     //executeScript(argv[1],envp);
     //exit(0);
     //}
-    char input[1024];
+    char* input=malloc(MAX_LENGTH*sizeof(char));
     clear_screen();
 
     printf("---------------------------------------------------------------\n");
@@ -416,7 +430,8 @@ int main(int argc, char* argv[], char* envp[]) {
 
         shellPrompt();
         // char* input = malloc(1024);
-        memset((void*) input, 0, 1024);
+        memset((void*) input, 0, MAX_LENGTH);
+
         int n = gets(input);	//
         /*int i=scanf("%[^\n]%*c",input);
 

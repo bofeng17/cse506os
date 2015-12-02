@@ -49,17 +49,17 @@ int terminal_read(char *buf, int count) {
     printf("%c", CURSOR); // input cursor ¦
     console_column--;
 
-    current->task_state = TASK_BLOCKED;
-    pid_t io_pid = current->pid;
+//    current->task_state = TASK_BLOCKED;
+//    pid_t io_pid = current->pid;
 
     while (press_over == 0) {
         // local_echo();
     }
 
-    task_struct* io = find_task_struct(io_pid);
-    if (io) {
-        io->task_state = TASK_READY;
-    }
+//    task_struct* io = find_task_struct(io_pid);
+//    if (io) {
+//        io->task_state = TASK_READY;
+//    }
 
     memcpy((void*) buf, (void*) terminal_buffer, count);
     int n = count > terminal_buf_count ? terminal_buf_count : count; // number of chars put to buffer

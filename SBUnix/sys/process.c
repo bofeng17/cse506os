@@ -395,7 +395,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
      * must finish copying them onto user stack before load_elf,
      * bacause load_elf will overwrite rodata segment
      */
-    if (load_elf(execv_task, bin_name) < 0)
+    if (load_elf(execv_task, execv_task->task_name) < 0)
         return -1; // -1 if error
     
     // flushing TLB immediately after modifying page table

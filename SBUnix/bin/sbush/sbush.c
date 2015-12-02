@@ -12,31 +12,38 @@
 
 char tmp[MAX_LENGTH];
 
+
+
+
 void cut_rootfs(char* name)
 {
+    size_t size = strlen(name);
+
 
     memset((void*) tmp, 0, MAX_LENGTH);
-   // char* tmp = malloc(30*sizeof(char));
+    // char* tmp = malloc(30*sizeof(char));
 
     //char tmp[MAX_LENGTH];
     //memset((void*) tmp, 0, MAX_LENGTH);
-    strcpy(tmp, name+7);
-    strcpy(name, tmp);
 
+    strcpy(tmp, name+7);
+    memset((void*) name, 0, size);
+
+    strcpy(name, tmp);
 
     //return tmp;
 }
 
-void add_rootfs(char* name)
-{
+void add_rootfs(char* name) {
     //char* tmp = malloc(30*sizeof(char));
-
+    size_t size = strlen(name);
     memset((void*) tmp, 0, MAX_LENGTH);
     //char tmp[MAX_LENGTH];
-   // memset((void*) tmp, 0, MAX_LENGTH);
+    // memset((void*) tmp, 0, MAX_LENGTH);
 
     strcpy(tmp, "rootfs/");
     strcat(tmp, name);
+    memset((void*) name, 0, size);
     strcpy(name, tmp);
 
     //return tmp;
@@ -56,7 +63,7 @@ void shellPrompt() {
     strcpy(root_dir, "rootfs/");
     strcat(root_dir, cur_dir);
 
-    printf("root@SBUINX:%s#", root_dir);
+    printf("=>root@SBUINX:%s# ", root_dir);
 
     memset((void*) cur_dir, 0, MAX_LENGTH);
     memset((void*) root_dir, 0, MAX_LENGTH);
@@ -123,28 +130,25 @@ void ls_cmd() {
 
     get_cwd(direct);
 
-     if(!strcmp(direct, "rootfs/"))
-    {
-       /* printf("im in rootfs\n");
-        printf("bin/\n");
-        printf("lib/\n");
-        printf("mnt/\n");*/
+    if (!strcmp(direct, "rootfs/")) {
+        /* printf("im in rootfs\n");
+         printf("bin/\n");
+         printf("lib/\n");
+         printf("mnt/\n");*/
 
         struct dirent* a = malloc(sizeof(struct dirent));
 
         read_rootfs(a);
 
-        for(i=0;i<a->num;i++)
-        {
-            printf("%s\n", a[i].name);
+        for (i = 0; i < a->num; i++) {
+            printf("%s    ", a[i].name);
         }
 
-
+        printf("\n");
         return;
     }
 
     cut_rootfs(direct);
-
 
     size_t length = strlen(direct);
     //printf("TESTING GET_CWD: %s \n", direct);
@@ -167,8 +171,9 @@ void ls_cmd() {
     for (i = 0; i < a->num; i++) {
         strcpy(final_name, a[i].name + length);
 
-        printf("%s\n", final_name);
+        printf("%s    ", final_name);
     }
+    printf("\n");
 
     memset((void*) direct, 0, MAX_LENGTH);
     memset((void*) final_name, 0, MAX_LENGTH);
@@ -238,8 +243,7 @@ void cd_cmd(char* input) {
                 break;
             }
         }
-        if(!strcmp(path, "rootfs/"))
-        {
+        if (!strcmp(path, "rootfs/")) {
             set_cwd(path);
             return;
         }
@@ -317,7 +321,7 @@ void sh_cmd(char* param, char* envp[]) {
     int count = read(file, input, MAX_BUFFER);
 
 //    if (input[0] == '#' && input[1] == '!') {
-    if (!strncmp(input, "#!",2)) {
+    if (!strncmp(input, "#!", 2)) {
         char line[MAX_LENGTH];
         memset((void*) line, 0, MAX_LENGTH);
 
@@ -354,16 +358,6 @@ void sh_cmd(char* param, char* envp[]) {
 //    memset((void*) cur, 0, MAX_LENGTH);
 //    memset((void*) input, 0, MAX_BUFFER);
 
-}
-
-void sleep_cmd(char* param){
-    int sleep_time = stoi(param);
-    printf("sleep time is:%d\n", sleep_time);
-    if (sleep_time > 0) {
-        sleep(sleep_time);
-    } else {
-        printf("===[ERROR] invalid sleep time:%d !===\n", sleep_time);
-    }
 }
 
 void executeBin(char* cmd, char* args[], char* envp[]) {
@@ -453,21 +447,27 @@ void executeCmd(char* input, char* envp[]) {
         sh_cmd(param, envp);
     } else if (!strcmp(cmd, "clear")) {
         clear_screen();
-    } else if (!strcmp(cmd, "sleep")) {
-        sleep_cmd(param);
     } else if (!strcmp(cmd, "exit")) {
-
+        printf("===[WARNING] current session will exit ! ===\n");
+        exit(0);
     } else if (!strcmp(cmd, "help")) {
 
     } else {    //execute bin or executables
-        if (check_file(args[0]) == -1) {
+
+        char cur_dir[MAX_LENGTH];
+        memset((void*) cur_dir, 0, MAX_LENGTH);
+        get_cwd(cur_dir);
+        cut_rootfs(cur_dir);
+        strcat(cur_dir, args[0]);
+
+        if (check_file(cur_dir) == -1) {
             printf("===[ERROR] not find executable %s !===\n", args[0]);
             return;
         }
 
         pid_t pid = fork();
         if (pid == 0) {
-            executeBin(args[0], args, envp);
+            executeBin(cur_dir, args, envp);
             exit(0);
         } else if (pid > 0) {
             if (isBgJob) {
@@ -490,14 +490,14 @@ void executeCmd(char* input, char* envp[]) {
 
 int main(int argc, char* argv[], char* envp[]) {
 
-    //getEnv(envp);
-    //#ifdef DEBUG
-    //printf("%s\t%s\t%s\n",envp[0],envp[1],envp[2]);
-    //#endif
-    //if(argc > 1) {
-    //executeScript(argv[1],envp);
-    //exit(0);
-    //}
+//getEnv(envp);
+//#ifdef DEBUG
+//printf("%s\t%s\t%s\n",envp[0],envp[1],envp[2]);
+//#endif
+//if(argc > 1) {
+//executeScript(argv[1],envp);
+//exit(0);
+//}
     char* input = malloc(MAX_LENGTH * sizeof(char));
     clear_screen();
 

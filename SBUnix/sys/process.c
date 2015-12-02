@@ -385,8 +385,6 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     self_ref_write(PT, STACK_TOP - PAGE_SIZE, self_ref_read(PT, tmp_vir_addr));
     self_ref_write(PT, tmp_vir_addr, 0);
     
-    // flushing TLB immediately after modifying page table
-    // only after flushing TLB can we start to make memory access
     __asm__ __volatile__ ("mov %0, %%cr3;"
                           ::"r"(current->cr3));
     

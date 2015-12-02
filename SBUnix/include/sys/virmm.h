@@ -64,25 +64,25 @@
 
 //page map level 4 page table definition
 struct pml4t {
-	uint64_t PML4E[TABLE_SIZE];
+    uint64_t PML4E[TABLE_SIZE];
 };
 typedef struct pml4t* pml4_t;
 
 //page directory pointer table
 struct pdptt {
-	uint64_t PDPTE[TABLE_SIZE];
+    uint64_t PDPTE[TABLE_SIZE];
 };
 typedef struct pdptt* pdpt_t;
 
 //page directory
 struct pdtt {
-	uint64_t PDTE[TABLE_SIZE];
+    uint64_t PDTE[TABLE_SIZE];
 };
 typedef struct pdtt* pdt_t;
 
 //page table
 struct ptt {
-	uint64_t PTE[TABLE_SIZE];
+    uint64_t PTE[TABLE_SIZE];
 };
 typedef struct ptt* pt_t;
 
@@ -141,38 +141,34 @@ typedef struct mm_struct {
 // get specific vma of mm
 vma_struct* get_vma(mm_struct* mm, int flag);
 
-void
-init_mm();
+void init_mm();
 
-void map_kernel();
+#define USER_MAP 1
+#define KERN_MAP 0
+void map_kernel(int user_or_kern);
 
-void
-initial_mapping();
+void initial_mapping();
 
-void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag);
-void map_user_pt(uint64_t vir_addr, uint64_t phy_addr, int flag);
+#define NEED_SET_PTE_FLAGS 1
+#define NOT_NEED_PTE_FLAGS 0
 
-uint64_t
-get_CR3();
+void map_virmem_to_phymem(uint64_t, uint64_t, int, int,int);
 
-void
-set_CR3(uint64_t CR3);
+uint64_t get_CR3();
 
-void*
-kmalloc(int flag);
+void set_CR3(uint64_t CR3);
 
-void
-kfree(void* addr, int flag);
+void* kmalloc(int flag);
 
-void*
-umalloc(void* addr, size_t size);
+void kfree(void* addr, int flag);
+
+void* umalloc(void* addr, size_t size);
 
 //void*
 //umap(void* addr, size_t size);
 
 //TODO: remember to set physical page to zero
-void
-ufree(void* addr);
+void ufree(void* addr);
 /* Self-reference:
  * make 510th entry of PML4, instead of 511th entry which is used by kernel mapping, 
  * points to the 1st entry of PML4
@@ -186,19 +182,18 @@ ufree(void* addr);
  * entry_val_phy: the physical addr. of page frame/next level page table
  *                to be written to the entry specified by entry_correpond_to_vir
  */
-void
-self_ref_write(int level, uint64_t entry_correpond_to_vir,
-		uint64_t entry_val_phy);
+void self_ref_write(int level, uint64_t entry_correpond_to_vir,
+        uint64_t entry_val_phy);
 
 /*
  * entry_correpond_to_vir: same to self_ref_write
  * return: the physical addr. of page frame/next level page table
  *         read from the entry specified by entry_correpond_to_vir
  */
-uint64_t
-self_ref_read(int level, uint64_t vir);
+uint64_t self_ref_read(int level, uint64_t vir);
 
 void test_selfref(uint64_t testaddr);
 
 void free_vma(vma_struct* mm);
+
 #endif

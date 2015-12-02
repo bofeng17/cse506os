@@ -343,9 +343,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     tmp = (void *) ((uint64_t) tmp & 0xfffffffffffffff8UL);
     
     // set null pointer between string area and envp
-    tmp -= 8;	      // uint64_t is 8 bytes
+    tmp -= 8;         // uint64_t is 8 bytes
     memset(tmp, 0, 8);
-    tmp -= 8;	      // uint64_t is 8 bytes
+    tmp -= 8;         // uint64_t is 8 bytes
     
     // store envp pointers in the proper place of user stack
     if (envc > 0) {
@@ -357,9 +357,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
         }
         execv_task->mm->env_start = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) envp[0]);
         // set 0 between envp and argv
-        //tmp -= 8;	      // uint64_t is 8 bytes
+        //tmp -= 8;       // uint64_t is 8 bytes
         memset(tmp, 0, 8);
-        tmp -= 8;	      // uint64_t is 8 bytes
+        tmp -= 8;         // uint64_t is 8 bytes
         
     }
     
@@ -439,7 +439,7 @@ void set_child_pt(task_struct* child) {
     global_PML4 = (pml4_t) kmalloc(KERNPT);
     child->cr3 = (uint64_t) global_PML4 - VIR_START;
     
-    map_kernel();
+    map_kernel(USER_MAP);
     
     vma_struct* vma = current->mm->mmap;
     
@@ -493,7 +493,8 @@ void set_child_pt(task_struct* child) {
                 self_ref_write(PT, start_addr, content);
                 
                 // map child's page table
-                map_user_pt(start_addr, content, USERPT);
+               map_virmem_to_phymem(start_addr,content,USERPT,USER_MAP,NOT_NEED_PTE_FLAGS);
+//                map_user_pt(start_addr, content, USERPT);
             }
             start_addr += PAGE_SIZE;
         }
@@ -594,7 +595,7 @@ int do_ps(ps_t ps) {
             ps->id[c] = cur->pid;
             strcpy(ps->name[c], cur->task_name);
             //       strcpy(ps->state[c], cur->task_name);
-            
+
             //ps->state[c] = cur->task_state;
             switch (cur->task_state) {
                 case TASK_NEW:
@@ -620,7 +621,7 @@ int do_ps(ps_t ps) {
                     break;
                 default: strcpy(ps->state[c], "unknown   ");
             }
-            
+
             cur = cur->next;
             c++;
         }while((cur != current));
@@ -657,9 +658,8 @@ pid_t do_waitpid(pid_t pid, int *status, int options){
         child->task_state=TASK_DEAD;
     } else {
         printf("parent doesn't have a child of pid %d!\n", pid);
-        
-    }
 
+    }
     // if child process already exited, return at once
     return pid;
 }

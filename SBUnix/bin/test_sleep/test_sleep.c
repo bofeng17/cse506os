@@ -3,6 +3,7 @@
 
 int main(int argc, char* argv[], char* envp[]) {
     printf("I'm going to sleep !\n");
+    printf("argc is:%d\n", argc);
 
     if (argc == 2) {
         int sleep_time = stoi(argv[1]);

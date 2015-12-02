@@ -257,7 +257,7 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 //            if (flag == ENVP_PARAMS) {
                 params[i] = (char*) rsp;
 //            }
-            
+//
 //            if (flag == ARGV_PARAMS) {
 //                params[i + 1] = (char*) rsp;
 //            }
@@ -325,7 +325,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     envc = set_params_to_stack(&tmp2, &envp, ENVP_PARAMS);
     
     // save argv string to the top area of user stack
-    argc = set_params_to_stack(&tmp2, &argv, ARGV_PARAMS);
+    argc += set_params_to_stack(&tmp2, &argv, ARGV_PARAMS);
     
     tmp = (void*) tmp2;
 //    //copy argv_0 (binary name) and set argv0 pointer
@@ -336,7 +336,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 //    }
 //    tmp = (char*) tmp - strlen(argv_0);
 //    argv[0] = (char*) tmp;
-//    
+//
 //    argc += 1;
     
     // align last byte

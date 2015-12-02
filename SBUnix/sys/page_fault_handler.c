@@ -19,22 +19,22 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
     
     __asm__ __volatile__("mov %%cr2, %0":"=r"(pf_addr));
 
-//    dprintf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
-//    if (pf_err_code & PF_BIT_0) {
-//        dprintf("invalid access right | ");
-//    } else {
-//        dprintf("not present | ");
-//    }
-//    if (pf_err_code & PF_BIT_1) {
-//        dprintf("write | ");
-//    } else {
-//        dprintf("read or execute | ");
-//    }
-//    if (pf_err_code & PF_BIT_2) {
-//        dprintf("in user mode\n");
-//    } else {
-//        dprintf("in kernel mode\n");
-//    }
+    dprintf("pf happens @%p, caused by %p\n", pf_addr, regs->rip);
+    if (pf_err_code & PF_BIT_0) {
+        dprintf("invalid access right | ");
+    } else {
+        dprintf("not present | ");
+    }
+    if (pf_err_code & PF_BIT_1) {
+        dprintf("write | ");
+    } else {
+        dprintf("read or execute | ");
+    }
+    if (pf_err_code & PF_BIT_2) {
+        dprintf("in user mode\n");
+    } else {
+        dprintf("in kernel mode\n");
+    }
 
     
     /*

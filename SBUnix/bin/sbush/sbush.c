@@ -53,7 +53,7 @@ void shellPrompt() {
     strcpy(root_dir, "rootfs/");
     strcat(root_dir, cur_dir);
 
-    printf("root@SBUINX:%s#", root_dir);
+    printf("=>root@SBUINX:%s# ", root_dir);
 
     memset((void*) cur_dir, 0, MAX_LENGTH);
     memset((void*) root_dir, 0, MAX_LENGTH);
@@ -131,7 +131,7 @@ void ls_cmd() {
         read_rootfs(a);
 
         for (i = 0; i < a->num; i++) {
-            printf("%s\t", a[i].name);
+            printf("%s    ", a[i].name);
         }
 
         printf("\n");
@@ -161,8 +161,9 @@ void ls_cmd() {
     for (i = 0; i < a->num; i++) {
         strcpy(final_name, a[i].name + length);
 
-        printf("%s\n", final_name);
+        printf("%s    ", final_name);
     }
+    printf("\n");
 
     memset((void*) direct, 0, MAX_LENGTH);
     memset((void*) final_name, 0, MAX_LENGTH);

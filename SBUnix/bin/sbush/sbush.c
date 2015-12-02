@@ -14,6 +14,7 @@ char tmp[MAX_LENGTH];
 
 void cut_rootfs(char* name)
 {
+    size_t size = strlen(name);
 
     memset((void*) tmp, 0, MAX_LENGTH);
    // char* tmp = malloc(30*sizeof(char));
@@ -21,6 +22,7 @@ void cut_rootfs(char* name)
     //char tmp[MAX_LENGTH];
     //memset((void*) tmp, 0, MAX_LENGTH);
     strcpy(tmp, name+7);
+    memset((void*) name, 0, size);
     strcpy(name, tmp);
 
 
@@ -30,13 +32,14 @@ void cut_rootfs(char* name)
 void add_rootfs(char* name)
 {
     //char* tmp = malloc(30*sizeof(char));
-
+    size_t size = strlen(name);
     memset((void*) tmp, 0, MAX_LENGTH);
     //char tmp[MAX_LENGTH];
    // memset((void*) tmp, 0, MAX_LENGTH);
 
     strcpy(tmp, "rootfs/");
     strcat(tmp, name);
+    memset((void*) name, 0, size);
     strcpy(name, tmp);
 
     //return tmp;

@@ -4,10 +4,11 @@
 int main(int argc, char* argv[], char* envp[]) {
     pid_t pid;
     int status;
+    // login here
+    printf("init process started: \n");
     while (1) {
         status = 0;
-        // login here
-        printf("init process started: \n");
+
         pid = fork();
         if (pid > 0) {
             waitpid(pid, &status, 0);

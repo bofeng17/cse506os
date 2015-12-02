@@ -71,7 +71,7 @@ tarfs_file* tarfs_open(char *name, int flags) {
                 (struct posix_header_ustar*) &_binary_tarfs_start;
         uint64_t size;
         //printf("im in tarfs open 1\n");
-        if (name == NULL) {
+        if (name == NULL || *name == 0) {
             dprintf("ERROR: provided file name is null\n");
             //printf("im in tarfs open 2\n");
             return NULL;

@@ -32,7 +32,7 @@ timer_init ()
     outb (0x40, lobyte);
     outb (0x40, hibyte);
     
-    //      pic_set_mask (0);
+//          pic_set_mask (0);
     //      pic_set_mask (1);
 }
 
@@ -59,15 +59,15 @@ void isr_timer (uint64_t cs) {
     
     // after 2s of boot, do...
 
+
     if (boot_count > 400) {
         // for do_sleep
         sleep_time_decrease ();
-//        
-//        /*
-//         * for preemptive scheduling
-//         * schedule every 1s
-//         */
-//        if (boot_count%200 == 0) {
+        /*
+         * for preemptive scheduling
+         * schedule every 0.5s
+         */
+//        if (boot_count%100 == 0) {
 //            // time slice runs up, ready to schedule
 //            ready_schedule = 1;
 //        }

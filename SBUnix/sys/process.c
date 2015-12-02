@@ -165,12 +165,14 @@ void setup_vma(mm_struct* mstruct) {
 }
 
 void func_init() {
+//    char* argv[3] = { "a1", "a2", NULL };
+//
+//    char* envp[4] = { "e1", "e2", "e3", NULL };
     char* argv[3] = { "a1", "a2", NULL };
     
-    char* envp[4] = { "e1", "e2", "e3", NULL };
+    char* envp[4] = { "PATH=bin:rootfs/bin", "HOME=rootfs/bin", "USER=ROOT", NULL };
     
     // transform kernel thread init to user process
-    
     // allocate mm_struct and vma for init
     set_task_struct(current);
 
@@ -184,7 +186,7 @@ void func_init() {
     current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
 
     // vma_chain setup by setup_vma() in do_execev
-    do_execv("bin/sbush", argv, envp);
+    do_execv("bin/init", argv, envp);
 }
 
 
@@ -238,7 +240,7 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
     void* rsp = (void*) rsp64;
     char** params = *params_p;
     if (params != NULL) {
-        params_no = count_args(params);
+        params_no = count_args(params);// params_no is at least one
         //dprintf("param_no is %d\n", params_no);
         i = params_no - 1;
         while (params[i] != NULL) {
@@ -257,7 +259,7 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
 //            if (flag == ENVP_PARAMS) {
                 params[i] = (char*) rsp;
 //            }
-            
+//
 //            if (flag == ARGV_PARAMS) {
 //                params[i + 1] = (char*) rsp;
 //            }
@@ -266,6 +268,11 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
             
             //dprintf ("tmp is %p", tmp);
             i--;
+
+            //since i is decremented, so if less than zero, must break!
+            if(i<0){
+                break;
+            }
             //printf("%s\n",(char*)tmp+1 );
         }
         
@@ -325,7 +332,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     envc = set_params_to_stack(&tmp2, &envp, ENVP_PARAMS);
     
     // save argv string to the top area of user stack
-    argc = set_params_to_stack(&tmp2, &argv, ARGV_PARAMS);
+    argc += set_params_to_stack(&tmp2, &argv, ARGV_PARAMS);
     
     tmp = (void*) tmp2;
 //    //copy argv_0 (binary name) and set argv0 pointer
@@ -336,7 +343,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
 //    }
 //    tmp = (char*) tmp - strlen(argv_0);
 //    argv[0] = (char*) tmp;
-//    
+//
 //    argc += 1;
     
     // align last byte
@@ -393,7 +400,7 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
      * must finish copying them onto user stack before load_elf,
      * bacause load_elf will overwrite rodata segment
      */
-    if (load_elf(execv_task, bin_name) < 0)
+    if (load_elf(execv_task, execv_task->task_name) < 0)
         return -1; // -1 if error
     
     // flushing TLB immediately after modifying page table

@@ -2,6 +2,7 @@
 #include <sys/printf.h>
 #include <sys/stdlib.h>
 #include <sys/string.h>
+#include <sys/process.h>
 
 // variable and function declarations used by terminal are in sbunix.h
 #define CURSOR 135
@@ -22,18 +23,27 @@ int terminal_write(int fd, char *buf, int count) {
 //void local_echo() {
 //    printf("%c", terminal_buffer[terminal_buf_count-1]);
 //}
-
-void do_clear(){
-
-        for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
-            for (size_t x = 0; x < VGA_WIDTH; x++) {
-                const size_t index = y * VGA_WIDTH + x;
-                console_buffer[index] = make_vgaentry(' ', console_color);
-            }
+void clear_bottom(){
+    for (size_t y = console_row+1; y < VGA_HEIGHT - 1; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t index = y * VGA_WIDTH + x;
+            console_buffer[index] = make_vgaentry(' ', console_color);
         }
-        console_row = 0;
-        console_column =0;
+    }
 }
+
+void do_clear() {
+    for (size_t y = 0; y < VGA_HEIGHT - 1; y++) {
+        for (size_t x = 0; x < VGA_WIDTH; x++) {
+            const size_t index = y * VGA_WIDTH + x;
+            console_buffer[index] = make_vgaentry(' ', console_color);
+        }
+    }
+    console_row = 0;
+    console_column = 0;
+}
+
+
 
 int terminal_read(char *buf, int count) {
     // isr_keyboard puts char into terminal buffer
@@ -46,12 +56,23 @@ int terminal_read(char *buf, int count) {
 
     user_input = 1; //set local echo flag
 
-    printf("%c",CURSOR);// input cursor ¦
+
+    printf("%c", CURSOR); // input cursor ¦
     console_column--;
+
+    clear_bottom();
+//    current->task_state = TASK_BLOCKED;
+//    pid_t io_pid = current->pid;
 
     while (press_over == 0) {
         // local_echo();
     }
+
+//    task_struct* io = find_task_struct(io_pid);
+//    if (io) {
+//        io->task_state = TASK_READY;
+//    }
+
     memcpy((void*) buf, (void*) terminal_buffer, count);
     int n = count > terminal_buf_count ? terminal_buf_count : count; // number of chars put to buffer
 
@@ -88,7 +109,7 @@ void terminal_get_char(uint8_t ch) {
 
             console_column--;
 
-            console_putchar(CURSOR);// input cursor
+            console_putchar(CURSOR); // input cursor
             console_column--;
 
         }
@@ -105,13 +126,13 @@ void terminal_get_char(uint8_t ch) {
 
             //judge whether or not to local_echo user input
             if (user_input == 1) {
-                if(ch=='\n'){
+                if (ch == '\n') {
                     console_putchar(' ');
                 }
 
                 console_putchar(ch);
 
-                console_putchar(CURSOR);// input cursor ¦
+                console_putchar(CURSOR); // input cursor ¦
                 console_column--;
 
             }

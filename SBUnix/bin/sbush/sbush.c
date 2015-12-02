@@ -247,7 +247,7 @@ void sh_cmd(char* param, char* envp[]) {
     int count = read(file, input, MAX_BUFFER);
 
 //    if (input[0] == '#' && input[1] == '!') {
-    if (!strcmp(input, "#!")) {
+    if (!strncmp(input, "#!",2)) {
         char line[MAX_LENGTH];
         memset((void*) line, 0, MAX_LENGTH);
 

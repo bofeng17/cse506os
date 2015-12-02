@@ -122,5 +122,5 @@ void clear_screen();
 
 // convert string to integer (positive)
 int stoi(char* s);
-
+int read_line(char* str, char* line);
 #endif

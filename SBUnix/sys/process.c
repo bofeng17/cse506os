@@ -183,14 +183,8 @@ void func_init() {
     umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
     current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
 
-
-    do_execv("bin/sbush", argv, envp);
-
-    
     // vma_chain setup by setup_vma() in do_execev
-    //do_execv("bin/test_hello", argv, envp);
-    
-
+    do_execv("bin/sbush", argv, envp);
 }
 
 
@@ -286,10 +280,6 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     //set task name
     strcpy(execv_task->task_name, bin_name);
     
-    int argc = 0;
-    int envc = 0;
-    char* argv_0 = bin_name;
-    
     /*
      * setup heap
      * each process has at least one page in heap
@@ -322,6 +312,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     __asm__ __volatile__ ("mov %0, %%cr3;"
                           ::"r"(current->cr3));
     
+    int argc = 0;
+    int envc = 0;
+    char* argv_0 = bin_name;
     
     // copy argc, argv, envp onto the temporary virt addr
     void* rsp = (void*) (tmp_vir_addr + PAGE_SIZE);
@@ -388,9 +381,14 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     rsp = tmp;
     
     // remap tmp_vir_addr to near STACK_TOP
-    execv_task->rsp = STACK_TOP - (tmp_vir_addr + PAGE_SIZE - (uint64_t) rsp);
+    execv_task->rsp = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) rsp);
     self_ref_write(PT, STACK_TOP - PAGE_SIZE, self_ref_read(PT, tmp_vir_addr));
     self_ref_write(PT, tmp_vir_addr, 0);
+    
+    // flushing TLB immediately after modifying page table
+    // only after flushing TLB can we start to make memory access
+    __asm__ __volatile__ ("mov %0, %%cr3;"
+                          ::"r"(current->cr3));
     
     /*
      * argc, argv, envp may be either stored on stack or rodata segment,

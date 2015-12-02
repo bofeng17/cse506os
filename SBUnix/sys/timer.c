@@ -14,7 +14,7 @@ uint32_t IRQ0_period = 5; // 5 mS between IRQs
 uint16_t PIT_reload_value = 5965; // 11930/2 50 HZ
 
 uint32_t boot_count = 0;
-uint32_t scheduled = 0;
+uint32_t ready_schedule = 0;// 1 for ready
 
 //Every time the mode/command register is written to, all internal logic in the selected PIT channel is reset, and the output immediately goes to its initial state
 void
@@ -58,16 +58,27 @@ void isr_timer (uint64_t cs) {
     //printf("%d   ",cs);
     
     // after 2s of boot, do...
-//    if (boot_count > 400) {
-//        // for do_sleep
-//        sleep_time_decrease ();
+
+    if (boot_count > 400) {
+        // for do_sleep
+        sleep_time_decrease ();
 //        
 //        /*
 //         * for preemptive scheduling
 //         * schedule every 1s
 //         */
-////        if (boot_count%200 == 0) {
-////            schedule();
-////        }
-//    }
+//        if (boot_count%200 == 0) {
+//            // time slice runs up, ready to schedule
+//            ready_schedule = 1;
+//        }
+//        if (ready_schedule && ((cs != 0x8) || (current -> pid == 0))) {
+//            // if readu for schedule, and
+//            // timer interrupt happens in user mode or in kernel mode executing idle thread
+//            ready_schedule = 0;
+//            schedule();
+//        } // otherwise try to schedule during next timer interrupt
+    }
+    
+
+
 }

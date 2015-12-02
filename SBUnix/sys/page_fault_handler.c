@@ -133,6 +133,8 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
                     tmp_phys_addr = self_ref_read(PT, tmp_vir_addr);
                     self_ref_write(PT, tmp_vir_addr, page_frame_des | pt_perm_flag);
                     
+                    // TODO: shall I flush TLB here?
+                    
                     // Copy content
                     memcpy((void *) tmp_vir_addr, (void *) (pf_addr & CLEAR_OFFSET),
                            PAGE_SIZE);
@@ -177,10 +179,12 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
             } else {
                 // pf caused by kernel bugs or (extreme memory shortage)
                 printf("Kernel Panic @%p by %p!\n", pf_addr,regs->rip);
-                __asm__ __volatile__("hlt");
+                __asm__ __volatile__("int $0x3");
             }
         }
     }
+    __asm__ __volatile__ ("mov %0, %%cr3;"
+                          ::"r"(current->cr3));
 }
 
 vma_struct *in_vma(uint64_t virt_addr, vma_struct *vma) {

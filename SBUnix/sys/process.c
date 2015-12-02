@@ -183,14 +183,8 @@ void func_init() {
     umalloc((void*) (STACK_TOP - PAGE_SIZE), PAGE_SIZE); // map one page initially
     current->mm->start_stack = STACK_TOP - STACK_PAGES * PAGE_SIZE;
 
-
-    do_execv("bin/sbush", argv, envp);
-
-    
     // vma_chain setup by setup_vma() in do_execev
-    //do_execv("bin/test_hello", argv, envp);
-    
-
+    do_execv("bin/sbush", argv, envp);
 }
 
 
@@ -260,13 +254,13 @@ int set_params_to_stack(uint64_t* rsp_p, char *** params_p, int flag) {
             }
             rsp = (char*) rsp - strlen(params[i]);
             
-            if (flag == ENVP_PARAMS) {
+//            if (flag == ENVP_PARAMS) {
                 params[i] = (char*) rsp;
-            }
+//            }
             
-            if (flag == ARGV_PARAMS) {
-                params[i + 1] = (char*) rsp;
-            }
+//            if (flag == ARGV_PARAMS) {
+//                params[i + 1] = (char*) rsp;
+//            }
             rsp = (char*) rsp - 1;
             *((char*) rsp) = '\0';
             
@@ -285,10 +279,6 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     task_struct* execv_task = current;
     //set task name
     strcpy(execv_task->task_name, bin_name);
-    
-    int argc = 0;
-    int envc = 0;
-    char* argv_0 = bin_name;
     
     /*
      * setup heap
@@ -322,6 +312,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     __asm__ __volatile__ ("mov %0, %%cr3;"
                           ::"r"(current->cr3));
     
+    int argc = 0;
+    int envc = 0;
+//    char* argv_0 = bin_name;
     
     // copy argc, argv, envp onto the temporary virt addr
     void* rsp = (void*) (tmp_vir_addr + PAGE_SIZE);
@@ -335,24 +328,24 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     argc = set_params_to_stack(&tmp2, &argv, ARGV_PARAMS);
     
     tmp = (void*) tmp2;
-    //copy argv_0 (binary name) and set argv0 pointer
-    tmp = (char*) tmp - strlen(argv_0);
-    int j = 0;
-    while (argv_0[j] != '\0') {
-        *((char*) tmp++) = argv_0[j++];
-    }
-    tmp = (char*) tmp - strlen(argv_0);
-    argv[0] = (char*) tmp;
-    
-    argc += 1;
+//    //copy argv_0 (binary name) and set argv0 pointer
+//    tmp = (char*) tmp - strlen(argv_0);
+//    int j = 0;
+//    while (argv_0[j] != '\0') {
+//        *((char*) tmp++) = argv_0[j++];
+//    }
+//    tmp = (char*) tmp - strlen(argv_0);
+//    argv[0] = (char*) tmp;
+//    
+//    argc += 1;
     
     // align last byte
     tmp = (void *) ((uint64_t) tmp & 0xfffffffffffffff8UL);
     
     // set null pointer between string area and envp
-    tmp -= 8;	      // uint64_t is 8 bytes
+    tmp -= 8;         // uint64_t is 8 bytes
     memset(tmp, 0, 8);
-    tmp -= 8;	      // uint64_t is 8 bytes
+    tmp -= 8;         // uint64_t is 8 bytes
     
     // store envp pointers in the proper place of user stack
     if (envc > 0) {
@@ -364,9 +357,9 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
         }
         execv_task->mm->env_start = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) envp[0]);
         // set 0 between envp and argv
-        //tmp -= 8;	      // uint64_t is 8 bytes
+        //tmp -= 8;       // uint64_t is 8 bytes
         memset(tmp, 0, 8);
-        tmp -= 8;	      // uint64_t is 8 bytes
+        tmp -= 8;         // uint64_t is 8 bytes
         
     }
     
@@ -388,9 +381,12 @@ int do_execv(char* bin_name, char ** argv, char** envp) {
     rsp = tmp;
     
     // remap tmp_vir_addr to near STACK_TOP
-    execv_task->rsp = STACK_TOP - (tmp_vir_addr + PAGE_SIZE - (uint64_t) rsp);
+    execv_task->rsp = DO_EXECV_TMP_ADDR_TRANSLATE((uint64_t) rsp);
     self_ref_write(PT, STACK_TOP - PAGE_SIZE, self_ref_read(PT, tmp_vir_addr));
     self_ref_write(PT, tmp_vir_addr, 0);
+    
+    __asm__ __volatile__ ("mov %0, %%cr3;"
+                          ::"r"(current->cr3));
     
     /*
      * argc, argv, envp may be either stored on stack or rodata segment,
@@ -443,7 +439,7 @@ void set_child_pt(task_struct* child) {
     global_PML4 = (pml4_t) kmalloc(KERNPT);
     child->cr3 = (uint64_t) global_PML4 - VIR_START;
     
-    map_kernel();
+    map_kernel(USER_MAP);
     
     vma_struct* vma = current->mm->mmap;
     
@@ -497,7 +493,8 @@ void set_child_pt(task_struct* child) {
                 self_ref_write(PT, start_addr, content);
                 
                 // map child's page table
-                map_user_pt(start_addr, content, USERPT);
+               map_virmem_to_phymem(start_addr,content,USERPT,USER_MAP,NOT_NEED_PTE_FLAGS);
+//                map_user_pt(start_addr, content, USERPT);
             }
             start_addr += PAGE_SIZE;
         }
@@ -598,7 +595,7 @@ int do_ps(ps_t ps) {
             ps->id[c] = cur->pid;
             strcpy(ps->name[c], cur->task_name);
             //       strcpy(ps->state[c], cur->task_name);
-            
+
             //ps->state[c] = cur->task_state;
             switch (cur->task_state) {
                 case TASK_NEW:
@@ -624,7 +621,7 @@ int do_ps(ps_t ps) {
                     break;
                 default: strcpy(ps->state[c], "unknown   ");
             }
-            
+
             cur = cur->next;
             c++;
         }while((cur != current));
@@ -661,9 +658,8 @@ pid_t do_waitpid(pid_t pid, int *status, int options){
         child->task_state=TASK_DEAD;
     } else {
         printf("parent doesn't have a child of pid %d!\n", pid);
-        
-    }
 
+    }
     // if child process already exited, return at once
     return pid;
 }

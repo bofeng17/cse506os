@@ -1,4 +1,24 @@
-p/x $rdi
-p/x $rsi
-p/x $rdx
+p current->pid
+#p current->task_name
+
+p current->next->pid
+#p current->next->task_name
+
+p current->next->next->pid
+#p current->next->next->next->task_name
+
+p current->next->next->next->pid
+#p current->next->next->next->task_name
+
+p current->next->next->next->next->pid
+#p current->next->next->next->next->task_name
+
+p current->next->next->next->next->next->pid
+#p current->next->next->next->next->next->task_name
+
+p current->next->next->next->next->next->next->pid
+#p current->next->next->next->next->next->next->task_name
+
+p current->next->next->next->next->next->next->next->pid
+#p current->next->next->next->next->next->next->next->task_name
 

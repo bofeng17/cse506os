@@ -460,14 +460,21 @@ void executeCmd(char* input, char* envp[]) {
     } else if (!strcmp(cmd, "help")) {
 
     } else {    //execute bin or executables
-        if (check_file(args[0]) == -1) {
+
+        char cur_dir[MAX_LENGTH];
+        memset((void*) cur_dir, 0, MAX_LENGTH);
+        get_cwd(cur_dir);
+        cut_rootfs(cur_dir);
+        strcat(cur_dir, args[0]);
+
+        if (check_file(cur_dir) == -1) {
             printf("===[ERROR] not find executable %s !===\n", args[0]);
             return;
         }
 
         pid_t pid = fork();
         if (pid == 0) {
-            executeBin(args[0], args, envp);
+            executeBin(cur_dir, args, envp);
             exit(0);
         } else if (pid > 0) {
             if (isBgJob) {

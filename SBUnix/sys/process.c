@@ -196,8 +196,8 @@ void func_init() {
 
 //insert new task to run queue
 void add_task(task_struct * task) {
-
     //linked list add operation needs to be careful!
+    // end is always non NULL!
     task->next=end->next;
     end->next = task;
     end = task;
@@ -591,43 +591,49 @@ int do_fork() {
 }
 
 int do_ps(ps_t ps) {
-    task_struct* cur = current;
-    int c = 0;
-    do  {
-        ps->id[c] = cur->pid;
-        strcpy(ps->name[c], cur->task_name);
-        //       strcpy(ps->state[c], cur->task_name);
-        
-        //ps->state[c] = cur->task_state;
-        switch (cur->task_state) {
-            case TASK_NEW:
-                strcpy(ps->state[c], "new       ");
-                break;
-            case TASK_READY:
-                strcpy(ps->state[c], "ready     ");
-                break;
-            case TASK_RUNNING:
-                strcpy(ps->state[c], "running   ");
-                break;
-            case TASK_SLEEPING:
-                strcpy(ps->state[c], "sleeping  ");
-                break;
-            case TASK_BLOCKED:
-                strcpy(ps->state[c], "blocked   ");
-                break;
-            case TASK_ZOMBIE:
-                strcpy(ps->state[c], "zombie    ");
-                break;
-            case TASK_DEAD:
-                strcpy(ps->state[c], "dead      ");
-                break;
-            default: strcpy(ps->state[c], "unknown   ");
-        }
-        
-        cur = cur->next;
-        c++;
-    }while((cur != current));
-    return c;
+    if (ps) { // if ps != NULL
+        task_struct* cur = current;
+        int c = 0;
+        do  {
+            ps->id[c] = cur->pid;
+            strcpy(ps->name[c], cur->task_name);
+            //       strcpy(ps->state[c], cur->task_name);
+            
+            //ps->state[c] = cur->task_state;
+            switch (cur->task_state) {
+                case TASK_NEW:
+                    strcpy(ps->state[c], "new       ");
+                    break;
+                case TASK_READY:
+                    strcpy(ps->state[c], "ready     ");
+                    break;
+                case TASK_RUNNING:
+                    strcpy(ps->state[c], "running   ");
+                    break;
+                case TASK_SLEEPING:
+                    strcpy(ps->state[c], "sleeping  ");
+                    break;
+                case TASK_BLOCKED:
+                    strcpy(ps->state[c], "blocked   ");
+                    break;
+                case TASK_ZOMBIE:
+                    strcpy(ps->state[c], "zombie    ");
+                    break;
+                case TASK_DEAD:
+                    strcpy(ps->state[c], "dead      ");
+                    break;
+                default: strcpy(ps->state[c], "unknown   ");
+            }
+            
+            cur = cur->next;
+            c++;
+        }while((cur != current));
+        return c;
+    } else {
+        // ps == NULL
+        printf("error: buff not allocated\n");
+        return -1;
+    }
 }
 
 int do_getpid(){
@@ -640,6 +646,7 @@ int do_getppid(){
 
 // 3rd parm ignored
 pid_t do_waitpid(pid_t pid, int *status, int options){
+    task_struct *child;
     if (current->wait_pid != pid) {
         // if child process not exited
         current->task_state = TASK_BLOCKED;
@@ -649,9 +656,13 @@ pid_t do_waitpid(pid_t pid, int *status, int options){
     // TODO: release the resource of child process
     
     // pass ret_val of child to *status
-    *status = find_task_struct(pid)->ret_val;
-    
-    find_task_struct(pid)->task_state=TASK_DEAD;
+    if ((child = find_task_struct(pid))) { // if should always be ture, here just for security
+        *status = child->ret_val;
+        child->task_state=TASK_DEAD;
+    } else {
+        printf("parent doesn't have a child of pid %d!\n", pid);
+        
+    }
 
     // if child process already exited, return at once
     return pid;
@@ -666,10 +677,15 @@ void do_exit(int status) {
      * Check if parent process is suspended (by calling waitpid())
      * if yes, wake parent process
      */
-    parent = find_task_struct(current->ppid);
-    parent->wait_pid = current->pid;
-    if (parent->task_state == TASK_BLOCKED) {
-        parent->task_state = TASK_READY;
+    if ((parent = find_task_struct(current->ppid))) {
+        // if found task_struct of parent process
+        parent->wait_pid = current->pid;
+        if (parent->task_state == TASK_BLOCKED) {
+            parent->task_state = TASK_READY;
+        }
+    } else {
+        // if parent process exits
+        printf("cannot find parent process of pid %d (may terminated)\n", current->ppid);
     }
     // current exited, so doesn't need push registers
     schedule();
@@ -688,27 +704,32 @@ void do_yield() {
 
 // find task_struct in run queue according to its pid
 task_struct *find_task_struct(int pid) {
-    task_struct *run = current->next;
-    while(run -> pid != pid){
-        run = run -> next;
-        if(run == current)
-            return NULL;
+    task_struct *traverse = current;
+    while (traverse) { // if traverse != NULL
+        if (traverse -> pid == pid) {
+            return traverse;
+        }
+        if ((traverse = traverse -> next) == current) {
+            break;
+        }
     }
-    return run;
+    return NULL;
 }
 
 
 // decrease sleep_time field of task_struct who are sleeping
 void sleep_time_decrease() {
-    task_struct *task_sleep = current->next;
-    while (task_sleep != NULL && task_sleep != current) {
-        if (task_sleep->task_state == TASK_SLEEPING) {
-            task_sleep->sleep_time -= IRQ0_period;
-            if (task_sleep->sleep_time <= 0) {
-                task_sleep->sleep_time = 0;
-                task_sleep->task_state = TASK_READY;
+    task_struct *traverse = current;
+    while (traverse) { // always trie: current->task_state != TASK_SLEEPING
+        if (traverse -> task_state == TASK_SLEEPING) {
+            traverse->sleep_time -= IRQ0_period;
+            if (traverse->sleep_time <= 0) {
+                traverse->sleep_time = 0;
+                traverse->task_state = TASK_READY;
             }
         }
-        task_sleep = task_sleep->next;
+        if ((traverse = traverse -> next) == current) {
+            break;
+        }
     }
 }

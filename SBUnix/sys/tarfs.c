@@ -411,6 +411,37 @@ int do_readdir(void* fd, struct dirent *dirp) {
 
 }
 
+void do_read_rootfs(struct dirent* dir)
+{
+    uint64_t i=0;
+    uint64_t size;
+    struct posix_header_ustar *header_start = (struct posix_header_ustar*)&_binary_tarfs_start;
+
+    while(header_start<(struct posix_header_ustar*)&_binary_tarfs_end)
+    {
+        
+        size=get_size_oct(header_start->size);
+
+        char* tmp = strstr(header_start->name, "/");
+        if(tmp==NULL)
+        {
+            break;
+        }
+
+        if(strlen(tmp)==1)
+        {
+            strcpy(dir[i].name ,header_start->name);
+            i++;
+        }
+        
+        
+        header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);
+    }
+
+    dir->num = i;
+
+}
+
 int do_closedir(struct dirent* close) {
     //kfree(close, 1);
     return 0;

@@ -176,6 +176,10 @@ void do_syscall() {
             __asm__ __volatile__ ("callq check_file_exist;"
                                   :"=a"(ret_val));
             break;
+        case SYS_readrootfs:
+            __asm__ __volatile__ ("callq do_read_rootfs;"
+                                  :"=a"(ret_val));
+            break;
             
         // file & terminal
         case SYS_read:

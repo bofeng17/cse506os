@@ -45,6 +45,10 @@ char* set_cwd(char* buf) {
     return (char*) syscall_1(SYS_setcwd, (uint64_t) buf);
 }
 
+void read_rootfs(struct dirent *dirp){
+     syscall_1(SYS_readrootfs, (uint64_t)dirp);
+}
+
 ////enum { SEEK_SET = 0, SEEK_CUR = 1, SEEK_END = 2 };
 ////typedef uint64_t off_t;
 //

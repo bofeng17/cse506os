@@ -10,12 +10,45 @@
 #define MAX_LENGTH 100
 #define MAX_BUFFER 1024
 
+char tmp[MAX_LENGTH];
+
+void cut_rootfs(char* name)
+{
+
+    memset((void*) tmp, 0, MAX_LENGTH);
+   // char* tmp = malloc(30*sizeof(char));
+
+    //char tmp[MAX_LENGTH];
+    //memset((void*) tmp, 0, MAX_LENGTH);
+    strcpy(tmp, name+7);
+    strcpy(name, tmp);
+
+
+    //return tmp;
+}
+
+void add_rootfs(char* name)
+{
+    //char* tmp = malloc(30*sizeof(char));
+
+    memset((void*) tmp, 0, MAX_LENGTH);
+    //char tmp[MAX_LENGTH];
+   // memset((void*) tmp, 0, MAX_LENGTH);
+
+    strcpy(tmp, "rootfs/");
+    strcat(tmp, name);
+    strcpy(name, tmp);
+
+    //return tmp;
+}
+
 void shellPrompt() {
 
     char cur_dir[MAX_LENGTH];
     memset((void*) cur_dir, 0, MAX_LENGTH);
 
     get_cwd(cur_dir);
+    cut_rootfs(cur_dir);
 
     char root_dir[MAX_LENGTH];
     memset((void*) root_dir, 0, MAX_LENGTH);
@@ -90,6 +123,29 @@ void ls_cmd() {
 
     get_cwd(direct);
 
+     if(!strcmp(direct, "rootfs/"))
+    {
+       /* printf("im in rootfs\n");
+        printf("bin/\n");
+        printf("lib/\n");
+        printf("mnt/\n");*/
+
+        struct dirent* a = malloc(sizeof(struct dirent));
+
+        read_rootfs(a);
+
+        for(i=0;i<a->num;i++)
+        {
+            printf("%s\n", a[i].name);
+        }
+
+
+        return;
+    }
+
+    cut_rootfs(direct);
+
+
     size_t length = strlen(direct);
     //printf("TESTING GET_CWD: %s \n", direct);
 
@@ -129,6 +185,8 @@ void cat_cmd(char* input) {
 
     get_cwd(cur);
 
+    cut_rootfs(cur);
+
     strcat(cur, input);
 
     //char* input_filename = malloc(sizeof(char));
@@ -153,7 +211,8 @@ void cat_cmd(char* input) {
 void cd_cmd(char* input) {
     if (input == NULL) {
         //set_pwd("rootfs");
-        printf("===[ERROR] cd parameter is NULL!===\n");
+        //printf("===[ERROR] cd parameter is NULL!===\n");
+        set_cwd("rootfs/");
         return;
     }
 
@@ -179,6 +238,11 @@ void cd_cmd(char* input) {
                 break;
             }
         }
+        if(!strcmp(path, "rootfs/"))
+        {
+            set_cwd(path);
+            return;
+        }
         //strcpy(path, "/");
 
         //add check if exists here
@@ -197,12 +261,14 @@ void cd_cmd(char* input) {
 
     }
 
+    cut_rootfs(path);
     void* tmp = opendir(path);
     if (tmp == NULL) {
         printf("===[ERROR] cd input is not a directory!===\n");
         return;
     }
 
+    add_rootfs(path);
     set_cwd(path);
 
 //    memset((void*) path, 0, MAX_LENGTH);
@@ -232,6 +298,8 @@ void sh_cmd(char* param, char* envp[]) {
     memset((void*) cur, 0, MAX_LENGTH);
 
     get_cwd(cur);
+
+    cut_rootfs(cur);
 
     strcat(cur, param);
 

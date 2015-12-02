@@ -61,6 +61,8 @@ char* set_cwd(char* buf);
 int
 chdir(const char *path);
 
+void read_rootfs(struct dirent *dirp);
+
 // files
 typedef int64_t ssize_t;
 enum {

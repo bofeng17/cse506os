@@ -34,6 +34,7 @@
 #define SYS_closedir    103
 #define SYS_setcwd      104
 #define SYS_checkfile   105
+#define SYS_readrootfs  106
 #define SYS_sbrk         13
 #define SYS_ps           14
 #define SYS_clear        15

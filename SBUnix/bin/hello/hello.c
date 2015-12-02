@@ -10,12 +10,12 @@ int main(int argc, char* argv[], char* envp[]) {
 
     }
 
-    for(i=0;i<argc;i++){
-        if(envp[i]!=NULL){
-        printf("envp[%d] is :%s\n",i,envp[i] );
-        }
-
-    }
+//    for(i=0;i<argc;i++){
+//        if(envp[i]!=NULL){
+//        printf("envp[%d] is :%s\n",i,envp[i] );
+//        }
+//
+//    }
 
     return 0;
 }

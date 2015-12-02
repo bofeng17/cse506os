@@ -102,7 +102,7 @@ int parseInputToParams(char* input, char* param[], char sep) {
 void ps_cmd() {
     ps_t ups = malloc(sizeof(ps_state));
 
-    if(ups==NULL){
+    if (ups == NULL) {
         printf("===[ERROR] malloc failed,out of memory!===\n");
         return;
     }
@@ -152,7 +152,7 @@ void ls_cmd() {
     struct dirent* a = malloc(sizeof(struct dirent));
     //printf("dirent size: %d\n", sizeof(struct dirent));
 
-    if(a==NULL){
+    if (a == NULL) {
         printf("===[ERROR] malloc failed,out of memory!===\n");
         return;
     }
@@ -356,6 +356,16 @@ void sh_cmd(char* param, char* envp[]) {
 
 }
 
+void sleep_cmd(char* param){
+    int sleep_time = stoi(param);
+    printf("sleep time is:%d\n", sleep_time);
+    if (sleep_time > 0) {
+        sleep(sleep_time);
+    } else {
+        printf("===[ERROR] invalid sleep time:%d !===\n", sleep_time);
+    }
+}
+
 void executeBin(char* cmd, char* args[], char* envp[]) {
     int result = 0;
     result = execve(cmd, args, envp);
@@ -443,6 +453,8 @@ void executeCmd(char* input, char* envp[]) {
         sh_cmd(param, envp);
     } else if (!strcmp(cmd, "clear")) {
         clear_screen();
+    } else if (!strcmp(cmd, "sleep")) {
+        sleep_cmd(param);
     } else if (!strcmp(cmd, "exit")) {
 
     } else if (!strcmp(cmd, "help")) {
@@ -486,7 +498,7 @@ int main(int argc, char* argv[], char* envp[]) {
     //executeScript(argv[1],envp);
     //exit(0);
     //}
-    char* input=malloc(MAX_LENGTH*sizeof(char));
+    char* input = malloc(MAX_LENGTH * sizeof(char));
     clear_screen();
 
     printf("---------------------------------------------------------------\n");

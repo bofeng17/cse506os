@@ -25,13 +25,13 @@ uint64_t get_vir_from_phy(uint64_t phy_addr) {
 }
 
 // set up page directory pointer table
-void*
-set_pdpt(pml4_t pml4, uint64_t pml4_index, int flag) {
-    pdpt_t pdpt = (pdpt_t) kmalloc(flag);
+void* set_pdpt(pml4_t pml4, uint64_t pml4_index, int kmalloc_flag,
+        int user_or_kern_map) {
+    pdpt_t pdpt = (pdpt_t) kmalloc(kmalloc_flag);
     uint64_t pdpt_entry = (uint64_t) pdpt;
     pdpt_entry -= VIR_START; // convert to physical address
 
-    if (flag == USERPT) {
+    if (user_or_kern_map == USER_MAP) {
         pdpt_entry |= PTE_U;
     }
 
@@ -43,13 +43,13 @@ set_pdpt(pml4_t pml4, uint64_t pml4_index, int flag) {
 }
 
 // set up page directory table
-void*
-set_pdt(pdpt_t pdpt, uint64_t pdpt_index, int flag) {
-    pdt_t pdt = (pdt_t) kmalloc(flag);
+void* set_pdt(pdpt_t pdpt, uint64_t pdpt_index, int kmalloc_flag,
+        int user_or_kern_map) {
+    pdt_t pdt = (pdt_t) kmalloc(kmalloc_flag);
     uint64_t pdt_entry = (uint64_t) pdt;
     pdt_entry -= VIR_START; // convert to physical address
 
-    if (flag == USERPT) {
+    if (user_or_kern_map == USER_MAP) {
         pdt_entry |= PTE_U;
     }
 
@@ -61,13 +61,13 @@ set_pdt(pdpt_t pdpt, uint64_t pdpt_index, int flag) {
 }
 
 // set up page table
-void*
-set_pt(pdt_t pdt, uint64_t pdt_index, int flag) {
-    pt_t pt = (pt_t) kmalloc(flag);
+void* set_pt(pdt_t pdt, uint64_t pdt_index, int kmalloc_flag,
+        int user_or_kern_map) {
+    pt_t pt = (pt_t) kmalloc(kmalloc_flag);
     uint64_t pt_entry = (uint64_t) pt;
     pt_entry -= VIR_START; // convert to physical address
 
-    if (flag == USERPT) {
+    if (user_or_kern_map == USER_MAP) {
         pt_entry |= PTE_U;
     }
 
@@ -138,7 +138,8 @@ void init_mm() {
 //  vmalloc_base = USER_VIR_START;
 }
 
-void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
+void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr,
+        int kmalloc_flag, int user_or_kern_map, int pte_flags) {
 
     pdpt_t pdpt;
     pdt_t pdt;
@@ -154,7 +155,8 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
         pdpt = (pdpt_t) pdpt64;
 
     } else {
-        pdpt = (pdpt_t) set_pdpt(global_PML4, pml4e_index, flag);
+        pdpt = (pdpt_t) set_pdpt(global_PML4, pml4e_index, kmalloc_flag,
+                user_or_kern_map);
     }
 
     uint64_t pdpte_index = get_pdpte_index(vir_addr);
@@ -167,7 +169,8 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
         pdt = (pdt_t) pdt64;
 
     } else {
-        pdt = (pdt_t) set_pdt(pdpt, pdpte_index, flag);
+        pdt = (pdt_t) set_pdt(pdpt, pdpte_index, kmalloc_flag,
+                user_or_kern_map);
     }
 
     uint64_t pdte_index = get_pdte_index(vir_addr);
@@ -178,70 +181,17 @@ void map_virmem_to_phymem(uint64_t vir_addr, uint64_t phy_addr, int flag) {
         pt = (pt_t) pt64;
 
     } else {
-        pt = (pt_t) set_pt(pdt, pdte_index, flag);
+        pt = (pt_t) set_pt(pdt, pdte_index, kmalloc_flag, user_or_kern_map);
     }
 
     uint64_t pte = phy_addr;
-    pte |= (PTE_P | PTE_W);
-    if (flag == USERPT)
-        pte |= PTE_U;
 
-    uint64_t pte_index = get_pte_index(vir_addr);
-    pt->PTE[pte_index] = pte;
-
-    //enable self reference mechanism
-    global_PML4->PML4E[TABLE_SIZE - 2] = ((uint64_t) global_PML4 - VIR_START)
-            | PTE_P;
-}
-
-void map_kernel_pt(uint64_t vir_addr, uint64_t phy_addr, int flag) {
-
-}
-
-void map_user_pt(uint64_t vir_addr, uint64_t phy_addr, int flag) {
-
-    pdpt_t pdpt;
-    pdt_t pdt;
-    pt_t pt;
-
-    //global_PML4 = (pml4_t)(get_CR3() + VIR_START);
-    uint64_t pml4e_index = get_pml4e_index(vir_addr);
-    uint64_t pml4e = global_PML4->PML4E[pml4e_index];
-
-    if (pml4e & PTE_P) {
-        uint64_t pdpt64 = get_vir_from_phy(pml4e);
-        pdpt64 &= CLEAR_OFFSET;
-        pdpt = (pdpt_t) pdpt64;
-
-    } else {
-        pdpt = (pdpt_t) set_pdpt(global_PML4, pml4e_index, flag);
+    if (pte_flags == NEED_SET_PTE_FLAGS) {
+        pte |= (PTE_P | PTE_W);
+        if (user_or_kern_map == USER_MAP)
+            pte |= PTE_U;
     }
 
-    uint64_t pdpte_index = get_pdpte_index(vir_addr);
-
-    uint64_t pdpte = pdpt->PDPTE[pdpte_index];
-
-    if (pdpte & PTE_P) {
-        uint64_t pdt64 = get_vir_from_phy(pdpte);
-        pdt64 &= CLEAR_OFFSET;
-        pdt = (pdt_t) pdt64;
-
-    } else {
-        pdt = (pdt_t) set_pdt(pdpt, pdpte_index, flag);
-    }
-
-    uint64_t pdte_index = get_pdte_index(vir_addr);
-    uint64_t pdte = pdt->PDTE[pdte_index];
-    if (pdte & PTE_P) {
-        uint64_t pt64 = get_vir_from_phy(pdte);
-        pt64 &= CLEAR_OFFSET;
-        pt = (pt_t) pt64;
-
-    } else {
-        pt = (pt_t) set_pt(pdt, pdte_index, flag);
-    }
-
-    uint64_t pte = phy_addr;
     uint64_t pte_index = get_pte_index(vir_addr);
     pt->PTE[pte_index] = pte;
 
@@ -269,23 +219,29 @@ void test_selfref(uint64_t testaddr) {
 }
 
 //begin mapping physical memory from 0 to 32MB
-void map_kernel() {
+void map_kernel(int flag) {
     uint64_t map_size = 0x2000000; //physical size 32MB
 
     uint64_t vir_addr = VIR_START;
     uint64_t phy_addr = PHY_START;
     uint64_t page_count = 0;
     while (phy_addr < map_size) {
-        map_virmem_to_phymem(vir_addr, phy_addr, KERNPT);
+        if (flag == KERN_MAP) {
+            map_virmem_to_phymem(vir_addr, phy_addr, KERNPT, KERN_MAP,
+                    NEED_SET_PTE_FLAGS);
+        } else {
+            map_virmem_to_phymem(vir_addr, phy_addr, USERPT, KERN_MAP,
+                    NEED_SET_PTE_FLAGS);
+        }
         phy_addr += PAGE_SIZE;
         vir_addr += PAGE_SIZE;
         page_count++;
     }
 
 }
+
 void initial_mapping() {
-    map_kernel();
-//use self-reference trick
+    map_kernel(KERN_MAP);
 
     set_CR3((uint64_t) global_PML4 - VIR_START);
 
@@ -329,8 +285,7 @@ uint64_t get_base(int flag) {
  * flag,1 indicates task_struct or
  *  	0 for kernel_stack
  */
-void*
-kmalloc(int flag) {
+void* kmalloc(int flag) {
     int i = 0;
     uint64_t base = get_base(flag);
     switch (flag) {
@@ -402,7 +357,7 @@ kmalloc(int flag) {
     }
 
     base += i * PAGE_SIZE;
-    // dprintf ("kmalloc return %d base %p\n", flag, base);
+// dprintf ("kmalloc return %d base %p\n", flag, base);
 
     memset((void *) base, 0, PAGE_SIZE);
 
@@ -461,19 +416,18 @@ void kfree(void* addr, int flag) {
 //}
 
 // original  umalloc that sets up page tables and maps vir to phy
-void*
-umalloc(void* addr, size_t size) {
+void* umalloc(void* addr, size_t size) {
     uint64_t ret_addr = (uint64_t) addr;
 
-    //align to lower page margin
+//align to lower page margin
     ret_addr &= CLEAR_OFFSET;
 
     int page_num = 1;
 
-    // the gap between addr and higher page margin
+// the gap between addr and higher page margin
     uint64_t gap = (ret_addr + PAGE_SIZE - (uint64_t) addr);
 
-    //if size < gap, then no need to allocate more pages
+//if size < gap, then no need to allocate more pages
     if (size > gap) {
         page_num += (size - gap) / PAGE_SIZE;
         if ((size - gap) % PAGE_SIZE) {
@@ -484,7 +438,8 @@ umalloc(void* addr, size_t size) {
     uint64_t vmalloc_base = ret_addr;
 
     while (page_num-- > 0) {
-        map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT);
+        map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT,
+        USER_MAP,NEED_SET_PTE_FLAGS);
         vmalloc_base += PAGE_SIZE;
     }
 
@@ -606,16 +561,16 @@ void* do_sbrk(size_t brk_size) {
     mm_struct * mm = current->mm;
     vma_struct * vma_heap = get_vma(mm, HEAP);
 
-    //4K aligned
+//4K aligned
     uint64_t oldbrk = (mm->brk + 0xfff) & 0xfffff000;
     uint64_t newbrk = (mm->brk + brk_size + 0xfff) & 0xfffff000;
 
-    // heap size not change
+// heap size not change
     if (oldbrk == newbrk) {
         return (void*) oldbrk;
     }
 
-    //enlarge heap
+//enlarge heap
     if (brk_size < BRK_LIMIT) {
         //umap((void*) addr, brk_size);
 
@@ -633,12 +588,12 @@ void* do_sbrk(size_t brk_size) {
 }
 
 void free_vma(vma_struct* mm) {
-        vma_struct *p = mm;
-        vma_struct *q = NULL;
-        while (p != NULL) {
-            q = p->vm_next;
-            kfree((void*)p,VMA);
-            p = q;
-        }
+    vma_struct *p = mm;
+    vma_struct *q = NULL;
+    while (p != NULL) {
+        q = p->vm_next;
+        kfree((void*) p, VMA);
+        p = q;
+    }
 
 }

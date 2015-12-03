@@ -357,7 +357,8 @@ void executeCmd(char* input, char* envp[]) {
         sleep(3);
         exit(0);
     } else if (!strcmp(cmd, "help")) {
-        printf("===[INFO] please see README ===\n");
+        printf("===[INFO] SBUINX supports cd, less, cat, pwd, sh, ls, echo, sleep, kill -9, ps, exit, clear command ===\n");
+        printf("===[INFO] please see README for detail usage ===\n");
     } else {    //execute bin or executables
         char full_path[MAX_LENGTH];
         memset((void*) full_path, 0, MAX_LENGTH);

@@ -6,7 +6,7 @@ Instructions:
     
     The root directory is rootfs/, and the default directory at the beginning is rootfs/bin/, you can “cd ..” or “cd” to go to rootfs/.
     
-    The SBUINX supports ls, ps, cat, sleep, echo, cd, pwd, kill -9, exit, clear and sh command, type the name of the executables into shell to run them(e.g., hello).     We provide fork_demo and execv_demo under rootfs/bin to test our fork and execv functions.
+    The SBUINX supports cd, less, cat, pwd, sh, ls, echo, sleep, kill -9, ps, exit, clear command, type the name of the executables into shell to run them(e.g., hello).     We provide fork_demo and execv_demo under rootfs/bin to test our fork and execv functions.
     
 
 Shell features:    Shell with PATH, since we do not have a file system, PATH are builtin   - cd, e.g., “cd ..” “cd” “cd bin” “cd mnt”   - less, take a peek at spcified file   - cat, e.g., “cat filename”   - pwd   - sh, execute script file, e.g. sh t.sh . Note that the script can only include valid shell cmd (implemented binaries and builtin cmd)   - ls, no args   - echo, echo what follows `echo'   - sleep, accepts one integer as argument, e.g. sleep 5   - kill -9, kill specified process according to pid, e.g. kill -9 10 . Note that process 0(idle) and 1(init) cannot be killed.   - ps, print all processes information in current system. First ps will show all tasks, after that dead tasks will be cleaned.   - exit, sbush can exit, appears like you logout current session and login a new session   - clear or cls, flush screen   - simple background job, test case: use tread & ,and use ps you'll see tread state is ready, and can be killed. Note tread is a dead loop program, do not directly execute it! 

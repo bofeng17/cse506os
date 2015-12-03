@@ -443,7 +443,8 @@ create_user_process(char* bin_name) {
 }
 
 void set_child_pt(task_struct* child) {
-    global_PML4 = (pml4_t) kmalloc(KERNPT);
+    global_PML4 = (pml4_t) kmalloc(USERPT);
+
     child->cr3 = (uint64_t) global_PML4 - VIR_START;
     
     map_kernel(USER_MAP);
@@ -518,6 +519,10 @@ void set_child_pt(task_struct* child) {
 int do_fork() {
     //create a new task struct
     task_struct *new_task = (task_struct *) (kmalloc(TASK));
+    if(new_task==NULL){
+        printf("Out of memory error ! Cannot fork new process!\n");
+        do_exit(-ILLEGAL_MEM_ACC);
+    }
     
     //assign new pid for child
     new_task->pid = assign_pid();

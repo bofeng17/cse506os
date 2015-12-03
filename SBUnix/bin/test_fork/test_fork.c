@@ -4,9 +4,9 @@
 
 int main (int argc, char* argv[], char* envp[]) {
     pid_t pid = fork();
-    int count = 50;
+    int count = 20;
     while (((count--) > 0) && pid > 0){
-        printf("I am parent process %d\n", getpid());
+        printf("I am parent process %d, count is %d\n", getpid(),count);
         pid = fork();
     }
     if (pid == 0) {

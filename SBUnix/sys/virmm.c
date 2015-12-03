@@ -108,13 +108,7 @@ void init_mm() {
     vma_base = userpt_base + USERPT_NUMBER * PAGE_SIZE;
     file_base = vma_base + VMA_NUMBER * PAGE_SIZE;
 
-    dprintf("kernpt_base : %p\n", kernpt_base);
-    dprintf("ktask_base : %p\n", ktask_base);
-    dprintf("kstack_base : %p\n", kstack_base);
-    dprintf("mm_base : %p\n", mm_base);
-    dprintf("userpt_base : %p\n", userpt_base);
-    dprintf("vma_base : %p\n", vma_base);
-    dprintf("file_base : %p\n", file_base);
+    dprintf("kernpt_base : %p\n", kernpt_base);dprintf("ktask_base : %p\n", ktask_base);dprintf("kstack_base : %p\n", kstack_base);dprintf("mm_base : %p\n", mm_base);dprintf("userpt_base : %p\n", userpt_base);dprintf("vma_base : %p\n", vma_base);dprintf("file_base : %p\n", file_base);
 
     memset((void *) kernpt_base, 0, KERNPT_NUMBER * PAGE_SIZE);
     memset((void *) ktask_base, 0, PROCESS_NUMBER * PAGE_SIZE);
@@ -228,10 +222,10 @@ void map_kernel(int flag) {
     while (phy_addr < map_size) {
         if (flag == KERN_MAP) {
             map_virmem_to_phymem(vir_addr, phy_addr, KERNPT, KERN_MAP,
-                    NEED_SET_PTE_FLAGS);
+            NEED_SET_PTE_FLAGS);
         } else {
             map_virmem_to_phymem(vir_addr, phy_addr, USERPT, KERN_MAP,
-                    NEED_SET_PTE_FLAGS);
+            NEED_SET_PTE_FLAGS);
         }
         phy_addr += PAGE_SIZE;
         vir_addr += PAGE_SIZE;
@@ -281,13 +275,46 @@ uint64_t get_base(int flag) {
     };
 }
 
+void set_base(int flag, size_t size) {
+    switch (flag) {
+    case KERNPT:
+        kernpt_base += size;
+        break;
+    case TASK:
+        ktask_base += size;
+        break;
+    case KSTACK:
+        kstack_base += size;
+        break;
+    case MM:
+        mm_base += size;
+        break;
+    case USERPT:
+        userpt_base += size;
+        break;
+    case VMA:
+        vma_base += size;
+        break;
+    case FILE:
+        file_base += size;
+        break;
+    default:
+        return;
+    };
+}
+
+void kmalloc_error() {
+    printf("Kmalloc Out of memory error ! \n");
+//          __asm__ __volatile__ ("hlt");
+
+    do_exit(-ILLEGAL_MEM_ACC);
+}
 /* allocate 4K size usable kernel virtual memory
  * flag,1 indicates task_struct or
  *  	0 for kernel_stack
  */
 void* kmalloc(int flag) {
     int i = 0;
-    uint64_t base = get_base(flag);
     switch (flag) {
     case KERNPT:
         while (i < KERNPT_NUMBER) {
@@ -296,6 +323,10 @@ void* kmalloc(int flag) {
                 break;
             } else
                 i++;
+        }
+        if (i > KERNPT_NUMBER) {
+            kmalloc_error();
+            return NULL;
         }
         break;
     case TASK:
@@ -306,6 +337,10 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
+        if (i > PROCESS_NUMBER) {
+            kmalloc_error();
+            return NULL;
+        }
         break;
     case KSTACK:
         while (i < KSTACK_NUMBER) {
@@ -314,6 +349,10 @@ void* kmalloc(int flag) {
                 break;
             } else
                 i++;
+        }
+        if (i > KSTACK_NUMBER) {
+            kmalloc_error();
+            return NULL;
         }
         break;
     case MM:
@@ -324,6 +363,10 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
+        if (i > MM_NUMBER) {
+            kmalloc_error();
+            return NULL;
+        }
         break;
     case USERPT:
         while (i < USERPT_NUMBER) {
@@ -332,6 +375,10 @@ void* kmalloc(int flag) {
                 break;
             } else
                 i++;
+        }
+        if (i > USERPT_NUMBER) {
+            kmalloc_error();
+            return NULL;
         }
         break;
     case VMA:
@@ -342,6 +389,10 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
+        if (i > VMA_NUMBER) {
+            kmalloc_error();
+            return NULL;
+        }
         break;
     case FILE:
         while (i < FILE_NUMBER) {
@@ -351,15 +402,24 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
+        if (i > FILE_NUMBER) {
+            kmalloc_error();
+            return NULL;
+        }
         break;
     default:
         return NULL;
     }
 
+    uint64_t base = get_base(flag);
+
     base += i * PAGE_SIZE;
+//    set_base(flag, i * PAGE_SIZE);
 // dprintf ("kmalloc return %d base %p\n", flag, base);
 
-    memset((void *) base, 0, PAGE_SIZE);
+    if (base) {
+        memset((void *) base, 0, PAGE_SIZE);
+    }
 
     if (flag == KSTACK) {
         return (void *) (base + PAGE_SIZE);
@@ -439,7 +499,7 @@ void* umalloc(void* addr, size_t size) {
 
     while (page_num-- > 0) {
         map_virmem_to_phymem(vmalloc_base, allocate_page_user(), USERPT,
-        USER_MAP,NEED_SET_PTE_FLAGS);
+        USER_MAP, NEED_SET_PTE_FLAGS);
         vmalloc_base += PAGE_SIZE;
     }
 

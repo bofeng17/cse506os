@@ -38,10 +38,10 @@ int main(int argc, char* argv[], char* envp[]) {
     void* b = opendir("bin/");
 
     if(b==NULL)
-+     {
-+        printf("===[ERROR] opendir failed!===\n");
-+        return 0;
-+     }
+     {
+        printf("===[ERROR] opendir failed!===\n");
+       return 0;
+    }
 
     readdir(b, a);
 

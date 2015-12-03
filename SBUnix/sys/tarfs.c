@@ -7,6 +7,8 @@
 
 typedef struct file tarfs_file;
 
+char cwd_shell[150];
+
 /*void *memmove(void *dest, const void *src, size_t n)
  {
  const char *s;
@@ -449,7 +451,8 @@ int do_closedir(struct dirent* close) {
 
 char* get_cwd(char* buf) {
     // char* tmp = buf;
-    strcpy(buf, current->cur_dir);
+    //strcpy(buf, current->cur_dir);
+     strcpy(buf, cwd_shell);
     //strcpy(buf, tmp);
     return buf;
 }
@@ -457,7 +460,9 @@ char* get_cwd(char* buf) {
 char* set_cwd(char* buf) {
     // char* tmp = buf;
     //memset(current->cur_dir, )
-    strcpy(current->cur_dir, buf);
+    //strcpy(current->cur_dir, buf);
+    memset((void*) cwd_shell, 0, strlen(cwd_shell));
+    strcpy(cwd_shell, buf);
     //WARNING: THE CURDIR MAY CONTAIN ITS ORIGINAL CONTENTS AFTER /0
     //strcpy(buf, tmp);
     return buf;

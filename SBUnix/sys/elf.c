@@ -7,6 +7,8 @@
 #include <sys/elf.h>
 #include <sys/string.h>
 
+//extern char cwd_shell[150];
+
 int load_elf(task_struct* task, char* bin_name) {
 
 

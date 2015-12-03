@@ -430,6 +430,7 @@ int main(int argc, char* argv[], char* envp[]) {
 //}
     char* input = malloc(MAX_LENGTH * sizeof(char));
     clear_screen();
+    set_cwd("rootfs/bin/");
 
     printf("---------------------------------------------------------------\n");
     printf("--------------Welcome! Thanks for using SBUINX!----------------\n");

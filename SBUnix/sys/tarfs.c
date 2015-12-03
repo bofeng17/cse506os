@@ -29,7 +29,7 @@ char cwd_shell[150];
  return dest;
  }*/
 
-int contain_slash(char* name) {
+/*int contain_slash(char* name) {
     int i;
     int length = strlen(name);
 
@@ -40,6 +40,27 @@ int contain_slash(char* name) {
     }
 
     return 0;
+
+}*/
+
+int contain_slash(char* name) {
+    int m=0;
+    int i;
+    int length = strlen(name);
+
+    for (i = 0; i < length; i++) {
+        if (name[i] == '/') {
+            //return 1;
+            m++;
+        }
+    }
+
+   /* if(i==1)
+    {
+        return 1;
+    }*/
+
+    return m;
 
 }
 
@@ -380,7 +401,25 @@ int do_readdir(void* fd, struct dirent *dirp) {
 
             strcpy(tmp, (header_start->name) + strlen(name));
 
-            if (contain_slash(tmp)) {
+            if (!strcmp(header_start->typeflag, "5")) {
+
+                    if (contain_slash(tmp)==1){
+                    
+                    strcpy(dirp[i].name, header_start->name);
+                    i++;
+                }
+                
+                }
+             else {
+                if(contain_slash(tmp)==0)
+                {
+                strcpy(dirp[i].name, header_start->name);
+                i++;
+            }
+            }
+
+
+            /*if (contain_slash(tmp)) {
                 if (!strcmp(header_start->typeflag, "5")) {
                     strcpy(dirp[i].name, header_start->name);
                     i++;
@@ -388,7 +427,7 @@ int do_readdir(void* fd, struct dirent *dirp) {
             } else {
                 strcpy(dirp[i].name, header_start->name);
                 i++;
-            }
+            }*/
 
             //strcpy(dirp[i].name ,header_start->name);
             //header_start=(struct posix_header_ustar*)header_start+1;

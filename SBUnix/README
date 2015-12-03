@@ -11,5 +11,5 @@ The SBUINX supports ls, ps, cat, sleep, echo, cd and sh command, type the name o
 cd: e.g., “cd ..” “cd” “cd bin” “cd mnt”
 cat: “cat filename”
 
-
+Shell features;
  

@@ -14,7 +14,7 @@ task_struct* end;
 task_struct* current;
 
 // whenever a dead process is cleaned, pid is not freed
-int pid_list[PROCESS_NUMBER*4];
+int pid_list[PROCESS_NUMBER * 4];
 
 int count_args(char ** args) {
     if (args == NULL)
@@ -607,44 +607,45 @@ int do_ps(ps_t ps) {
     if (ps) { // if ps != NULL
         task_struct* cur = current;
         int c = 0;
-        do  {
+        do {
             ps->id[c] = cur->pid;
             strcpy(ps->name[c], cur->task_name);
             //       strcpy(ps->state[c], cur->task_name);
 
             //ps->state[c] = cur->task_state;
             switch (cur->task_state) {
-                case TASK_NEW:
-                    strcpy(ps->state[c], "new       ");
-                    break;
-                case TASK_READY:
-                    strcpy(ps->state[c], "ready     ");
-                    break;
-                case TASK_RUNNING:
-                    strcpy(ps->state[c], "running   ");
-                    break;
-                case TASK_SLEEPING:
-                    strcpy(ps->state[c], "sleeping  ");
-                    break;
-                case TASK_BLOCKED:
-                    strcpy(ps->state[c], "blocked   ");
-                    break;
-                case TASK_ZOMBIE:
-                    strcpy(ps->state[c], "zombie    ");
-                    break;
-                case TASK_DEAD:
-                    strcpy(ps->state[c], "dead      ");
-                    break;
-                default: strcpy(ps->state[c], "unknown   ");
+            case TASK_NEW:
+                strcpy(ps->state[c], "new       ");
+                break;
+            case TASK_READY:
+                strcpy(ps->state[c], "ready     ");
+                break;
+            case TASK_RUNNING:
+                strcpy(ps->state[c], "running   ");
+                break;
+            case TASK_SLEEPING:
+                strcpy(ps->state[c], "sleeping  ");
+                break;
+            case TASK_BLOCKED:
+                strcpy(ps->state[c], "blocked   ");
+                break;
+            case TASK_ZOMBIE:
+                strcpy(ps->state[c], "zombie    ");
+                break;
+            case TASK_DEAD:
+                strcpy(ps->state[c], "dead      ");
+                break;
+            default:
+                strcpy(ps->state[c], "unknown   ");
             }
 
             cur = cur->next;
             c++;
-        }while((cur != current));
-        
+        } while ((cur != current));
+
         // clean dead process, so next time of ps we will not see dead ones
         clean_dead();
-        
+
         return c;
     } else {
         // ps == NULL
@@ -687,11 +688,14 @@ pid_t do_waitpid(pid_t pid, int *status, int options) {
 int do_kill(pid_t pid) {
     if (pid > 1) {
         task_struct *dying = find_task_struct(pid);
-        dying->task_state = TASK_DEAD;
-//        do_exit(0);
-        return 0;
-    } else{
-        return -1;//
+        if (dying) {
+            dying->task_state = TASK_DEAD;
+            return 0;
+        }else{
+            return -1;
+        }
+    } else {
+        return -1; //
     }
 }
 

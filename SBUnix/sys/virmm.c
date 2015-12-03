@@ -305,7 +305,7 @@ void set_base(int flag, size_t size) {
 
 void kmalloc_error() {
     printf("Kmalloc Out of memory error ! \n");
-//          __asm__ __volatile__ ("hlt");
+          __asm__ __volatile__ ("hlt");
 
     do_exit(-ILLEGAL_MEM_ACC);
 }
@@ -350,7 +350,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > KSTACK_NUMBER) {
+        if (i >= KSTACK_NUMBER) {
             kmalloc_error();
             return NULL;
         }
@@ -363,7 +363,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > MM_NUMBER) {
+        if (i >= MM_NUMBER) {
             kmalloc_error();
             return NULL;
         }
@@ -376,7 +376,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > USERPT_NUMBER) {
+        if (i >= USERPT_NUMBER) {
             kmalloc_error();
             return NULL;
         }
@@ -389,7 +389,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > VMA_NUMBER) {
+        if (i >= VMA_NUMBER) {
             kmalloc_error();
             return NULL;
         }
@@ -402,7 +402,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > FILE_NUMBER) {
+        if (i >= FILE_NUMBER) {
             kmalloc_error();
             return NULL;
         }

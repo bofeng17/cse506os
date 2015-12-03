@@ -8,9 +8,7 @@ static uint32_t page_inuse_num = 0;
 //static uint64_t kmalloc_base = 0; //the start of kmalloc usable physical address
 
 extern uint32_t page_num;
-//age_sp* page_struct_start=(page_sp*)(&kernofs+physfree);
-//page_sp* page_struct_start=(page_sp*)(0xffffffff80350000);
-//int page_num=((page_length)>>12);
+
 extern page_sp* page_struct_start;
 extern uint32_t page_index;
 
@@ -136,7 +134,7 @@ uint64_t allocate_page() {
 
 }
 
-uint64_t allocate_pages(uint32_t num) {
+/*uint64_t allocate_pages(uint32_t num) {
 	uint32_t i;
 	uint32_t start = find_free_pages(num);
 	//return (uint64_t)(0xffffffff80200000+start);
@@ -148,7 +146,7 @@ uint64_t allocate_pages(uint32_t num) {
 	}
 	//return (uint64_t)(start<<12)
 	return (uint64_t)((tmp->index) << 12);
-}
+}*/
 
 uint64_t allocate_page_user() {
 	uint32_t i = 8192;

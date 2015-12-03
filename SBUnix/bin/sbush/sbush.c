@@ -350,6 +350,8 @@ void executeCmd(char* input, char* envp[]) {
         sh_cmd(param, envp);
     } else if (!strcmp(cmd, "clear")) {
         clear_screen();
+    } else if (!strcmp(cmd, "cls")) {
+        clear_screen();
     } else if (!strcmp(cmd, "exit")) {
         printf("===[WARNING] current session will exit in 3s ! ===\n");
         sleep(3);

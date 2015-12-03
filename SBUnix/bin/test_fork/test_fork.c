@@ -4,7 +4,7 @@
 
 int main (int argc, char* argv[], char* envp[]) {
     pid_t pid = fork();
-    int count = 100;
+    int count = 5;
     while (((count--) > 0) && pid > 0){
         printf("I am parent process %d\n", getpid());
         pid = fork();

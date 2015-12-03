@@ -18,17 +18,20 @@ void schedule() {
         //not delete zombie from run queue, just skip it
         //zombie become dead when its parent read the return value
         // a kernel thread named clean_dead will run occasionally and clear dead tasks
-        prev->task_state = TASK_READY;
+        current->task_state = TASK_READY;
     }
 
     current = current->next;
 
     //current won't be null, if only one task exists, that must be idle
-    while (current->task_state != TASK_READY) {
+    while ((current->task_state != TASK_READY) || (current->pid == 0)) {
         current = current->next;
-        if (current == prev)
+        if (current == prev) {
             //already traverse the run queue, so break
+            // TODO: don't switch back to idle if there is other process
+            current = idle;
             break;
+        }
     }
 
     end = current;

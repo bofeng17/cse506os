@@ -97,7 +97,7 @@ void copy_mm(task_struct *);
 extern task_struct *current;
 extern task_struct* idle;
 
-extern int pid_list[PROCESS_NUMBER];
+extern int pid_list[PROCESS_NUMBER*4];
 
 #define DO_EXECV_TMP_ADDR_TRANSLATE(x) (STACK_TOP - (tmp_vir_addr + PAGE_SIZE - x))
 

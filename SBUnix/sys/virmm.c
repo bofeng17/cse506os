@@ -431,10 +431,9 @@ void* kmalloc(int flag) {
 
 void kfree(void* addr, int flag) {
     if (flag == KSTACK) {
-        memset((void *) (addr - PAGE_SIZE), 0, PAGE_SIZE);
-    } else {
-        memset((void *) addr, 0, PAGE_SIZE);
+        addr -= PAGE_SIZE;
     }
+        memset((void *) addr, 0, PAGE_SIZE);
 
     uint64_t base = get_base(flag);
     int bitmap_pos = ((uint64_t) addr - base) / PAGE_SIZE;

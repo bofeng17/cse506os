@@ -189,7 +189,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
 //                for (int i = 0; i < 20; i ++) {
 //                    printf("%p %p\n",*(stk_ptr+2*i),*(stk_ptr+2*i+1));
 //                }
-                __asm__ __volatile__("int $0x3");
+                __asm__ __volatile__("hlt");
             }
         }
     }

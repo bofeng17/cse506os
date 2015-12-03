@@ -57,17 +57,17 @@ void isr_timer (uint64_t cs) {
     
     //printf("%d   ",cs);
     
-    // after 2s of boot, do...
+    // after 1.5s of boot, do...
 
 
-    if (boot_count > 400) {
+    if (boot_count >= 300) {
         // for do_sleep
         sleep_time_decrease ();
         /*
          * for preemptive scheduling
-         * schedule every 0.5s
+         * schedule every 0.25s
          */
-        if (boot_count%100 == 0) {
+        if (boot_count%50 == 0) {
             // time slice runs up, ready to schedule
             ready_schedule = 1;
         }

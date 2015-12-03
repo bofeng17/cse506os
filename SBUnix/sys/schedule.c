@@ -64,8 +64,8 @@ void clean_dead() {
             dead = cur->next;
             cur->next = cur->next->next;        //delete dead task
 
-            pid_list[dead->pid] = 0;
-            kfree((void*) dead->kernel_stack, KSTACK);
+//            pid_list[dead->pid] = 0;
+            kfree((void*) dead->init_kern, KSTACK);
             free_vma(dead->mm->mmap);        // free VMA
             kfree((void*) dead->mm, MM);
             kfree(dead, TASK);

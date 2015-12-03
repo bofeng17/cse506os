@@ -13,7 +13,8 @@ task_struct* front;
 task_struct* end;
 task_struct* current;
 
-int pid_list[PROCESS_NUMBER];
+// whenever a dead process is cleaned, pid is not freed
+int pid_list[PROCESS_NUMBER*4];
 
 int count_args(char ** args) {
     if (args == NULL)
@@ -637,6 +638,10 @@ int do_ps(ps_t ps) {
             cur = cur->next;
             c++;
         }while((cur != current));
+        
+        // clean dead process, so next time of ps we will not see dead ones
+        clean_dead();
+        
         return c;
     } else {
         // ps == NULL

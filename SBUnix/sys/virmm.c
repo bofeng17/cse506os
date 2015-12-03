@@ -304,7 +304,7 @@ void set_base(int flag, size_t size) {
 }
 
 void kmalloc_error() {
-    printf("Kmalloc Out of memory error ! \n");
+    printf("Kernel Panic: Kmalloc Out of memory error ! \n");
           __asm__ __volatile__ ("hlt");
 
     do_exit(-ILLEGAL_MEM_ACC);

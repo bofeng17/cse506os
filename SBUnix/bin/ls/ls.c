@@ -72,7 +72,7 @@ main (int argc, char* argv[], char* envp[])
      
      if(b==NULL)
      {
-        printf("===[ERROR] readdir failed!===\n");
+        printf("===[ERROR] opendir failed!===\n");
         return 0;
      }
 

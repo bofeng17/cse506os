@@ -24,7 +24,7 @@ void schedule() {
     current = current->next;
 
     //current won't be null, if only one task exists, that must be idle
-    while (current->task_state != TASK_READY && current != idle) {
+    while (current->task_state != TASK_READY) {
         current = current->next;
         if (current == prev)
             //already traverse the run queue, so break

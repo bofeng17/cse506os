@@ -324,7 +324,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > KERNPT_NUMBER) {
+        if (i >= KERNPT_NUMBER) {
             kmalloc_error();
             return NULL;
         }
@@ -337,7 +337,7 @@ void* kmalloc(int flag) {
             } else
                 i++;
         }
-        if (i > PROCESS_NUMBER) {
+        if (i >= PROCESS_NUMBER) {
             kmalloc_error();
             return NULL;
         }

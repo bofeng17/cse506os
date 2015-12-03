@@ -463,17 +463,28 @@ void do_read_rootfs(struct dirent* dir)
         
         size=get_size_oct(header_start->size);
 
+        if(contain_slash(header_start->name)==0)
+        {
+            strcpy(dir[i].name ,header_start->name);
+            i++;
+            //continue;
+        } 
+        else
+        {
+
+        
         char* tmp = strstr(header_start->name, "/");
-        if(tmp==NULL)
+        /*if(tmp==NULL)
         {
             break;
-        }
+        }*/
 
         if(strlen(tmp)==1)
         {
             strcpy(dir[i].name ,header_start->name);
             i++;
         }
+    }
         
         
         header_start=(struct posix_header_ustar*)((void*)header_start+((size+511)/512 + 1)*512);

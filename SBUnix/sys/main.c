@@ -22,10 +22,6 @@ page_sp* page_struct_start;
 
 task_struct* idle;
 
-void test(){
-    printf("im'test\n");
-}
-
 void start(uint32_t* modulep, void* physbase, void* physfree) {
 
 	struct smap_t {

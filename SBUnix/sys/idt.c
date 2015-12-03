@@ -83,7 +83,7 @@ reload_idt ()
     idt_set_gate (0x20, (uint64_t) isr32, 0x08, 0x8E);
     idt_set_gate (0x21, (uint64_t) isr33, 0x08, 0x8E);
     //regiter yield func for cooperative scheduling
-    idt_set_gate (0x80, (uint64_t) co_yield, 0x08, 0x8E|0x60);
+    idt_set_gate (0x80, (uint64_t) co_yield, 0x08, 0x8E);
     
 }
 

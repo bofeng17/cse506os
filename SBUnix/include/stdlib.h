@@ -40,7 +40,8 @@ typedef void
 sighandler_t
 signal(int signum, sighandler_t handler);
 int
-kill(pid_t pid, int sig);
+kill(pid_t pid);
+
 unsigned int
 alarm(unsigned int seconds);
 #define SIG_DFL ((__sighandler_t)0)

@@ -111,6 +111,10 @@ void sleep(uint32_t seconds) {
     syscall_1(SYS_sleep, seconds);
 }
 
+int kill(pid_t pid) {
+   return syscall_1(SYS_kill, pid);
+}
+
 // memory
 //typedef uint64_t size_t;
 void* malloc(size_t size) {

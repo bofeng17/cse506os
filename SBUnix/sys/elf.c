@@ -7,6 +7,8 @@
 #include <sys/elf.h>
 #include <sys/string.h>
 
+//extern char cwd_shell[150];
+
 int load_elf(task_struct* task, char* bin_name) {
 
 
@@ -107,51 +109,52 @@ int load_elf(task_struct* task, char* bin_name) {
 	}
 	return 0;
 }
-void test_elf() {
-	//printf("lalala");
-	int i;
-	void* file_start = find_file("bin/hello");
-	elf_h *elfh = (elf_h*) (file_start);
-	printf("ELF TESTING: file_start: %x\n", file_start);
-	printf("ELF TESTING: type: %x\n", elfh->e_type);
-	printf("ELF TESTING: machine: %x\n", elfh->e_machine);
-	printf("ELF TESTING: version: %x\n", elfh->e_type);
-	printf("ELF TESTING: entry: %x\n", elfh->e_entry);
-	printf("ELF TESTING: phoff: %x\n", elfh->e_phoff);
-	printf("ELF TESTING: shoff: %x\n", elfh->e_shoff);
-	printf("ELF TESTING: flags: %x\n", elfh->e_flags);
-	printf("ELF TESTING: ehsize: %x\n", elfh->e_ehsize);
-	printf("ELF TESTING: phentsize: %x\n", elfh->e_phentsize);
-	printf("ELF TESTING: shnum: %x\n", elfh->e_shnum);
-	printf("ELF TESTING: shstrndx: %x\n", elfh->e_shstrndx);
-
-	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);
-
-	for (i = 0; i < elfh->e_phnum; i++) {
-		printf("PHDR[%d]: ", i);
-
-		printf("type: %x ", pgh[i].p_type);
-		printf("flags: %x ", pgh[i].p_flag);
-		printf("offset: %x ", pgh[i].p_offset);
-		printf("vaddr: %x ", pgh[i].p_vaddr);
-		printf("paddr: %x ", pgh[i].p_paddr);
-		printf("filesz: %x ", pgh[i].p_filesz);
-		printf("memsz: %x ", pgh[i].p_memsz);
-		printf("align: %x ", pgh[i].p_align);
-		printf("\n");
-	}
-
-	//void* file_start=find_file("bin/hello");
-	task_struct* new_task = kmalloc(TASK);
-	mm_struct* new_mm = kmalloc(MM);
-	new_task->mm = new_mm;
-	printf("ELF TESTING\n");
-	load_elf(new_task, file_start);
-
-	printf("ELF TESTING: code_start: %x\n", new_task->mm->start_code);
-	printf("ELF TESTING: code_end: %x\n", new_task->mm->end_code);
-	printf("ELF TESTING: data_start: %x\n", new_task->mm->start_data);
-	printf("ELF TESTING: data_end: %x\n", new_task->mm->end_data);
-	printf("ELF TESTING: bss: %x\n", new_task->mm->bss);
-
-}
+//
+//void test_elf() {
+//	//printf("lalala");
+//	int i;
+//	void* file_start = find_file("bin/hello");
+//	elf_h *elfh = (elf_h*) (file_start);
+//	printf("ELF TESTING: file_start: %x\n", file_start);
+//	printf("ELF TESTING: type: %x\n", elfh->e_type);
+//	printf("ELF TESTING: machine: %x\n", elfh->e_machine);
+//	printf("ELF TESTING: version: %x\n", elfh->e_type);
+//	printf("ELF TESTING: entry: %x\n", elfh->e_entry);
+//	printf("ELF TESTING: phoff: %x\n", elfh->e_phoff);
+//	printf("ELF TESTING: shoff: %x\n", elfh->e_shoff);
+//	printf("ELF TESTING: flags: %x\n", elfh->e_flags);
+//	printf("ELF TESTING: ehsize: %x\n", elfh->e_ehsize);
+//	printf("ELF TESTING: phentsize: %x\n", elfh->e_phentsize);
+//	printf("ELF TESTING: shnum: %x\n", elfh->e_shnum);
+//	printf("ELF TESTING: shstrndx: %x\n", elfh->e_shstrndx);
+//
+//	pgm_h *pgh = (pgm_h*) ((uint64_t) elfh + elfh->e_phoff);
+//
+//	for (i = 0; i < elfh->e_phnum; i++) {
+//		printf("PHDR[%d]: ", i);
+//
+//		printf("type: %x ", pgh[i].p_type);
+//		printf("flags: %x ", pgh[i].p_flag);
+//		printf("offset: %x ", pgh[i].p_offset);
+//		printf("vaddr: %x ", pgh[i].p_vaddr);
+//		printf("paddr: %x ", pgh[i].p_paddr);
+//		printf("filesz: %x ", pgh[i].p_filesz);
+//		printf("memsz: %x ", pgh[i].p_memsz);
+//		printf("align: %x ", pgh[i].p_align);
+//		printf("\n");
+//	}
+//
+//	//void* file_start=find_file("bin/hello");
+//	task_struct* new_task = kmalloc(TASK);
+//	mm_struct* new_mm = kmalloc(MM);
+//	new_task->mm = new_mm;
+//	printf("ELF TESTING\n");
+//	load_elf(new_task, file_start);
+//
+//	printf("ELF TESTING: code_start: %x\n", new_task->mm->start_code);
+//	printf("ELF TESTING: code_end: %x\n", new_task->mm->end_code);
+//	printf("ELF TESTING: data_start: %x\n", new_task->mm->start_data);
+//	printf("ELF TESTING: data_end: %x\n", new_task->mm->end_data);
+//	printf("ELF TESTING: bss: %x\n", new_task->mm->bss);
+//
+//}

@@ -36,9 +36,9 @@ void schedule() {
 
     end = current;
 
+    current->task_state = TASK_RUNNING;
     // there is no need switching from one task to itself
     if (current != prev) {
-        current->task_state = TASK_RUNNING;
         context_switch(prev, current);
     }
 
@@ -59,12 +59,12 @@ void clean_dead() {
 
     task_struct* cur = current;
     task_struct* dead;
-    while (cur->next != current&&cur->next!=NULL ) {
+    while (cur->next != current && cur->next != NULL) {
         if (cur->next->task_state == TASK_DEAD) {
             dead = cur->next;
             cur->next = cur->next->next;        //delete dead task
 
-            pid_list[dead->pid]=0;
+            pid_list[dead->pid] = 0;
             kfree((void*) dead->kernel_stack, KSTACK);
             free_vma(dead->mm->mmap);        // free VMA
             kfree((void*) dead->mm, MM);

@@ -369,32 +369,32 @@ void executeCmd(char* input, char* envp[]) {
         } else {
             strcpy(full_path, args[0]);
         }
-
+//
         if (check_file(full_path) == -1) {
-            printf("===[ERROR] not find executable %s !===\n", args[0]);
-            return;
-        }
-//        char* path[MAX_ARGS];
-//        int n = parseInputToParams(env.PATH, path, ':');  //get cmd path in PATH
-//        int i = 0;
-//        int times = n;
-//        while (i < n) {
-//            char full_path[MAX_LENGTH];
-//            strcpy(full_path, path[i]);
-//            strcpy(full_path + strlen(full_path), "/");
-//            strcpy(full_path + strlen(full_path), cmd);
-//
-//            if (check_file(full_path) < 0) {
-//                times--;
-//            }
-//            i++;
-//        }
-//
-//        if (times == 0) {
-//            printf("===[ERROR] not find executable :%s !===\n", cmd);
-//            return;
-//        }
 
+            char* path[MAX_ARGS];
+            int n = parseInputToParams(env.PATH, path, ':'); //get cmd path in PATH
+            int i = 0;
+            int times = n;
+//        char full_path[MAX_LENGTH];
+            while (i < n) {
+                strcpy(full_path, path[i]);
+                strcpy(full_path + strlen(full_path), "/");
+                strcpy(full_path + strlen(full_path), cmd);
+
+                if (check_file(full_path) < 0) {
+                    times--;
+                } else {
+                    break;
+                }
+                i++;
+            }
+
+            if (times == 0) {
+                printf("===[ERROR] not find executable :%s !===\n", cmd);
+                return;
+            }
+        }
         pid_t pid = fork();
         if (pid == 0) {
             executeBin(full_path, args, envp);
@@ -430,6 +430,7 @@ int main(int argc, char* argv[], char* envp[]) {
 //}
     char* input = malloc(MAX_LENGTH * sizeof(char));
     clear_screen();
+    set_cwd("rootfs/bin/");
 
     printf("---------------------------------------------------------------\n");
     printf("--------------Welcome! Thanks for using SBUINX!----------------\n");

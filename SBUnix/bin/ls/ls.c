@@ -69,6 +69,13 @@ main (int argc, char* argv[], char* envp[])
 
      void* b = opendir(direct);
 
+     
+     if(b==NULL)
+     {
+        printf("===[ERROR] opendir failed!===\n");
+        return 0;
+     }
+
      readdir(b, a);
 
      char final_name[MAX_LENGTH];

@@ -240,6 +240,10 @@ void do_syscall() {
             __asm__ __volatile__ ("callq do_clear;"
                                   :"=a"(ret_val));
             break;
+        case SYS_kill:
+            __asm__ __volatile__ ("callq do_kill;"
+                                  :"=a"(ret_val));
+            break;
          default:
             printf("Syscall wasn't implemented\n");
             break;

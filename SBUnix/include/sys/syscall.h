@@ -38,6 +38,7 @@
 #define SYS_sbrk         13
 #define SYS_ps           14
 #define SYS_clear        15
+#define SYS_kill        16
 
 // init msr registers
 void syscall_init();

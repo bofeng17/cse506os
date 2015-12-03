@@ -357,7 +357,7 @@ void executeCmd(char* input, char* envp[]) {
         sleep(3);
         exit(0);
     } else if (!strcmp(cmd, "help")) {
-
+        printf("===[INFO] please see README ===\n");
     } else {    //execute bin or executables
         char full_path[MAX_LENGTH];
         memset((void*) full_path, 0, MAX_LENGTH);

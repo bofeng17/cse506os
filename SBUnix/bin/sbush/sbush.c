@@ -358,17 +358,17 @@ void executeCmd(char* input, char* envp[]) {
 
     } else {    //execute bin or executables
         char full_path[MAX_LENGTH];
-//        memset((void*) full_path, 0, MAX_LENGTH);
-//        if (strncmp(args[0], "bin/", 4)) {
-//
-//            get_cwd(full_path);
-//            cut_rootfs(full_path);
-//
-//            strcat(full_path, args[0]);
-//
-//        } else {
-        strcpy(full_path, args[0]);
-//        }
+        memset((void*) full_path, 0, MAX_LENGTH);
+        if (strncmp(args[0], "bin/", 4)) {
+
+            get_cwd(full_path);
+            cut_rootfs(full_path);
+
+            strcat(full_path, args[0]);
+
+        } else {
+            strcpy(full_path, args[0]);
+        }
 //
         if (check_file(full_path) == -1) {
 
@@ -384,12 +384,11 @@ void executeCmd(char* input, char* envp[]) {
 
                 if (check_file(full_path) < 0) {
                     times--;
-                }else{
+                } else {
                     break;
                 }
                 i++;
             }
-
 
             if (times == 0) {
                 printf("===[ERROR] not find executable :%s !===\n", cmd);

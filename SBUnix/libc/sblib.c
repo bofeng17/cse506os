@@ -25,9 +25,6 @@ void* opendir(const char* name) {
     return (void*) syscall_1(SYS_opendir, (uint64_t) name);
 }
 
-/*struct dirent* readdir(void* fd) {
- return (struct dirent*) syscall_1(SYS_open, (uint64_t) fd);
- }*/
 
 int readdir(void* fd, struct dirent *dirp) {
     return syscall_2(SYS_readdir, (uint64_t) fd, (uint64_t) dirp);

@@ -183,7 +183,6 @@ void do_syscall() {
             
         // file & terminal
         case SYS_read:
-            // TODO: This is not the final version of read.
             __asm__ __volatile__ ("mov %r14, %rdx;");
             __asm__ __volatile__ ("callq do_read;"
                                   :"=a"(ret_val));
@@ -229,6 +228,7 @@ void do_syscall() {
                                   :"=a"(ret_val));
             break;
         case SYS_wait4:
+            __asm__ __volatile__ ("mov %r14, %rdx;");
             __asm__ __volatile__ ("callq do_waitpid;"
                                   :"=a"(ret_val));
             break;

@@ -152,7 +152,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
             } else {
                 // TODO: branch never reached by testing
                 // pf caused by illegal access of user, kill user process
-                printf("pid %d illegal access, kill!\n", current->pid);
+                printf("SEGMENTATION FAULT: pid %d. kill!\n", current->pid);
                 do_exit(-ILLEGAL_MEM_ACC);
             }
         }
@@ -164,7 +164,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
         if (pf_err_code & PF_BIT_2) {
             // TODO: branch never reached by testing
             // pf caused by illegal access of user, kill user process
-            printf("pid %d illegal access, kill!\n", current->pid);
+            printf("SEGMENTATION FAULT: pid %d. kill!\n", current->pid);
             do_exit(-ILLEGAL_MEM_ACC);
         } else {
             /*
@@ -174,7 +174,7 @@ void page_fault_handler(pt_regs *regs, uint64_t pf_err_code) {
             if (search_exception_table(regs->rip)) {
                 // TODO: branch never reached by testing
                 // pf caused by wrong syscall parm provided by user, kill user process
-                printf("pid %d illegal access, kill!\n", current->pid);
+                printf("SEGMENTATION FAULT: pid %d. kill!\n", current->pid);
                 do_exit(-ILLEGAL_MEM_ACC);
             } else {
                 // pf caused by kernel bugs or (extreme memory shortage)

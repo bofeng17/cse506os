@@ -1,5 +1,8 @@
 ##README
 
+###Detailed Usage
+see README file (not this one)
+
 ### useful scripts
 - use sh run.sh (or ./run.sh) to make and run
 - use sh up.sh to upload files to sever
